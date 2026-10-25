@@ -44,6 +44,8 @@ input[type=text]{flex:1;font-size:18px;padding:12px;border-radius:12px;border:1p
 #pList .nm{flex:1;font-size:18px}
 #pList .nm small{display:block;opacity:.7;font-size:12px}
 #pList button{padding:8px 10px;font-size:14px}
+#pList .av{width:52px;height:52px;border-radius:50%;background:#24384f;display:flex;align-items:center;justify-content:center;font-size:24px;flex:none}
+#pList li.me .nm{font-weight:bold}
 .setting{display:block;margin:14px 0}
 .setting input[type=range]{width:100%;margin:8px 0}
 .setting.check{display:flex;gap:10px;align-items:center}

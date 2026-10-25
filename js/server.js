@@ -105,6 +105,7 @@ export class Api {
   health(timeout = 6000) { return this.req('GET', '/health', { auth: false, timeout }); }
   me() { return this.req('GET', '/people/me'); }
   people() { return this.req('GET', '/people'); }
+  peoplePublic() { return this.req('GET', '/people/public', { auth: false, timeout: 6000 }); }   // ARN_PUBLIC_LIST=1 servers
   createPerson(familyKey, name, message, visibility) {
     const f = new FormData(); f.append('name', name); f.append('message', message || ''); f.append('visibility', visibility);
     return this.req('POST', '/people', { form: f, familyKey, auth: false });

@@ -451,6 +451,18 @@ const SRV_STEPS = [
 ];
 const SRV_WAIT = 10000, SRV_WAIT_OPTIONAL = 6000, SRV_GAP = 600;
 
+// Open enrollment: when the server says so, anyone with the address can create their profile without the family key.
+let srvOpen = null; // null = unknown, true/false = as reported by /health
+function applyOpenEnrollment() {
+  $('enFamKey').classList.toggle('hidden', srvOpen === true);
+}
+async function checkOpenEnrollment() {
+  if (!cfg.url) return srvOpen;
+  try { srvOpen = !!(await api.health()).open_enrollment; } catch { /* keep last known */ }
+  applyOpenEnrollment();
+  return srvOpen;
+}
+
 function enrollToServer() { return !!cfg.url && !$('enSrv').classList.contains('hidden') && $('enToSrv').checked; }
 
 function setupEnrollServer(existing, keepCheck = false) {
@@ -465,7 +477,13 @@ function setupEnrollServer(existing, keepCheck = false) {
     setMsg(`Πρόσθεσε λήψεις στο προφίλ σου στον server${cfg.name ? ` («${cfg.name}»)` : ''}. Πάτα ▶.`);
   } else {
     $('enName').disabled = false;
-    if (on) setMsg('Γράψε το όνομά σου, το κλειδί της οικογένειας και πάτα ▶ Αυτόματη λήψη.');
+    if (on) {
+      const hint = () => setMsg(srvOpen === true ? 'Γράψε το όνομά σου και πάτα ▶ Αυτόματη λήψη.'
+        : 'Γράψε το όνομά σου, το κλειδί της οικογένειας και πάτα ▶ Αυτόματη λήψη.');
+      applyOpenEnrollment(); hint();
+      const shown = $('enMsg').textContent;
+      checkOpenEnrollment().then(() => { if ($('enMsg').textContent === shown) hint(); });
+    }
   }
 }
 
@@ -509,9 +527,16 @@ async function saveEnrollServer() {
     if (!cfg.token) {
       const name = $('enName').value.trim(), key = $('enFamKey').value.trim();
       if (!name) { setMsg('Γράψε το όνομά σου.'); return; }
-      if (!key) { setMsg('Χρειάζεται το κλειδί της οικογένειας (στο ζητάει μόνο αυτή τη φορά).'); return; }
+      if (!key && srvOpen !== true) await checkOpenEnrollment();
+      if (!key && srvOpen !== true) { applyOpenEnrollment(); setMsg('Χρειάζεται το κλειδί της οικογένειας (στο ζητάει μόνο αυτή τη φορά).'); return; }
       setMsg('Δημιουργία του προφίλ σου στον server…');
-      const r = await api.createPerson(key, name, $('enSrvMsg').value.trim(), $('enSrvFamily').checked ? 'family' : 'selected');
+      let r;
+      try {
+        r = await api.createPerson(key || null, name, $('enSrvMsg').value.trim(), $('enSrvFamily').checked ? 'family' : 'selected');
+      } catch (e) {
+        if (e.status === 401 && e.code === 'family_key_required') { srvOpen = false; applyOpenEnrollment(); }
+        throw e;
+      }
       cfg.token = r.token; cfg.personId = r.person.id; cfg.name = r.person.name; server.saveCfg(cfg);
       $('enFamKey').value = '';
       showToken(r.token);
@@ -614,9 +639,11 @@ async function refreshServer(verbose = false) {
   if (verbose) info.textContent = 'Έλεγχος…';
   try {
     const h = await api.health();
+    srvOpen = !!h.open_enrollment; applyOpenEnrollment();
     if (!cfg.token) {
       $('srvMe').classList.add('hidden');
-      info.textContent = `Ο server απαντά ✓ (${h.people} άτομα). Για να μπεις, πάτα «＋ Νέο άτομο» και καταχώρισε τον εαυτό σου (θα χρειαστείς το κλειδί της οικογένειας), ή βάλε το token σου.`;
+      info.textContent = `Ο server απαντά ✓ (${h.people} άτομα). Για να μπεις, πάτα «＋ Νέο άτομο» και καταχώρισε τον εαυτό σου`
+        + (srvOpen ? '' : ' (θα χρειαστείς το κλειδί της οικογένειας)') + ', ή βάλε το token σου.';
       return;
     }
     const me = await api.me();

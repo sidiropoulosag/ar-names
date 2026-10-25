@@ -61,10 +61,11 @@ export class Tracker {
     return this.tracks;
   }
   // choose which visible track should get an embedding this frame (or null)
-  pick() {
+  pick(filter = null) {
     if (!this.gallery.people.length) return null;
     let best = null, bestPri = -Infinity;
     for (const t of this.tracks) {
+      if (filter && !filter(t)) continue;
       if (t.missed > 0 || t.wpx < 36 || Math.abs(t.pose.yaw) > 75) continue;
       const age = this.frame - t.lastEmbed;
       let pri;

@@ -93,14 +93,16 @@
   </div>
   <p class="small">Καταχώριζε μόνο άτομα που συμφωνούν. Τα δεδομένα μένουν μόνο σε αυτή τη συσκευή.</p>
 
-  <h2>☁️ Server οικογένειας (προαιρετικό)</h2>
-  <p class="small">Αν το ορίσεις, η αναγνώριση γίνεται από κοινό server της οικογένειας: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
+  <h2>☁️ Server οικογένειας</h2>
+  <p class="small">Με τον server, η αναγνώριση γίνεται από κοινό server της οικογένειας: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
   <label class="setting">Διεύθυνση server
-    <input id="srvUrl" type="text" inputmode="url" placeholder="https://….trycloudflare.com" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+    <input id="srvUrl" type="text" inputmode="url" placeholder="κενό = μόνο σε αυτή τη συσκευή" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+  <p id="srvUrlNote" class="small"></p>
   <label class="setting">Το προσωπικό μου token
     <input id="srvToken" type="password" placeholder="Δίνεται μία φορά, όταν καταχωρίζεσαι" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
   <div class="row wrap">
     <button id="srvTest">🔌 Έλεγχος σύνδεσης</button>
+    <button id="srvDefault" class="hidden">↺ Προεπιλεγμένος server</button>
     <button id="srvLogout">Αποσύνδεση</button>
   </div>
   <label class="setting check"><input id="srvOn" type="checkbox"> Αναγνώριση μέσω server</label>

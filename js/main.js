@@ -110,9 +110,13 @@ async function loop() {
     const r0 = performance.now();
     labels.render(tracks, vw, vh, settings.showUnknown, now);
     const rdt = performance.now() - r0; stats.renderSamples.push(rdt); if (stats.renderSamples.length > 600) stats.renderSamples.shift();
-    let useLocal = true;
-    if (serverOn()) { await serverStep(tracks, vw, vh, now); useLocal = srv.offline; }
-    const t = useLocal ? tracker.pick() : null;
+    let useLocal = true, filter = null;
+    if (serverOn()) {
+      await serverStep(tracks, vw, vh, now); useLocal = srv.offline;
+      // people saved only on this phone keep working: faces the server doesn't know are matched locally too
+      if (!useLocal && gallery.people.length) { useLocal = true; filter = (x) => !x.srv && (x.srvMiss || 0) >= 1; }
+    }
+    const t = useLocal ? tracker.pick(filter) : null;
     if (t) {
       const e0 = performance.now();
       try {
@@ -453,12 +457,13 @@ const SRV_WAIT = 10000, SRV_WAIT_OPTIONAL = 6000, SRV_GAP = 600;
 
 // Open enrollment: when the server says so, anyone with the address can create their profile without the family key.
 let srvOpen = null; // null = unknown, true/false = as reported by /health
+let srvReach = null; // null = unknown, true/false = did the last /health answer
 function applyOpenEnrollment() {
   $('enFamKey').classList.toggle('hidden', srvOpen === true);
 }
 async function checkOpenEnrollment() {
   if (!cfg.url) return srvOpen;
-  try { srvOpen = !!(await api.health()).open_enrollment; } catch { /* keep last known */ }
+  try { srvOpen = !!(await api.health(4000)).open_enrollment; srvReach = true; } catch { srvReach = false; /* keep last known */ }
   applyOpenEnrollment();
   return srvOpen;
 }
@@ -482,7 +487,14 @@ function setupEnrollServer(existing, keepCheck = false) {
         : 'Γράψε το όνομά σου, το κλειδί της οικογένειας και πάτα ▶ Αυτόματη λήψη.');
       applyOpenEnrollment(); hint();
       const shown = $('enMsg').textContent;
-      checkOpenEnrollment().then(() => { if ($('enMsg').textContent === shown) hint(); });
+      checkOpenEnrollment().then(() => {
+        if (mode !== 'enroll' || existing !== en.person) return;
+        if (srvReach === false && !en.auto && !en.samples.length) {
+          // Server unreachable: fall back to on-device enrollment (the user can tick ☁️ again to retry).
+          $('enToSrv').checked = false; $('enSrvFields').classList.add('hidden');
+          setMsg('Ο server της οικογένειας δεν απαντά τώρα — η καταχώριση θα γίνει μόνο σε αυτή τη συσκευή. Βάλε όνομα και πάτα ▶ (ή τσέκαρε ξανά το ☁️ για να ξαναδοκιμάσεις).');
+        } else if ($('enMsg').textContent === shown) hint();
+      });
     }
   }
 }
@@ -590,6 +602,10 @@ $('tokOk').onclick = () => { $('tokVal').value = ''; $('tokSheet').classList.add
 // ---------- server settings + permissions ----------
 function syncServerUi() {
   $('srvUrl').value = cfg.url || '';
+  $('srvUrlNote').textContent = !cfg.url ? 'Χωρίς server: όλα γίνονται μόνο σε αυτή τη συσκευή.'
+    : server.isDefaultUrl(cfg) ? 'Ο server της οικογένειας (προεπιλογή). Άδειασε το πεδίο για χρήση μόνο στη συσκευή.'
+      : 'Δική σου διεύθυνση. Άδειο = μόνο στη συσκευή.';
+  $('srvDefault').classList.toggle('hidden', server.isDefaultUrl(cfg));
   $('srvToken').value = cfg.token || '';
   $('srvOn').checked = !!cfg.enabled;
   $('srvOn').disabled = !(cfg.url && cfg.token);
@@ -599,7 +615,15 @@ function syncServerUi() {
 }
 function initServerUi() {
   syncServerUi();
-  $('srvUrl').onchange = () => { cfg.url = server.normUrl($('srvUrl').value); server.saveCfg(cfg); syncServerUi(); };
+  $('srvUrl').onchange = () => {
+    server.setUserUrl(cfg, $('srvUrl').value); srvOpen = null; srvReach = null; srv.offline = false;
+    server.saveCfg(cfg); syncServerUi();
+    if (!cfg.url) $('srvInfo').textContent = 'Ο server απενεργοποιήθηκε — όλα γίνονται μόνο σε αυτή τη συσκευή.';
+  };
+  $('srvDefault').onclick = () => {
+    server.resetUrl(cfg); srvOpen = null; srvReach = null; srv.offline = false;
+    server.saveCfg(cfg); syncServerUi(); refreshServer(true);
+  };
   $('srvToken').onchange = () => { cfg.token = $('srvToken').value.trim(); cfg.personId = null; cfg.name = ''; server.saveCfg(cfg); syncServerUi(); };
   $('srvTest').onclick = () => refreshServer(true);
   $('srvOn').onchange = () => {
@@ -635,7 +659,7 @@ function initServerUi() {
 
 async function refreshServer(verbose = false) {
   const info = $('srvInfo');
-  if (!cfg.url) { info.textContent = 'Γράψε πρώτα τη διεύθυνση του server.'; return; }
+  if (!cfg.url) { info.textContent = 'Χωρίς server: όλα γίνονται μόνο σε αυτή τη συσκευή. (Για server, γράψε διεύθυνση ή πάτα «Προεπιλεγμένος server».)'; return; }
   if (verbose) info.textContent = 'Έλεγχος…';
   try {
     const h = await api.health();

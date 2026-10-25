@@ -1,15 +1,32 @@
-// Optional "family server" mode: API client, settings (localStorage) and Greek messages.
-// Nothing here runs unless the user enters a server URL in Settings.
+// "Family server" mode: API client, settings (localStorage) and Greek messages.
+// The family server below is used by default; change it here (one place). Users can change it or clear it
+// (= on-device only) in Settings.
+export const DEFAULT_SERVER_URL = 'https://arnames.taila38131.ts.net';
 const KEY = 'ar-names-server';
 
+// Stored settings: 'serverUrl' exists ONLY if the user edited the address ('' = server switched off).
+// No 'serverUrl' -> DEFAULT_SERVER_URL. Older versions stored 'url': a non-empty one counts as the user's choice.
 export function loadCfg() {
   let c = {};
   try { c = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { c = {}; }
-  return { url: '', token: '', enabled: false, personId: null, name: '', ...c };
+  let custom = null;
+  if (typeof c.serverUrl === 'string') custom = c.serverUrl;
+  else if (typeof c.url === 'string' && c.url.trim()) custom = c.url;
+  return {
+    token: c.token || '', enabled: !!c.enabled, personId: c.personId ?? null, name: c.name || '',
+    customUrl: custom, url: custom === null ? DEFAULT_SERVER_URL : normUrl(custom),
+  };
 }
 export function saveCfg(c) {
-  localStorage.setItem(KEY, JSON.stringify({ url: c.url, token: c.token, enabled: c.enabled, personId: c.personId, name: c.name }));
+  const o = { token: c.token, enabled: c.enabled, personId: c.personId, name: c.name };
+  if (c.customUrl !== null && c.customUrl !== undefined) o.serverUrl = c.customUrl;
+  localStorage.setItem(KEY, JSON.stringify(o));
 }
+// User edited the address field: '' = off, anything else = custom address.
+export function setUserUrl(c, raw) { c.customUrl = normUrl(raw); c.url = c.customUrl; }
+// Back to the built-in default (forget the user's choice).
+export function resetUrl(c) { c.customUrl = null; c.url = DEFAULT_SERVER_URL; }
+export const isDefaultUrl = (c) => c.customUrl === null;
 export function normUrl(u) {
   u = (u || '').trim().replace(/\/+$/, '');
   if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
@@ -85,7 +102,7 @@ export class Api {
     }
     return data;
   }
-  health() { return this.req('GET', '/health', { auth: false, timeout: 6000 }); }
+  health(timeout = 6000) { return this.req('GET', '/health', { auth: false, timeout }); }
   me() { return this.req('GET', '/people/me'); }
   people() { return this.req('GET', '/people'); }
   createPerson(familyKey, name, message, visibility) {

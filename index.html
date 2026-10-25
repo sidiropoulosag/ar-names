@@ -21,6 +21,7 @@
   <video id="video" playsinline muted autoplay></video>
   <canvas id="overlay"></canvas>
   <canvas id="guide"></canvas>
+  <div id="bubbles"></div>
 </div>
 
 <header id="topbar">
@@ -38,7 +39,7 @@
   <div class="card">
     <h1>Ονόματα AR</h1>
     <p>Η κάμερα αναγνωρίζει τα άτομα που έχεις καταχωρίσει και δείχνει το όνομά τους σε 3D πάνω από το κεφάλι.</p>
-    <p class="small">Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.</p>
+    <p id="privacyNote" class="small">Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.</p>
     <button id="btnStart" class="primary big" disabled>Φόρτωση μοντέλων…</button>
     <p id="loadErr" class="err"></p>
   </div>
@@ -48,6 +49,14 @@
 <div id="enroll" class="panel bottom hidden">
   <div class="row">
     <input id="enName" type="text" placeholder="Όνομα (π.χ. Μαρία)" maxlength="40" autocomplete="off">
+  </div>
+  <div id="enSrv" class="hidden">
+    <label class="setting check"><input id="enToSrv" type="checkbox"> ☁️ Καταχώριση του εαυτού μου στον server της οικογένειας</label>
+    <div id="enSrvFields">
+      <textarea id="enSrvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που θα φαίνεται πάνω από το όνομά σου (προαιρετικό)"></textarea>
+      <label class="setting check"><input id="enSrvFamily" type="checkbox"> Να βλέπει το μήνυμά μου όλη η οικογένεια</label>
+      <input id="enFamKey" type="password" placeholder="Κλειδί οικογένειας" autocomplete="off">
+    </div>
   </div>
   <div id="enMsg" class="msg">Βάλε όνομα και κοίτα την κάμερα.</div>
   <div id="enSteps" class="steps"></div>
@@ -83,6 +92,40 @@
     <button id="pClear" class="danger">🗑 Διαγραφή όλων</button>
   </div>
   <p class="small">Καταχώριζε μόνο άτομα που συμφωνούν. Τα δεδομένα μένουν μόνο σε αυτή τη συσκευή.</p>
+
+  <h2>☁️ Server οικογένειας (προαιρετικό)</h2>
+  <p class="small">Αν το ορίσεις, η αναγνώριση γίνεται από κοινό server της οικογένειας: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
+  <label class="setting">Διεύθυνση server
+    <input id="srvUrl" type="text" inputmode="url" placeholder="https://….trycloudflare.com" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+  <label class="setting">Το προσωπικό μου token
+    <input id="srvToken" type="password" placeholder="Δίνεται μία φορά, όταν καταχωρίζεσαι" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+  <div class="row wrap">
+    <button id="srvTest">🔌 Έλεγχος σύνδεσης</button>
+    <button id="srvLogout">Αποσύνδεση</button>
+  </div>
+  <label class="setting check"><input id="srvOn" type="checkbox"> Αναγνώριση μέσω server</label>
+  <p id="srvInfo" class="small"></p>
+  <div id="srvMe" class="hidden">
+    <label class="setting">Το μήνυμά μου (φαίνεται πάνω από το όνομά μου)
+      <textarea id="srvMsg" rows="2" maxlength="300"></textarea></label>
+    <div class="row"><button id="srvMsgSave" class="primary">💾 Αποθήκευση μηνύματος</button></div>
+    <h3>Ποιος βλέπει το όνομα και το μήνυμά μου</h3>
+    <label class="setting check"><input id="srvFamily" type="checkbox"> Όλη η οικογένεια</label>
+    <ul id="srvMembers"></ul>
+    <p class="small">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
+    <div class="row"><button id="srvDelMe" class="danger">🗑 Διαγραφή του προφίλ μου από τον server</button></div>
+  </div>
+</div>
+
+<!-- One-time token -->
+<div id="tokSheet" class="sheet center hidden">
+  <div class="card">
+    <h2>Το προσωπικό σου token</h2>
+    <p>Φαίνεται <b>μόνο αυτή τη φορά</b>. Αποθηκεύτηκε ήδη σε αυτό το κινητό. Κράτα κι ένα αντίγραφο (π.χ. στις σημειώσεις) για να συνδεθείς από άλλη συσκευή.</p>
+    <input id="tokVal" type="text" readonly>
+    <div class="row"><button id="tokCopy">📋 Αντιγραφή</button><button id="tokOk" class="primary">Εντάξει</button></div>
+    <p id="tokCopied" class="small"></p>
+  </div>
 </div>
 
 <script type="module" src="js/main.js"></script>

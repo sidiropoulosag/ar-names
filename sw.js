@@ -3,10 +3,10 @@
 //    (SharedArrayBuffer -> multi-threaded WASM) even on static hosts like GitHub Pages.
 // 2) Offline cache: everything the app fetches is cached; the full asset list is also precached in the background.
 // All paths are relative to this file, so it works under any subpath (e.g. /ar-names/).
-const CACHE = 'ar-names-v6';
+const CACHE = 'ar-names-v7';
 const ASSETS = [
   './', 'index.html', 'coi-serviceworker.js', 'app.css', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
-  'js/main.js', 'js/ort.js', 'js/detector.js', 'js/embedder.js', 'js/labels3d.js', 'js/tracker.js', 'js/geometry.js', 'js/db.js',
+  'js/main.js', 'js/ort.js', 'js/detector.js', 'js/embedder.js', 'js/labels3d.js', 'js/tracker.js', 'js/geometry.js', 'js/db.js', 'js/server.js',
   'vendor/ort/ort.wasm.min.mjs', 'vendor/ort/ort-wasm-simd-threaded.mjs', 'vendor/ort/ort-wasm-simd-threaded.wasm',
   'vendor/three/three.module.js', 'vendor/three/three.core.js',
   'vendor/three/addons/loaders/FontLoader.js', 'vendor/three/addons/geometries/TextGeometry.js',

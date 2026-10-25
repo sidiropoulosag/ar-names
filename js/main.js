@@ -3,6 +3,7 @@ import { Embedder } from './embedder.js';
 import { Labels3D } from './labels3d.js';
 import { Gallery, Tracker } from './tracker.js';
 import * as db from './db.js';
+import * as server from './server.js';
 
 const $ = (id) => document.getElementById(id);
 const video = $('video'), overlay = $('overlay'), guide = $('guide');
@@ -16,7 +17,9 @@ const gallery = new Gallery();
 const tracker = new Tracker(gallery, settings);
 const stats = { fps: 0, det: 0, emb: 0, embN: 0, faces: 0, frames: 0, lastT: 0, detSamples: [], embSamples: [], renderSamples: [] };
 let facing = 'environment', stream = null, mode = 'scan', ready = false;
-window.__ar = { tracker, detector, embedder, labels, stats, settings, gallery, get mode() { return mode; }, get ready() { return ready; }, db };
+const cfg = server.loadCfg();
+const api = new server.Api(cfg);
+window.__ar = { cfg, api, get srv() { return srv; }, tracker, detector, embedder, labels, stats, settings, gallery, get mode() { return mode; }, get ready() { return ready; }, db };
 
 function setStatus(t) { $('status').textContent = t; }
 
@@ -107,7 +110,9 @@ async function loop() {
     const r0 = performance.now();
     labels.render(tracks, vw, vh, settings.showUnknown, now);
     const rdt = performance.now() - r0; stats.renderSamples.push(rdt); if (stats.renderSamples.length > 600) stats.renderSamples.shift();
-    const t = tracker.pick();
+    let useLocal = true;
+    if (serverOn()) { await serverStep(tracks, vw, vh, now); useLocal = srv.offline; }
+    const t = useLocal ? tracker.pick() : null;
     if (t) {
       const e0 = performance.now();
       try {
@@ -121,6 +126,7 @@ async function loop() {
     labels.render([], vw, vh, false, now);
     await enrollFrame(res, vw, vh);
   }
+  renderBubbles();
   if (settings.showStats && stats.frames % 5 === 0) {
     $('stats').textContent = `fps ${stats.fps.toFixed(0)}  πρόσωπα ${stats.faces}\nανίχνευση ${stats.det.toFixed(1)} ms (${detector.delegate})\nαναγνώριση ${stats.emb.toFixed(1)} ms/πρόσωπο`;
   }
@@ -133,7 +139,7 @@ async function reloadPeople() {
   gallery.set(people);
   tracker.relabel();
   $('peopleCount').textContent = people.length;
-  $('hint').classList.toggle('hidden', people.length > 0 || mode !== 'scan');
+  $('hint').classList.toggle('hidden', people.length > 0 || mode !== 'scan' || serverOn());
   $('hint').textContent = 'Δεν υπάρχει κανείς ακόμα. Πάτα «＋ Νέο άτομο» για να καταχωρίσεις κάποιον.';
   renderPeople(people);
   return people;
@@ -182,11 +188,13 @@ function openEnroll(existing = null) {
   $('enName').disabled = !!existing;
   $('enThumbs').innerHTML = '';
   $('enSave').disabled = true;
+  en.steps = STEPS; en.srvMode = false;
   $('enroll').classList.remove('hidden');
   $('btnEnroll').classList.add('hidden');
   $('hint').classList.add('hidden');
   renderSteps();
   setMsg(existing ? `Πρόσθεσε λήψεις για «${existing.name}»` : 'Βάλε όνομα και κοίτα την κάμερα.');
+  setupEnrollServer(existing);
   en.prevFacing = facing;
   if (facing !== 'user' && !window.__ar.keepCamera) openCamera('user');
 }
@@ -200,7 +208,7 @@ async function closeEnroll() {
 }
 function setMsg(t) { $('enMsg').textContent = t; }
 function renderSteps() {
-  $('enSteps').innerHTML = STEPS.map((_, i) => `<span class="${!en.auto ? '' : i < en.step ? 'done' : i === en.step ? 'now' : ''}"></span>`).join('');
+  $('enSteps').innerHTML = en.steps.map((_, i) => `<span class="${!en.auto ? '' : i < en.step ? 'done' : i === en.step ? 'now' : ''}"></span>`).join('');
 }
 function largest(res) {
   const f = res.faces || []; if (!f.length) return -1;
@@ -223,9 +231,10 @@ async function capture(face, vw, vh, pose) {
   try {
     const input = embedder.crop(frameCanvas, face.kps, vw, vh);
     const thumb = embedder.thumb();
+    const blob = enrollToServer() ? await frameJpeg(face, vw, vh) : null;
     const e = await embedder.run(input);
-    en.samples.push({ e, thumb, pose });
     const img = new Image(); img.src = thumb; $('enThumbs').appendChild(img);
+    en.samples.push({ e, thumb, pose, blob, el: img, label: server.classifyPose(pose) });
     $('enSave').disabled = !$('enName').value.trim();
   } finally { en.busy = false; }
 }
@@ -239,6 +248,7 @@ async function enrollFrame(res, vw, vh) {
   const now = performance.now();
   if (en.oneShot && !en.busy) { en.oneShot = false; await capture(lms, vw, vh, pose); setMsg(`Λήψεις: ${en.samples.length}. Πάτα «Αποθήκευση».`); return; }
   if (!en.auto || en.busy) return;
+  if (en.srvMode) return enrollFrameServer(face, pose, vw, vh, now);
   const step = STEPS[en.step];
   const taken = en.samples.filter((s) => s.step === en.step).length;
   const okPose = pose && step.ok(pose, en.st);
@@ -255,15 +265,16 @@ async function enrollFrame(res, vw, vh) {
 }
 function nextStep() {
   en.step++; en.stepStart = performance.now();
-  if (en.step >= STEPS.length) {
+  if (en.step >= en.steps.length) {
     en.auto = false; renderSteps();
     setMsg(`Έτοιμο! ${en.samples.length} λήψεις. Πάτα «Αποθήκευση».`);
     $('enAuto').disabled = false;
     return;
   }
-  renderSteps(); setMsg(STEPS[en.step].msg);
+  renderSteps(); setMsg(en.steps[en.step].msg);
 }
 async function saveEnroll() {
+  if (enrollToServer()) return saveEnrollServer();
   const name = $('enName').value.trim();
   if (!name || !en.samples.length) return;
   let p = en.person;
@@ -289,8 +300,8 @@ async function enrollFromFiles(files) {
       const input = embedder.crop(bmp, res.faces[i].kps, bmp.width, bmp.height);
       const thumb = embedder.thumb();
       const e = await embedder.run(input);
-      en.samples.push({ e, thumb, pose: null });
       const img = new Image(); img.src = thumb; $('enThumbs').appendChild(img);
+      en.samples.push({ e, thumb, pose: null, blob: enrollToServer() ? f : null, el: img, label: server.classifyPose(res.faces[i].pose) });
     } catch (err) { console.warn(err); setMsg('Σφάλμα στη φωτογραφία: ' + err.message); }
   }
   $('enSave').disabled = !($('enName').value.trim() && en.samples.length);
@@ -306,9 +317,11 @@ $('pClose').onclick = closePeople;
 $('enCancel').onclick = closeEnroll;
 $('enSave').onclick = saveEnroll;
 $('enName').oninput = () => { $('enSave').disabled = !($('enName').value.trim() && en.samples.length); };
+$('enToSrv').onchange = () => setupEnrollServer(en.person, true);
 $('enAuto').onclick = () => {
+  en.srvMode = enrollToServer(); en.steps = en.srvMode ? SRV_STEPS : STEPS;
   en.auto = true; en.step = 0; en.stepStart = performance.now(); en.st = {};
-  $('enAuto').disabled = true; renderSteps(); setMsg(STEPS[0].msg);
+  $('enAuto').disabled = true; renderSteps(); setMsg(en.steps[0].msg);
 };
 $('enOne').onclick = () => { en.oneShot = true; };
 $('enFile').onchange = (ev) => { enrollFromFiles([...ev.target.files]); ev.target.value = ''; };
@@ -348,4 +361,293 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
   $('loadErr').textContent = 'Η κάμερα χρειάζεται σύνδεση HTTPS και σύγχρονο browser (Safari / Chrome).';
 }
+initServerUi();
 boot();
+
+// ======================================================================
+// Family-server mode (optional; everything below is inactive until a server URL is set)
+// ======================================================================
+function serverOn() { return !!(cfg.enabled && cfg.url && cfg.token); }
+const SRV_INTERVAL = 400; // at most 2.5 recognise calls per second
+const srv = { inflight: false, last: 0, offline: false, retryAt: 0, calls: 0, ok: 0, lastError: null };
+
+async function serverStep(tracks, vw, vh, now) {
+  if (srv.inflight || now - srv.last < SRV_INTERVAL) return;
+  if (srv.offline && now < srv.retryAt) return;
+  const cand = tracks.filter((t) => t.missed === 0 && t.wpx >= 36 && Math.abs(t.pose.yaw) <= 75 &&
+    now - (t.srvAt || 0) > (t.srv ? 1500 : 350)).sort((a, b) => (a.srvAt || 0) - (b.srvAt || 0)).slice(0, 3);
+  if (!cand.length) return; // no faces in view -> no network traffic
+  srv.last = now;
+  const faces = [];
+  for (const t of cand) {
+    try {
+      const e0 = performance.now();
+      const e = await embedder.run(embedder.crop(frameCanvas, t.kps, vw, vh));
+      const ems = performance.now() - e0;
+      stats.emb = ema(stats.emb, ems, 0.2); stats.embN++; stats.embSamples.push(ems); if (stats.embSamples.length > 300) stats.embSamples.shift();
+      t.srvAt = now;
+      faces.push({ id: t.id, box: [t.box.x0, t.box.y0, t.box.x1, t.box.y1], embedding: Array.from(e, (v) => Math.round(v * 1e5) / 1e5) });
+    } catch (err) { console.warn(err); }
+  }
+  if (!faces.length) return;
+  srv.inflight = true; srv.calls++;
+  api.recognize(faces).then((r) => {
+    if (srv.offline) { srv.offline = false; tracker.relabel(); setStatus('☁️ Συνδέθηκε ξανά με τον server'); }
+    srv.ok++; srv.lastError = null;
+    for (const f of r.faces) {
+      const t = tracker.tracks.find((x) => x.id === f.id);
+      if (!t) continue;
+      t.embeds++;
+      if (f.status === 'known') {
+        t.srvMiss = 0; t.srv = true; t.label = f.name; t.message = f.message || ''; t.personId = f.person_id; t.sim = f.similarity;
+        if (!t.recognisedAt) t.recognisedAt = performance.now();
+      } else {
+        t.srvMiss = (t.srvMiss || 0) + 1;
+        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.personId = null; }
+      }
+    }
+  }).catch((e) => {
+    srv.lastError = e;
+    const wasOffline = srv.offline;
+    srv.offline = true;
+    srv.retryAt = performance.now() + (e.status === 401 ? 15000 : 5000);
+    if (!wasOffline) {
+      for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; }
+      tracker.relabel();
+      const local = gallery.people.length ? 'συνεχίζω με τα άτομα αυτής της συσκευής' : 'θα ξαναδοκιμάσω σε λίγο';
+      setStatus(e.status === 401 ? '⚠️ Server: το token δεν ισχύει — δες τις Ρυθμίσεις' : `⚠️ Χωρίς σύνδεση με τον server — ${local}`);
+    }
+  }).finally(() => { srv.inflight = false; });
+}
+
+// message bubbles above the 3D names (server mode only; local people have no message)
+const bubbleEls = new Map();
+function renderBubbles() {
+  const live = new Set();
+  if (mode === 'scan') {
+    for (const [id, rec] of labels.meshes) {
+      if (!rec.msg || rec.sx === undefined) continue;
+      live.add(id);
+      let el = bubbleEls.get(id);
+      if (!el) { el = document.createElement('div'); el.className = 'bubble'; $('bubbles').appendChild(el); bubbleEls.set(id, el); }
+      if (el.textContent !== rec.msg) el.textContent = rec.msg;
+      const top = rec.sy - rec.ss * 1.2;                  // just above the letters
+      const below = top - el.offsetHeight < 64;          // no room under the top bar -> put it under the name
+      el.style.transform = below ? `translate(${rec.sx}px, ${rec.sy + 6}px) translate(-50%, 0)` : `translate(${rec.sx}px, ${top}px) translate(-50%, -100%)`;
+    }
+  }
+  for (const [id, el] of bubbleEls) if (!live.has(id)) { el.remove(); bubbleEls.delete(id); }
+}
+
+// ---------- server enrollment ----------
+const SRV_STEPS = [
+  { msg: 'Κοίτα ευθεία στην κάμερα', ok: (p) => Math.abs(p.yaw) < 10 && p.pitch > -9 && p.pitch < 12 },
+  { msg: 'Γύρνα αργά το κεφάλι προς τη μία πλευρά', ok: (p) => ['left', 'right'].includes(server.classifyPose(p)) && Math.abs(p.yaw) > 18, sign: 'yaw' },
+  { msg: 'Τώρα προς την άλλη πλευρά', ok: (p, st) => ['left', 'right'].includes(server.classifyPose(p)) && Math.abs(p.yaw) > 18 && Math.sign(p.yaw) !== st.yawSign },
+  { msg: 'Σήκωσε το πηγούνι (κοίτα λίγο προς τα πάνω)', ok: (p) => server.classifyPose(p) === 'up' },
+  { msg: 'Κατέβασε το πηγούνι (κοίτα λίγο προς τα κάτω)', ok: (p) => server.classifyPose(p) === 'down' },
+  { msg: 'Προαιρετικά: γύρνα εντελώς στο πλάι (προφίλ)', ok: (p) => server.classifyPose(p).startsWith('profile'), sign: 'yaw2', optional: true },
+  { msg: 'Προαιρετικά: προφίλ και από την άλλη πλευρά', ok: (p, st) => server.classifyPose(p).startsWith('profile') && Math.sign(p.yaw) !== st.yaw2Sign, optional: true },
+];
+const SRV_WAIT = 10000, SRV_WAIT_OPTIONAL = 6000, SRV_GAP = 600;
+
+function enrollToServer() { return !!cfg.url && !$('enSrv').classList.contains('hidden') && $('enToSrv').checked; }
+
+function setupEnrollServer(existing, keepCheck = false) {
+  const can = !!cfg.url && !existing;
+  $('enSrv').classList.toggle('hidden', !can);
+  if (!can) { $('enName').disabled = !!existing; return; }
+  if (!keepCheck) $('enToSrv').checked = true;
+  const on = $('enToSrv').checked, registered = !!cfg.token;
+  $('enSrvFields').classList.toggle('hidden', !on || registered);
+  if (on && registered) {
+    $('enName').value = cfg.name || ''; $('enName').disabled = true;
+    setMsg(`Πρόσθεσε λήψεις στο προφίλ σου στον server${cfg.name ? ` («${cfg.name}»)` : ''}. Πάτα ▶.`);
+  } else {
+    $('enName').disabled = false;
+    if (on) setMsg('Γράψε το όνομά σου, το κλειδί της οικογένειας και πάτα ▶ Αυτόματη λήψη.');
+  }
+}
+
+async function enrollFrameServer(face, pose, vw, vh, now) {
+  const step = en.steps[en.step];
+  const taken = en.samples.filter((s) => s.step === en.step).length;
+  const wait = now - en.stepStart;
+  if (pose && step.ok(pose, en.st) && now - en.lastCap > SRV_GAP) {
+    en.lastCap = now;
+    if (step.sign === 'yaw') en.st.yawSign = Math.sign(pose.yaw);
+    if (step.sign === 'yaw2') en.st.yaw2Sign = Math.sign(pose.yaw);
+    await capture(face, vw, vh, pose);
+    en.samples[en.samples.length - 1].step = en.step;
+    if (taken + 1 >= PER_STEP) nextStep();
+  } else if ((taken > 0 && wait > STEP_TIMEOUT) || wait > (step.optional ? SRV_WAIT_OPTIONAL : SRV_WAIT)) {
+    nextStep(); // skip: the server will tell us what is still missing
+  }
+}
+
+// JPEG of the area around the face (not the whole room), full camera resolution
+let jpegCanvas = null;
+async function frameJpeg(face, vw, vh) {
+  const w = face.x1 - face.x0, h = face.y1 - face.y0, cx = (face.x0 + face.x1) / 2, cy = (face.y0 + face.y1) / 2;
+  const half = Math.max(w, h) * 1.1;
+  const x0 = Math.max(0, Math.round(cx - half)), y0 = Math.max(0, Math.round(cy - half * 1.1));
+  const x1 = Math.min(vw, Math.round(cx + half)), y1 = Math.min(vh, Math.round(cy + half));
+  const cw = Math.max(2, x1 - x0), ch = Math.max(2, y1 - y0);
+  if (!jpegCanvas) jpegCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(cw, ch) : document.createElement('canvas');
+  jpegCanvas.width = cw; jpegCanvas.height = ch;
+  jpegCanvas.getContext('2d').drawImage(frameCanvas, x0, y0, cw, ch, 0, 0, cw, ch);
+  if (jpegCanvas.convertToBlob) return jpegCanvas.convertToBlob({ type: 'image/jpeg', quality: 0.92 });
+  return new Promise((r) => jpegCanvas.toBlob(r, 'image/jpeg', 0.92));
+}
+
+async function saveEnrollServer() {
+  const send = en.samples.filter((s) => s.blob && !s.sent);
+  if (!send.length) { setMsg('Δεν υπάρχουν νέες λήψεις για αποστολή.'); return; }
+  $('enSave').disabled = true; $('enAuto').disabled = true;
+  const result = { ok: 0, rejected: {}, enrollment: null };
+  try {
+    if (!cfg.token) {
+      const name = $('enName').value.trim(), key = $('enFamKey').value.trim();
+      if (!name) { setMsg('Γράψε το όνομά σου.'); return; }
+      if (!key) { setMsg('Χρειάζεται το κλειδί της οικογένειας (στο ζητάει μόνο αυτή τη φορά).'); return; }
+      setMsg('Δημιουργία του προφίλ σου στον server…');
+      const r = await api.createPerson(key, name, $('enSrvMsg').value.trim(), $('enSrvFamily').checked ? 'family' : 'selected');
+      cfg.token = r.token; cfg.personId = r.person.id; cfg.name = r.person.name; server.saveCfg(cfg);
+      $('enFamKey').value = '';
+      showToken(r.token);
+      syncServerUi();
+    }
+    if (!cfg.personId) { const me = await api.me(); cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg); }
+    let i = 0;
+    for (const s of send) {
+      setMsg(`Αποστολή λήψης ${++i}/${send.length}…`);
+      try {
+        const r = await api.addFrame(cfg.personId, s.label, s.blob);
+        s.sent = true; s.el.classList.add('ok'); result.ok++; result.enrollment = r.enrollment;
+      } catch (e) {
+        if (e.status === 0 || e.status === 401) throw e;
+        s.sent = true; s.el.classList.add('bad'); s.el.title = server.errEl(e);
+        const why = server.errEl(e); result.rejected[why] = (result.rejected[why] || 0) + 1;
+        if (e.detail && e.detail.enrollment) result.enrollment = e.detail.enrollment;
+      }
+    }
+    window.__ar.lastServerEnroll = result;
+    const enr = result.enrollment;
+    const rej = Object.entries(result.rejected).map(([w, n]) => `${n}× ${w}`).join('· ');
+    const head = `Στάλθηκαν ${result.ok} λήψεις${rej ? `, απορρίφθηκαν: ${rej}` : ''}.`;
+    if (enr && enr.active) {
+      cfg.enabled = true; server.saveCfg(cfg); syncServerUi(); tracker.relabel();
+      setMsg(`${head} ✅ Το προφίλ σου είναι έτοιμο (${enr.frames} λήψεις). Η αναγνώριση μέσω server ενεργοποιήθηκε.`);
+      setTimeout(() => { if (mode === 'enroll' && $('tokSheet').classList.contains('hidden')) closeEnroll(); }, 3500);
+    } else {
+      const miss = enr ? enr.missing_poses : [];
+      const need = enr ? enr.frames_still_needed : 0;
+      setMsg(`${head} Χρειάζονται ακόμα ${need} λήψεις${miss.length ? ` — λείπουν: ${server.posesEl(miss)}` : ''}. Πάτα ξανά ▶ Αυτόματη λήψη ή 📸.`);
+    }
+  } catch (e) {
+    setMsg('⚠️ ' + (e.code === 'offline' || e.code === 'timeout' ? 'Ο server δεν απαντά. Έλεγξε τη διεύθυνση στις Ρυθμίσεις και ξαναπάτα «Αποθήκευση».' : 'Σφάλμα: ' + server.errEl(e)));
+  } finally {
+    $('enAuto').disabled = false;
+    $('enSave').disabled = !en.samples.some((s) => s.blob && !s.sent);
+  }
+}
+
+function showToken(tok) {
+  $('tokVal').value = tok; $('tokCopied').textContent = '';
+  $('tokSheet').classList.remove('hidden');
+}
+$('tokCopy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('tokVal').value); $('tokCopied').textContent = 'Αντιγράφηκε ✓'; }
+  catch (e) { $('tokVal').select(); document.execCommand && document.execCommand('copy'); $('tokCopied').textContent = 'Επιλέχθηκε — πάτα «Αντιγραφή» από το μενού.'; }
+};
+$('tokOk').onclick = () => { $('tokVal').value = ''; $('tokSheet').classList.add('hidden'); };
+
+// ---------- server settings + permissions ----------
+function syncServerUi() {
+  $('srvUrl').value = cfg.url || '';
+  $('srvToken').value = cfg.token || '';
+  $('srvOn').checked = !!cfg.enabled;
+  $('srvOn').disabled = !(cfg.url && cfg.token);
+  $('privacyNote').textContent = serverOn()
+    ? 'Λειτουργία server: για την αναγνώριση στέλνεται στον server της οικογένειας μόνο ένα αριθμητικό αποτύπωμα κάθε προσώπου (όχι εικόνα).'
+    : 'Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.';
+}
+function initServerUi() {
+  syncServerUi();
+  $('srvUrl').onchange = () => { cfg.url = server.normUrl($('srvUrl').value); server.saveCfg(cfg); syncServerUi(); };
+  $('srvToken').onchange = () => { cfg.token = $('srvToken').value.trim(); cfg.personId = null; cfg.name = ''; server.saveCfg(cfg); syncServerUi(); };
+  $('srvTest').onclick = () => refreshServer(true);
+  $('srvOn').onchange = () => {
+    cfg.enabled = $('srvOn').checked; server.saveCfg(cfg); srv.offline = false;
+    for (const t of tracker.tracks) { t.srv = false; t.message = ''; }
+    tracker.relabel(); syncServerUi(); reloadPeople();
+    setStatus(cfg.enabled ? '☁️ Αναγνώριση μέσω server' : 'Αναγνώριση στη συσκευή');
+  };
+  $('srvLogout').onclick = () => {
+    if (cfg.token && !confirm('Αποσύνδεση από τον server; Θα χρειαστείς το token σου για να ξανασυνδεθείς.')) return;
+    Object.assign(cfg, { token: '', personId: null, name: '', enabled: false }); server.saveCfg(cfg);
+    syncServerUi(); $('srvMe').classList.add('hidden'); $('srvInfo').textContent = 'Αποσυνδέθηκες.'; tracker.relabel();
+  };
+  $('srvMsgSave').onclick = async () => {
+    try { await api.patchMe(cfg.personId, { message: $('srvMsg').value.trim() }); $('srvInfo').textContent = 'Το μήνυμα αποθηκεύτηκε ✓'; }
+    catch (e) { $('srvInfo').textContent = '⚠️ ' + server.errEl(e); }
+  };
+  $('srvFamily').onchange = async () => {
+    try { await api.patchMe(cfg.personId, { visibility: $('srvFamily').checked ? 'family' : 'selected' }); await refreshServer(); }
+    catch (e) { $('srvInfo').textContent = '⚠️ ' + server.errEl(e); $('srvFamily').checked = !$('srvFamily').checked; }
+  };
+  $('srvDelMe').onclick = async () => {
+    if (!confirm('Διαγραφή του προφίλ σου από τον server; Σβήνονται οι φωτογραφίες, το μήνυμα και οι άδειες. Δεν αναιρείται.')) return;
+    try {
+      await api.deletePerson(cfg.personId);
+      Object.assign(cfg, { token: '', personId: null, name: '', enabled: false }); server.saveCfg(cfg);
+      syncServerUi(); $('srvMe').classList.add('hidden'); $('srvInfo').textContent = 'Το προφίλ σου διαγράφηκε από τον server.';
+    } catch (e) { $('srvInfo').textContent = '⚠️ ' + server.errEl(e); }
+  };
+  const btnPeople = $('btnPeople').onclick;
+  $('btnPeople').onclick = () => { btnPeople(); if (cfg.url && cfg.token) refreshServer(); };
+}
+
+async function refreshServer(verbose = false) {
+  const info = $('srvInfo');
+  if (!cfg.url) { info.textContent = 'Γράψε πρώτα τη διεύθυνση του server.'; return; }
+  if (verbose) info.textContent = 'Έλεγχος…';
+  try {
+    const h = await api.health();
+    if (!cfg.token) {
+      $('srvMe').classList.add('hidden');
+      info.textContent = `Ο server απαντά ✓ (${h.people} άτομα). Για να μπεις, πάτα «＋ Νέο άτομο» και καταχώρισε τον εαυτό σου (θα χρειαστείς το κλειδί της οικογένειας), ή βάλε το token σου.`;
+      return;
+    }
+    const me = await api.me();
+    cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg);
+    const { people } = await api.people();
+    const e = me.enrollment;
+    info.textContent = `Συνδεδεμένος ως «${me.name}» ✓ — ` + (e.active ? `προφίλ έτοιμο (${e.frames} λήψεις).`
+      : `λείπουν λήψεις: ${server.posesEl(e.missing_poses) || e.frames_still_needed}. Πάτα «＋ Νέο άτομο» για να τις προσθέσεις.`);
+    $('srvMe').classList.remove('hidden');
+    if (document.activeElement !== $('srvMsg')) $('srvMsg').value = me.message || '';
+    const fam = me.visibility === 'family';
+    $('srvFamily').checked = fam;
+    const allowed = new Set(me.allowed_viewers.map((v) => (typeof v === 'object' ? v.id : v)));
+    const ul = $('srvMembers'); ul.innerHTML = '';
+    const others = people.filter((p) => p.id !== me.id);
+    if (!others.length) ul.innerHTML = '<li class="small">Δεν υπάρχουν ακόμα άλλα μέλη.</li>';
+    for (const p of others) {
+      const li = document.createElement('li');
+      li.innerHTML = '<label class="setting check"><input type="checkbox"> <span></span></label>';
+      const cb = li.querySelector('input');
+      li.querySelector('span').textContent = p.name + (p.active ? '' : ' (δεν έχει ολοκληρώσει την καταχώριση)');
+      cb.checked = fam || allowed.has(p.id); cb.disabled = fam; cb.dataset.id = p.id;
+      cb.onchange = async () => {
+        try { cb.checked ? await api.grant(me.id, p.id) : await api.revoke(me.id, p.id); info.textContent = 'Οι άδειες αποθηκεύτηκαν ✓'; }
+        catch (err) { cb.checked = !cb.checked; info.textContent = '⚠️ ' + server.errEl(err); }
+      };
+      ul.appendChild(li);
+    }
+    syncServerUi();
+  } catch (e) {
+    $('srvMe').classList.add('hidden');
+    info.textContent = '⚠️ ' + server.errEl(e) + (e.code === 'offline' ? ' — έλεγξε τη διεύθυνση (αλλάζει κάθε φορά που ξεκινά ο server).' : '');
+  }
+}

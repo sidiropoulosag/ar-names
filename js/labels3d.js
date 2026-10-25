@@ -103,6 +103,7 @@ export class Labels3D {
       }
       const k = rec.sm, pop = Math.min(1, (now - rec.born) / 180);
       const ease = 1 - Math.pow(1 - pop, 3);
+      rec.msg = t.message || ''; rec.sx = k.x; rec.sy = k.y; rec.ss = k.s * ease; // for the HTML message bubble
       rec.mesh.position.set(k.x, H - k.y, 0);
       rec.mesh.quaternion.copy(k.q);
       rec.mesh.scale.setScalar(k.s * ease);

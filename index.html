@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<script src="coi-serviceworker.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0d1b2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Ονόματα AR</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="app.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+</head>
+<body>
+<div id="stage">
+  <video id="video" playsinline muted autoplay></video>
+  <canvas id="overlay"></canvas>
+  <canvas id="guide"></canvas>
+</div>
+
+<header id="topbar">
+  <button id="btnPeople" class="pill" aria-label="Άτομα">👥 <span id="peopleCount">0</span></button>
+  <div id="status" class="pill status">Φόρτωση…</div>
+  <button id="btnFlip" class="pill" aria-label="Αλλαγή κάμερας">🔄</button>
+</header>
+<div id="stats" class="hidden"></div>
+<div id="hint" class="hint hidden"></div>
+
+<button id="btnEnroll" class="fab" aria-label="Νέο άτομο">＋ Νέο άτομο</button>
+
+<!-- Start (needed for camera permission on iOS) -->
+<div id="start" class="sheet center">
+  <div class="card">
+    <h1>Ονόματα AR</h1>
+    <p>Η κάμερα αναγνωρίζει τα άτομα που έχεις καταχωρίσει και δείχνει το όνομά τους σε 3D πάνω από το κεφάλι.</p>
+    <p class="small">Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.</p>
+    <button id="btnStart" class="primary big" disabled>Φόρτωση μοντέλων…</button>
+    <p id="loadErr" class="err"></p>
+  </div>
+</div>
+
+<!-- Enroll -->
+<div id="enroll" class="panel bottom hidden">
+  <div class="row">
+    <input id="enName" type="text" placeholder="Όνομα (π.χ. Μαρία)" maxlength="40" autocomplete="off">
+  </div>
+  <div id="enMsg" class="msg">Βάλε όνομα και κοίτα την κάμερα.</div>
+  <div id="enSteps" class="steps"></div>
+  <div id="enThumbs" class="thumbs"></div>
+  <div class="row wrap">
+    <button id="enAuto" class="primary">▶ Αυτόματη λήψη (γωνίες)</button>
+    <button id="enOne">📸 Μία λήψη</button>
+    <label class="btn">🖼️ Από φωτογραφία<input id="enFile" type="file" accept="image/*" multiple hidden></label>
+  </div>
+  <div class="row">
+    <button id="enCancel">Άκυρο</button>
+    <button id="enSave" class="primary" disabled>💾 Αποθήκευση</button>
+  </div>
+</div>
+
+<!-- People & settings -->
+<div id="people" class="panel full hidden">
+  <div class="phead"><h2>Άτομα</h2><button id="pClose" class="pill">✕</button></div>
+  <ul id="pList"></ul>
+  <p id="pEmpty" class="small">Δεν υπάρχουν καταχωρισμένα άτομα.</p>
+  <h2>Ρυθμίσεις</h2>
+  <label class="setting">Αυστηρότητα αναγνώρισης: <b id="thrVal"></b>
+    <input id="thr" type="range" min="0.25" max="0.65" step="0.01">
+    <span class="small">Χαμηλότερη = αναγνωρίζει πιο εύκολα (και από πλάι), αλλά με περισσότερα λάθη. Υψηλότερη = λιγότερα λάθη.</span>
+  </label>
+  <label class="setting">Εμβέλεια ανίχνευσης:
+    <select id="optRange"><option value="384">Κοντά (ταχύτερο)</option><option value="512">Κανονική</option><option value="704">Μακριά / ομάδες (πιο αργό)</option></select></label>
+  <label class="setting check"><input id="optUnknown" type="checkbox"> Δείξε «?» σε άγνωστα πρόσωπα</label>
+  <label class="setting check"><input id="optStats" type="checkbox"> Δείξε ταχύτητα (ms / fps)</label>
+  <div class="row wrap">
+    <button id="pExport">⬇ Αντίγραφο ασφαλείας</button>
+    <label class="btn">⬆ Επαναφορά<input id="pImport" type="file" accept="application/json,.json" hidden></label>
+    <button id="pClear" class="danger">🗑 Διαγραφή όλων</button>
+  </div>
+  <p class="small">Καταχώριζε μόνο άτομα που συμφωνούν. Τα δεδομένα μένουν μόνο σε αυτή τη συσκευή.</p>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

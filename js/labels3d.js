@@ -5,6 +5,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { makeObject, animateObject } from './objects3d.js';
 
 const tmpE = new THREE.Euler();
+const clampS = (v) => (Number.isFinite(+v) && v !== null ? Math.min(2, Math.max(0.5, +v)) : 1);
 
 export class Labels3D {
   constructor(canvas) {
@@ -63,12 +64,17 @@ export class Labels3D {
       else if (showUnknown && t.embeds >= 3) { text = '?'; unk = true; }
       if (!text || t.missed > 3) continue;
       alive.add(t.id);
+      // what this person chose (0.4.0): name on/off + per-person sizes (0.5-2); defaults = name, x1
+      const showName = unk || t.showName !== false;
+      const sz = (!unk && t.sizes) || null;
+      const sN = clampS(sz && sz.name), sT = clampS(sz && sz.text), sO = clampS(sz && sz.object);
+      const key = showName ? text : '\u0000' + text;
       let rec = this.meshes.get(t.id);
-      if (!rec || rec.text !== text) {
-        if (rec) { this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); }
-        const mesh = new THREE.Mesh(this.geometry(text), unk ? [this.matUnkFront, this.matUnkSide] : [this.matFront, this.matSide]);
-        this.scene.add(mesh);
-        rec = { mesh, text, born: now, sm: rec ? rec.sm : null };
+      if (!rec || rec.key !== key) {
+        if (rec) { if (rec.mesh) this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); }
+        const mesh = showName ? new THREE.Mesh(this.geometry(text), unk ? [this.matUnkFront, this.matUnkSide] : [this.matFront, this.matSide]) : null;
+        if (mesh) this.scene.add(mesh);
+        rec = { mesh, key, text, born: now, sm: rec ? rec.sm : null };
         this.meshes.set(t.id, rec);
       }
       // anchor above the head along the face's up direction (mouth -> eyes)
@@ -80,18 +86,23 @@ export class Labels3D {
       let ux = ex - mx, uy = ey - my; const em = Math.hypot(ux, uy) || 1; ux /= em; uy /= em;
       const fw = (t.box.x1 - t.box.x0) * vw * s;
       const fh = (t.box.y1 - t.box.y0) * vh * s;
-      const gw = rec.mesh.geometry.boundingBox ? (rec.mesh.geometry.boundingBox.max.x - rec.mesh.geometry.boundingBox.min.x) : 0.6 * text.length;
-      // fit the whole word on screen (92% of the width) for close-up faces
-      const size = Math.max(14, Math.min(150, fw * (unk ? 0.35 : 0.3), (W * 0.92) / Math.max(gw, 0.5)));
+      const bb = rec.mesh && rec.mesh.geometry.boundingBox;
+      const gw = rec.mesh ? (bb ? bb.max.x - bb.min.x : 0.6 * text.length) : 0;
+      // base size from the face width (smoothed below); the name's own size also fits the screen width
+      const size = Math.max(14, Math.min(150, fw * (unk ? 0.35 : 0.3)));
       // eyes sit ~40% down the box; go up to the top of the head + a small gap
       const lift = fh * 0.5 + size * 0.25;
       let px = ex + ux * lift, py = ey + uy * lift;
-      // the person's chosen 3D object (if any) floats above the name
       const objId = (!unk && t.objectId) || '';
-      const objS = objId ? size * 2.2 : 0;
-      // keep the whole name (and object) on screen (below the top bar) even for very close faces
-      py = Math.max(py, size * 1.3 + 64 + objS * 1.1);
-      const half = size * gw / 2 + 4;
+      // stack, from the head up: name -> 3D object -> (HTML) comment bubble
+      const nameS = (b) => (gw ? Math.max(10, Math.min(b * sN, (W * 0.92) / Math.max(gw, 0.5))) : 0);
+      const stackH = (b) => (gw ? nameS(b) * 1.05 : b * 0.15) + (objId ? b * 2.2 * sO * 1.1 : 0);
+      // keep the whole stack on screen (below the top bar) even for very close faces
+      // (+ room for the comment bubble above it, so it does not have to drop over the face)
+      const msg = (!unk && t.message) || '';
+      const bubH = msg ? (16 * sT * 1.3) * Math.min(4, msg.split('\n').length) + 18 : 0;
+      py = Math.max(py, stackH(size) + 64 + size * 0.25 + Math.min(bubH, H * 0.25));
+      const half = Math.max(nameS(size) * gw / 2, objId ? size * 1.1 * sO : 0) + 4;
       px = Math.min(Math.max(px, Math.min(W / 2, half)), Math.max(W / 2, W - half));
       // head orientation from the 5-point pose estimate (damped)
       const m = this.mirror ? -1 : 1, D = Math.PI / 180;
@@ -107,25 +118,32 @@ export class Labels3D {
       }
       const k = rec.sm, pop = Math.min(1, (now - rec.born) / 180);
       const ease = 1 - Math.pow(1 - pop, 3);
-      rec.msg = t.message || ''; rec.sx = k.x; rec.sy = k.y; rec.ss = k.s * ease; // for the HTML message bubble
-      rec.mesh.position.set(k.x, H - k.y, 0);
-      rec.mesh.quaternion.copy(k.q);
-      rec.mesh.scale.setScalar(k.s * ease);
+      const ns = nameS(k.s), nameH = gw ? ns * 1.05 : k.s * 0.15;
+      if (rec.mesh) {
+        rec.mesh.position.set(k.x, H - k.y, 0);
+        rec.mesh.quaternion.copy(k.q);
+        rec.mesh.scale.setScalar(ns * ease);
+      }
       if (rec.objWant !== objId) {
         if (rec.obj) { this.scene.remove(rec.obj); rec.obj = null; }
         rec.objWant = objId;
         if (objId) { rec.obj = makeObject(objId); this.scene.add(rec.obj); rec.objBorn = now; }
       }
+      let top = k.y - nameH;                              // screen y of the top of the stack
       if (rec.obj) {
-        const os = k.s * 2.2 * Math.min(1, (now - rec.objBorn) / 250);
-        rec.obj.position.set(k.x, H - k.y + k.s * 1.05 + os * 0.55, 0);
+        const full = k.s * 2.2 * sO, os = full * Math.min(1, (now - rec.objBorn) / 250);
+        rec.obj.position.set(k.x, H - k.y + nameH + os * 0.55, 0);
         rec.obj.scale.setScalar(os);
         animateObject(rec.obj, now / 1000);
+        top -= full * 1.1;
       }
+      // for the HTML comment bubble: above the stack; `low` = fallback spot just under the name
+      rec.msg = (!unk && t.message) || ''; rec.sx = k.x; rec.sy = k.y; rec.ss = ns * ease;
+      rec.top = top - k.s * 0.08; rec.low = k.y + 6; rec.textScale = sT;
       rec.hasObj = !!rec.obj;
     }
-    for (const [id, rec] of this.meshes) if (!alive.has(id)) { this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); this.meshes.delete(id); }
+    for (const [id, rec] of this.meshes) if (!alive.has(id)) { if (rec.mesh) this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); this.meshes.delete(id); }
     this.renderer.render(this.scene, this.camera);
   }
-  clear() { for (const [, r] of this.meshes) { this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); } this.meshes.clear(); this.renderer.render(this.scene, this.camera); }
+  clear() { for (const [, r] of this.meshes) { if (r.mesh) this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); } this.meshes.clear(); this.renderer.render(this.scene, this.camera); }
 }

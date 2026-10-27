@@ -95,6 +95,7 @@
     <label class="btn">⬆ Επαναφορά<input id="pImport" type="file" accept="application/json,.json" hidden></label>
     <button id="pClear" class="danger">🗑 Διαγραφή όλων</button>
   </div>
+  <button id="pAddNew" class="hidden" style="margin-top:8px">＋ Προσθήκη νέου προφίλ</button>
   <p class="small">Καταχώριζε μόνο άτομα που συμφωνούν. Όσα άτομα δεν έχουν ☁️ μένουν μόνο σε αυτή τη συσκευή.</p>
 
   <h2>☁️ Server οικογένειας</h2>
@@ -117,13 +118,20 @@
   <p id="srvInfo" class="small"></p>
   <div id="srvMe" class="hidden">
     <h3 id="dispTitle">Τι βλέπουν οι άλλοι πάνω από το κεφάλι μου</h3>
-    <p class="small disp-only">Διάλεξε ένα από τα τρία. Όσοι σε αναγνωρίζουν με την κάμερα βλέπουν το όνομά σου και μόνο αυτό που διάλεξες.</p>
-    <label class="setting check disp-only"><input type="radio" name="dispMode" value="message"> 💬 Μήνυμα 1</label>
-    <textarea id="srvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που φαίνεται πάνω από το όνομά σου"></textarea>
-    <label class="setting check disp-only"><input type="radio" name="dispMode" value="message2"> 💬 Μήνυμα 2</label>
+    <p id="dispHint" class="small disp-only">Διάλεξε ένα από τα τρία.</p>
+    <label class="setting check combo-only"><input type="checkbox" class="dispItem" value="name"> 🏷️ Όνομα</label>
+    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="message1"> 💬 Σχόλιο / Μήνυμα 1</label>
+    <textarea id="srvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που φαίνεται πάνω από το κεφάλι σου"></textarea>
+    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="message2"> 💬 Μήνυμα 2</label>
     <textarea id="srvMsg2" class="disp-only" rows="2" maxlength="300" placeholder="Ένα δεύτερο μήνυμα (π.χ. για άλλη περίσταση)"></textarea>
-    <label class="setting check disp-only"><input type="radio" name="dispMode" value="object3d"> 🧸 3D αντικείμενο πάνω από το κεφάλι</label>
+    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="object3d"> 🧸 3D αντικείμενο</label>
     <div id="objBox" class="disp-only"><div id="objPick"></div><canvas id="objPrev" width="120" height="120"></canvas></div>
+    <div id="sizeBox" class="sizes-only">
+      <label class="size"><span>Μέγεθος ονόματος</span><input id="szName" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
+      <label class="size"><span>Μέγεθος σχολίου</span><input id="szText" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
+      <label class="size"><span>Μέγεθος αντικειμένου</span><input id="szObj" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
+      <div id="dispPrev" aria-label="Προεπισκόπηση"><div class="pv-bub"></div><span class="pv-obj"></span><div class="pv-name"></div><div class="pv-face">🙂</div></div>
+    </div>
     <p id="srvDispOld" class="small adv-only hidden">⚠️ Χρειάζεται ενημέρωση server (0.3.0) για «Μήνυμα 2» και 3D αντικείμενα — τώρα φαίνεται μόνο το μήνυμα.</p>
     <div class="row"><button id="srvMsgSave" class="primary">💾 Αποθήκευση</button></div>
     <h3>Ποιος με βλέπει</h3>

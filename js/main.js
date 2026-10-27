@@ -5,6 +5,7 @@ import { Gallery, Tracker } from './tracker.js';
 import * as db from './db.js';
 import * as server from './server.js';
 import { OBJECTS, objectInfo, previewObject, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
+let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
 const $ = (id) => document.getElementById(id);
 const video = $('video'), overlay = $('overlay'), guide = $('guide');
@@ -259,6 +260,7 @@ function renderPeople() {
     ul.appendChild(li);
   }
   $('pEmpty').classList.toggle('hidden', ul.children.length > 0);
+  syncEnrollBtn();
   $('peopleCount').textContent = people.length + srvOnly;
   const fc = $('famCount');
   let t = '';
@@ -279,11 +281,25 @@ function renderPeople() {
   fc.textContent = t; fc.classList.toggle('hidden', !t);
 }
 // what a person chose to show (only present when they allow you to see it)
+// what a viewer shows for one person, from any server version's `display`
+const ITEM_OF_MODE = { message: 'message1', message2: 'message2', object3d: 'object3d' };
+function viewOf(d) {
+  const items = Array.isArray(d.items) && d.items.length ? d.items : ['name', ITEM_OF_MODE[d.mode] || 'message1'];
+  const texts = [];
+  if (d.items) { for (const k of ['message1', 'message2']) if (items.includes(k) && d[k]) texts.push(d[k]); }
+  else if (d.mode !== 'object3d' && d.text) texts.push(d.text);
+  const sz = d.sizes || {};
+  return { items, showName: items.includes('name'), text: texts.join('\n'),
+    objectId: items.includes('object3d') ? (d.object_id || DEFAULT_OBJECT) : '',
+    sizes: d.sizes ? { name: +sz.name || 1, text: +sz.text || 1, object: +sz.object || 1 } : null };
+}
 function dispTag(d) {
   if (!d) return '';
-  if (d.mode === 'object3d') { const o = objectInfo(d.object_id); return ` · δείχνει ${o.emoji} ${o.name}`; }
-  if (d.text) return ` · 💬 «${d.text.length > 40 ? d.text.slice(0, 40) + '…' : d.text}»`;
-  return '';
+  const v = viewOf(d), out = [];
+  if (v.objectId) { const o = objectInfo(v.objectId); out.push(`δείχνει ${o.emoji} ${o.name}`); }
+  if (v.text) { const t = v.text.replace(/\n/g, ' · '); out.push(`💬 «${t.length > 40 ? t.slice(0, 40) + '…' : t}»`); }
+  if (d.items && !v.showName) out.push('χωρίς όνομα');
+  return out.length ? ' · ' + out.join(' · ') : '';
 }
 function escapeHtml(s) { return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
@@ -291,6 +307,14 @@ function openPeople() {
   $('people').classList.remove('hidden');
   refreshFamily(); clearInterval(fam.timer);
   fam.timer = setInterval(() => { if (!document.hidden) refreshFamily(); }, 15000);   // live while the list is open
+}
+// «＋ Νέο άτομο» only until this device has its owner's profile (server token, or the on-device «me» person);
+// afterwards adding / re-enrolling is in Settings («Προσθήκη νέου προφίλ») and in advanced mode.
+function hasOwnProfile() { return !!cfg.token || (localPeople || []).some((p) => p.me); }
+function syncEnrollBtn() {
+  const own = hasOwnProfile();
+  $('btnEnroll').classList.toggle('hidden', own || mode === 'enroll');
+  $('pAddNew').classList.toggle('hidden', !own);
 }
 function closePeople() { $('people').classList.add('hidden'); clearInterval(fam.timer); fam.timer = 0; }
 function famOnFocus() { if (!document.hidden && Date.now() - fam.at > 3000) refreshFamily(); }
@@ -329,7 +353,7 @@ async function closeEnroll() {
   mode = 'scan';
   gctx.clearRect(0, 0, guide.width, guide.height);
   $('enroll').classList.add('hidden');
-  $('btnEnroll').classList.remove('hidden');
+  syncEnrollBtn();
   if (en.prevFacing !== facing && !window.__ar.keepCamera) await openCamera(en.prevFacing);
   await reloadPeople();
 }
@@ -411,7 +435,10 @@ async function saveEnroll() {
   }
   const front = en.samples.find((s) => s.pose && Math.abs(s.pose.yaw) < 12) || en.samples[0];
   if (p) { p.embeddings = [...p.embeddings, ...en.samples.map((s) => s.e)].slice(-40); if (!p.thumb) p.thumb = front.thumb; }
-  else p = { id: db.newId(), name, thumb: front.thumb, created: Date.now(), embeddings: en.samples.map((s) => s.e) };
+  else {
+    p = { id: db.newId(), name, thumb: front.thumb, created: Date.now(), embeddings: en.samples.map((s) => s.e) };
+    if (!hasOwnProfile()) p.me = true;   // the first person enrolled on a device without a profile = the owner
+  }
   await db.putPerson(p);
   window.__ar.lastSaved = { id: p.id, name: p.name, n: p.embeddings.length };
   await closeEnroll();
@@ -453,6 +480,7 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !isStandalone()) $('iosHint
 
 $('btnFlip').onclick = () => openCamera(facing === 'user' ? 'environment' : 'user');
 $('btnEnroll').onclick = () => openEnroll();
+$('pAddNew').onclick = () => { closePeople(); openEnroll(); };
 $('btnPeople').onclick = openPeople;
 $('pClose').onclick = closePeople;
 $('enCancel').onclick = closeEnroll;
@@ -540,15 +568,14 @@ async function serverStep(tracks, vw, vh, now) {
       if (!t) continue;
       t.embeds++;
       if (f.status === 'known') {
-        // 0.3.0 servers send only the item the person chose ('display'); older ones send 'message'
-        const d = f.display || { mode: 'message', text: f.message || '' };
+        // 0.4.0: 'display.items' (1-2 of name/message1/message2/object3d) + sizes; 0.3.0: one 'display.mode'; older: 'message'
+        const v = viewOf(f.display || { mode: 'message', text: f.message || '' });
         t.srvMiss = 0; t.srv = true; t.label = f.name; t.personId = f.person_id; t.sim = f.similarity;
-        t.objectId = d.mode === 'object3d' ? (d.object_id || DEFAULT_OBJECT) : '';
-        t.message = d.mode === 'object3d' ? '' : (d.text ?? f.message ?? '');
+        t.objectId = v.objectId; t.message = v.text; t.showName = v.showName; t.sizes = v.sizes;
         if (!t.recognisedAt) t.recognisedAt = performance.now();
       } else {
         t.srvMiss = (t.srvMiss || 0) + 1;
-        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; }
+        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.showName = true; t.sizes = null; }
       }
     }
   }).catch((e) => {
@@ -557,7 +584,7 @@ async function serverStep(tracks, vw, vh, now) {
     srv.offline = true;
     srv.retryAt = performance.now() + (e.status === 401 ? 15000 : 5000);
     if (!wasOffline) {
-      for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; }
+      for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.showName = true; t.sizes = null; }
       tracker.relabel();
       const local = gallery.people.length ? 'συνεχίζω με τα άτομα αυτής της συσκευής' : 'θα ξαναδοκιμάσω σε λίγο';
       setStatus(e.status === 401 ? (adv ? '⚠️ Server: το token δεν ισχύει — δες τις Ρυθμίσεις' : '⚠️ Το προφίλ σου δεν βρέθηκε — δες τις Ρυθμίσεις')
@@ -577,9 +604,11 @@ function renderBubbles() {
       let el = bubbleEls.get(id);
       if (!el) { el = document.createElement('div'); el.className = 'bubble'; $('bubbles').appendChild(el); bubbleEls.set(id, el); }
       if (el.textContent !== rec.msg) el.textContent = rec.msg;
-      const top = rec.sy - rec.ss * 1.2;                  // just above the letters
+      const fs = Math.round(16 * (rec.textScale || 1)) + 'px';   // the person's «μέγεθος σχολίου»
+      if (el.style.fontSize !== fs) el.style.fontSize = fs;
+      const top = rec.top ?? rec.sy - rec.ss * 1.2;      // above the name / 3D object stack
       const below = top - el.offsetHeight < 64;          // no room under the top bar -> put it under the name
-      el.style.transform = below ? `translate(${rec.sx}px, ${rec.sy + 6}px) translate(-50%, 0)` : `translate(${rec.sx}px, ${top}px) translate(-50%, -100%)`;
+      el.style.transform = below ? `translate(${rec.sx}px, ${rec.low ?? rec.sy + 6}px) translate(-50%, 0)` : `translate(${rec.sx}px, ${top}px) translate(-50%, -100%)`;
     }
   }
   for (const [id, el] of bubbleEls) if (!live.has(id)) { el.remove(); bubbleEls.delete(id); }
@@ -754,6 +783,7 @@ function syncServerUi() {
   $('srvToken').value = cfg.token || '';
   $('srvOn').checked = !!cfg.enabled;
   $('srvOn').disabled = !(cfg.url && cfg.token);
+  syncEnrollBtn();
   $('privacyNote').textContent = serverOn()
     ? 'Λειτουργία server: για την αναγνώριση στέλνεται στον server της οικογένειας μόνο ένα αριθμητικό αποτύπωμα κάθε προσώπου (όχι εικόνα).'
     : 'Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.';
@@ -773,7 +803,7 @@ function initServerUi() {
   $('srvTest').onclick = () => refreshServer(true);
   $('srvOn').onchange = () => {
     cfg.enabled = $('srvOn').checked; server.saveCfg(cfg); srv.offline = false;
-    for (const t of tracker.tracks) { t.srv = false; t.message = ''; t.objectId = ''; }
+    for (const t of tracker.tracks) { t.srv = false; t.message = ''; t.objectId = ''; t.showName = true; t.sizes = null; }
     tracker.relabel(); syncServerUi(); reloadPeople();
     setStatus(cfg.enabled ? '☁️ Αναγνώριση μέσω server' : 'Αναγνώριση στη συσκευή');
   };
@@ -784,11 +814,17 @@ function initServerUi() {
   };
   $('srvMsgSave').onclick = async () => {
     const f = { message: $('srvMsg').value.trim() };
+    let note = '';
     if (hasCap('display')) {
-      const mode = (document.querySelector('input[name=dispMode]:checked') || {}).value || 'message';
-      Object.assign(f, { message2: $('srvMsg2').value.trim(), display_mode: mode, object_id: dispObj });
+      const items = selItems();
+      Object.assign(f, { message2: $('srvMsg2').value.trim(), object_id: dispObj });
+      if (hasCap('combo')) f.display_items = items;
+      else f.display_mode = ({ message1: 'message', message2: 'message2', object3d: 'object3d' })[items[0]] || 'message';
+      if (hasCap('sizes')) Object.assign(f, { size_name: +$('szName').value, size_text: +$('szText').value, size_object: +$('szObj').value });
+      const empty = [['message1', f.message, 'το Μήνυμα 1'], ['message2', f.message2, 'το Μήνυμα 2']].filter(([k, t]) => items.includes(k) && !t).map((x) => x[2]);
+      if (empty.length) note = ` (${empty.join(' και ')} είναι κενό — δεν θα φαίνεται)`;
     }
-    try { await api.patchMe(cfg.personId, f); $('srvInfo').textContent = hasCap('display') ? 'Αποθηκεύτηκε ✓' : 'Το μήνυμα αποθηκεύτηκε ✓'; }
+    try { await api.patchMe(cfg.personId, f); dispDirty = false; $('srvInfo').textContent = (hasCap('display') ? 'Αποθηκεύτηκε ✓' : 'Το μήνυμα αποθηκεύτηκε ✓') + note; }
     catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); }
   };
   // object picker (from the registry in objects3d.js)
@@ -797,12 +833,13 @@ function initServerUi() {
     if (o.thumb) { const im = new Image(); im.loading = 'lazy'; im.decoding = 'async'; im.alt = ''; im.width = im.height = 48; im.src = assetUrl(o.thumb); b.appendChild(im); }
     else { const e = document.createElement('span'); e.className = 'emo'; e.textContent = o.emoji; b.appendChild(e); }
     const t = document.createElement('span'); t.textContent = o.name; b.appendChild(t);
-    b.onclick = () => { pickObject(o.id); const r = document.querySelector('input[name=dispMode][value=object3d]'); r.checked = true; };
+    b.onclick = () => { pickObject(o.id); dispDirty = true; autoPick('object3d'); };
     $('objPick').appendChild(b);
   }
-  for (const r of document.querySelectorAll('input[name=dispMode]')) r.onchange = () => { if (r.value === 'object3d') pickObject(dispObj); };
-  $('srvMsg').onfocus = () => { document.querySelector('input[name=dispMode][value=message]').checked = true; };
-  $('srvMsg2').onfocus = () => { document.querySelector('input[name=dispMode][value=message2]').checked = true; };
+  for (const b of itemBoxes()) b.onchange = () => { dispDirty = true; syncItems(b); if (b.value === 'object3d' && b.checked) pickObject(dispObj); };
+  $('srvMsg').oninput = () => { autoPick('message1'); updatePreview(); };
+  $('srvMsg2').oninput = () => { autoPick('message2'); updatePreview(); };
+  for (const id of ['szName', 'szText', 'szObj']) $(id).oninput = () => { dispDirty = true; showSize(id); updatePreview(); };
   $('srvFamily').onchange = async () => {
     try { await api.patchMe(cfg.personId, { visibility: $('srvFamily').checked ? 'family' : 'selected' }); await refreshServer(); }
     catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); $('srvFamily').checked = !$('srvFamily').checked; }
@@ -824,6 +861,62 @@ function pickObject(id) {
   dispObj = objectInfo(id).id;
   for (const b of $('objPick').children) b.classList.toggle('sel', b.dataset.obj === dispObj);
   try { previewObject($('objPrev'), dispObj); } catch (e) { console.warn('preview', e); }
+  updatePreview();
+}
+
+// «Τι βλέπουν οι άλλοι»: 0.4.0 = 1-2 of name/message1/message2/object3d (+ sizes);
+// 0.3.0 = the name always + exactly one of the other three; 0.2.0 = message only.
+function itemBoxes() { return [...document.querySelectorAll('.dispItem')]; }
+function activeBoxes() { return itemBoxes().filter((b) => dispMulti || b.value !== 'name'); }
+const selItems = () => activeBoxes().filter((b) => b.checked).map((b) => b.value);
+function syncItems(changed = null) {
+  const boxes = activeBoxes();
+  let warn = '';
+  if (!dispMulti) {
+    if (changed && changed.checked) for (const b of boxes) if (b !== changed) b.checked = false;
+    if (!boxes.some((b) => b.checked)) { (changed || boxes[0]).checked = true; if (changed) warn = ' Χρειάζεται μία επιλογή.'; }
+    for (const b of boxes) b.disabled = false;
+  } else {
+    if (changed && changed.checked && boxes.filter((b) => b.checked).length > 2) { changed.checked = false; warn = ' Το πολύ 2 — ξετσέκαρε πρώτα ένα.'; }
+    if (!boxes.some((b) => b.checked)) { (changed || boxes[0]).checked = true; warn = ' Χρειάζεται τουλάχιστον ένα.'; }
+    const n = boxes.filter((b) => b.checked).length;
+    for (const b of boxes) b.disabled = !b.checked && n >= 2;
+  }
+  const n = selItems().length;
+  $('dispHint').textContent = dispMulti
+    ? `Διάλεξε 1 ή 2 (π.χ. όνομα + 3D αντικείμενο ή σχόλιο + 3D αντικείμενο). Επιλεγμένα: ${n}/2.${warn}`
+    : `Διάλεξε ένα από τα τρία. Όσοι σε αναγνωρίζουν βλέπουν το όνομά σου και μόνο αυτό που διάλεξες.${warn}`;
+  updatePreview();
+}
+function autoPick(item) {   // typing a message / tapping an object ticks it, if there is room
+  const b = activeBoxes().find((x) => x.value === item);
+  if (!b || b.checked || (dispMulti && selItems().length >= 2)) return;
+  b.checked = true; dispDirty = true; syncItems(b);
+}
+function setItems(items) { for (const b of itemBoxes()) b.checked = items.includes(b.value); syncItems(); }
+function showSize(id) { const el = $(id); el.nextElementSibling.textContent = '×' + (+el.value).toFixed(1); }
+function setSizes(sz = {}) {
+  for (const [id, k] of [['szName', 'name'], ['szText', 'text'], ['szObj', 'object']]) { $(id).value = Math.min(2, Math.max(0.5, +sz[k] || 1)); showSize(id); }
+}
+function updatePreview() {   // tiny HTML mock of the label (no WebGL), only on 0.4.0 servers
+  if (!hasCap('sizes')) return;
+  const items = selItems(), pv = $('dispPrev');
+  const name = pv.querySelector('.pv-name'), bub = pv.querySelector('.pv-bub'), obj = pv.querySelector('.pv-obj');
+  name.hidden = !items.includes('name'); name.textContent = cfg.name || 'Όνομα';
+  name.style.fontSize = (20 * +$('szName').value).toFixed(0) + 'px';
+  const texts = [['message1', 'srvMsg'], ['message2', 'srvMsg2']].filter(([k]) => items.includes(k)).map(([, id]) => $(id).value.trim()).filter(Boolean);
+  bub.hidden = !texts.length; bub.textContent = texts.join('\n');
+  bub.style.fontSize = (13 * +$('szText').value).toFixed(1) + 'px';
+  const o = objectInfo(dispObj), px = Math.round(38 * +$('szObj').value);
+  obj.hidden = !items.includes('object3d');
+  if (!obj.hidden) {
+    const key = o.id + ':' + px;
+    if (obj.dataset.key !== key) {
+      obj.dataset.key = key; obj.textContent = '';
+      if (o.thumb) { const im = new Image(); im.alt = ''; im.width = im.height = px; im.src = assetUrl(o.thumb); obj.appendChild(im); }
+      else { obj.textContent = o.emoji; obj.style.fontSize = Math.round(px * 0.8) + 'px'; }
+    }
+  }
 }
 
 async function refreshServer(verbose = false) {
@@ -853,18 +946,25 @@ async function refreshServer(verbose = false) {
       : `λείπουν λήψεις: ${server.posesEl(e.missing_poses) || e.frames_still_needed}. Πάτα «＋ Νέο άτομο» για να τις προσθέσεις.`);
     if (adv) advInfo.textContent += ` · προφίλ #${me.id}, ${e.frames} λήψεις`;
     $('srvMe').classList.remove('hidden');
-    // «Τι βλέπουν οι άλλοι»: message / message2 / 3D object (0.3.0+); older servers: the one message only
+    // «Τι βλέπουν οι άλλοι»: 0.4.0 two items + sizes; 0.3.0 one item; older servers: the one message only
     const disp = hasCap('display');
+    dispMulti = disp && hasCap('combo');
     for (const el of document.querySelectorAll('#srvMe .disp-only')) el.classList.toggle('hidden', !disp);
-    $('srvDispOld').classList.toggle('hidden', disp);
+    for (const el of document.querySelectorAll('#srvMe .combo-only')) el.classList.toggle('hidden', !dispMulti);
+    for (const el of document.querySelectorAll('#srvMe .sizes-only')) el.classList.toggle('hidden', !(disp && hasCap('sizes')));
+    $('srvDispOld').classList.toggle('hidden', dispMulti);
+    $('srvDispOld').textContent = disp ? '⚠️ Χρειάζεται ενημέρωση server (0.4.0) για 2 επιλογές μαζί και μεγέθη — τώρα φαίνεται το όνομα + μία επιλογή.'
+      : '⚠️ Χρειάζεται ενημέρωση server (0.4.0) για «Μήνυμα 2», 3D αντικείμενα και μεγέθη — τώρα φαίνεται μόνο το μήνυμα.';
     $('dispTitle').textContent = disp ? 'Τι βλέπουν οι άλλοι πάνω από το κεφάλι μου' : 'Το μήνυμά μου (φαίνεται πάνω από το όνομά μου)';
     const editing = [$('srvMsg'), $('srvMsg2')].includes(document.activeElement);
-    if (!editing) {
+    if (!editing && !dispDirty) {
       $('srvMsg').value = me.message || '';
       $('srvMsg2').value = me.message2 || '';
-      const mode = disp ? (me.display_mode || 'message') : 'message';
-      const r = document.querySelector(`input[name=dispMode][value=${mode}]`); if (r) r.checked = true;
-      if (disp) pickObject(me.object_id || DEFAULT_OBJECT);
+      if (disp) {
+        setItems(Array.isArray(me.display_items) && dispMulti ? me.display_items : ['name', ITEM_OF_MODE[me.display_mode] || 'message1']);
+        setSizes(me.sizes);
+        pickObject(me.object_id || DEFAULT_OBJECT);
+      }
     }
     const fam = me.visibility === 'family';
     $('srvFamily').checked = fam;

@@ -71,3 +71,15 @@ body.adv .adv-only{display:block}
 #objPrev{width:120px;height:120px;flex:none;border-radius:12px;background:rgba(255,255,255,.06)}
 #srvMsg,#srvMsg2{width:100%;box-sizing:border-box}
 #pList small .disp{opacity:1}
+#sizeBox{margin:4px 0 10px}
+.size{display:grid;grid-template-columns:9.5em 1fr 3em;align-items:center;gap:8px;margin:4px 0;font-size:14px}
+.size input{width:100%;accent-color:#4fc3f7}
+.size output{text-align:right;font-variant-numeric:tabular-nums;opacity:.85}
+#dispPrev{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;height:190px;margin-top:6px;border-radius:12px;background:rgba(255,255,255,.06);overflow:hidden;padding:6px}
+#dispPrev .pv-bub{background:rgba(255,255,255,.92);color:#0d1b2a;border-radius:10px;padding:3px 8px;max-width:90%;line-height:1.25;text-align:center;white-space:pre-wrap}
+#dispPrev .pv-obj{line-height:1}
+#dispPrev .pv-obj img{object-fit:contain;display:block}
+#dispPrev .pv-name{font-weight:800;color:#fff;text-shadow:0 2px 0 #1565c0,0 3px 6px rgba(0,0,0,.5);line-height:1}
+#dispPrev .pv-face{font-size:34px;line-height:1}
+#dispPrev [hidden]{display:none}
+.dispItem:disabled+*,.setting.check:has(.dispItem:disabled){opacity:.5}

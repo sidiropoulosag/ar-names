@@ -3,13 +3,16 @@
 //    (SharedArrayBuffer -> multi-threaded WASM) even on static hosts like GitHub Pages.
 // 2) Offline cache: everything the app fetches is cached; the full asset list is also precached in the background.
 // All paths are relative to this file, so it works under any subpath (e.g. /ar-names/).
-const CACHE = 'ar-names-v11';
+const CACHE = 'ar-names-v12';
+// 3D models (models3d/) are NEVER precached: each is cached on first use, in its own cache that survives app updates.
+const MODELS_CACHE = 'ar-names-models-1';
 const ASSETS = [
   './', 'index.html', 'coi-serviceworker.js', 'app.css', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
-  'js/main.js', 'js/ort.js', 'js/detector.js', 'js/embedder.js', 'js/labels3d.js', 'js/tracker.js', 'js/geometry.js', 'js/db.js', 'js/server.js',
+  'js/main.js', 'js/ort.js', 'js/detector.js', 'js/embedder.js', 'js/labels3d.js', 'js/tracker.js', 'js/geometry.js', 'js/db.js', 'js/server.js', 'js/objects3d.js',
   'vendor/ort/ort.wasm.min.mjs', 'vendor/ort/ort-wasm-simd-threaded.mjs', 'vendor/ort/ort-wasm-simd-threaded.wasm',
   'vendor/three/three.module.js', 'vendor/three/three.core.js',
   'vendor/three/addons/loaders/FontLoader.js', 'vendor/three/addons/geometries/TextGeometry.js',
+  'vendor/three/addons/loaders/GLTFLoader.js', 'vendor/three/addons/utils/SkeletonUtils.js', 'vendor/three/addons/utils/BufferGeometryUtils.js',
   'models/yunet.onnx', 'models/sface.onnx', 'fonts/dejavu_sans_bold_greek.typeface.json',
 ];
 // Precache only what is not cached yet (runs in the background; never blocks activation).
@@ -25,7 +28,7 @@ async function precache() {
 self.addEventListener('install', (e) => { self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys()
-    .then((ks) => Promise.all(ks.filter((k) => k.startsWith('ar-names-') && k !== CACHE).map((k) => caches.delete(k))))
+    .then((ks) => Promise.all(ks.filter((k) => k.startsWith('ar-names-') && k !== CACHE && k !== MODELS_CACHE).map((k) => caches.delete(k))))
     .then(() => self.clients.claim()));
   precache(); // background, not awaited
 });
@@ -46,7 +49,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   if (req.cache === 'only-if-cached' && req.mode !== 'same-origin') return;
   e.respondWith((async () => {
-    const c = await caches.open(CACHE);
+    const c = await caches.open(/\/models3d\//.test(new URL(req.url).pathname) ? MODELS_CACHE : CACHE);
     const hit = await c.match(req, { ignoreSearch: true });
     if (hit) return isolate(hit);
     try {

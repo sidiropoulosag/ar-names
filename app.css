@@ -60,3 +60,14 @@ textarea,input[type=password]{width:100%;font:inherit;font-size:16px;padding:10p
 #srvMembers li{padding:4px 0}
 #enSrvFields.hidden{display:none}
 #tokVal{width:100%;font:15px ui-monospace,Menlo,monospace;padding:12px;border-radius:12px;border:1px solid #3d5a80;background:#0d1b2a;color:#fff;margin:10px 0}
+.adv-only{display:none}
+body.adv .adv-only{display:block}
+#objBox{display:flex;gap:12px;align-items:flex-start;margin:6px 0 10px}
+#objPick{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;flex:1;max-height:220px;overflow-y:auto}
+#objPick button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px;font-size:11px;min-width:0}
+#objPick button img{width:48px;height:48px;object-fit:contain}
+#objPick button .emo{font-size:30px;line-height:48px;height:48px}
+#objPick button.sel{outline:3px solid #4fc3f7}
+#objPrev{width:120px;height:120px;flex:none;border-radius:12px;background:rgba(255,255,255,.06)}
+#srvMsg,#srvMsg2{width:100%;box-sizing:border-box}
+#pList small .disp{opacity:1}

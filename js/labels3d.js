@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { makeObject, animateObject } from './objects3d.js';
 
 const tmpE = new THREE.Euler();
 
@@ -64,7 +65,7 @@ export class Labels3D {
       alive.add(t.id);
       let rec = this.meshes.get(t.id);
       if (!rec || rec.text !== text) {
-        if (rec) this.scene.remove(rec.mesh);
+        if (rec) { this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); }
         const mesh = new THREE.Mesh(this.geometry(text), unk ? [this.matUnkFront, this.matUnkSide] : [this.matFront, this.matSide]);
         this.scene.add(mesh);
         rec = { mesh, text, born: now, sm: rec ? rec.sm : null };
@@ -85,8 +86,11 @@ export class Labels3D {
       // eyes sit ~40% down the box; go up to the top of the head + a small gap
       const lift = fh * 0.5 + size * 0.25;
       let px = ex + ux * lift, py = ey + uy * lift;
-      // keep the whole name on screen (below the top bar) even for very close faces
-      py = Math.max(py, size * 1.3 + 64);
+      // the person's chosen 3D object (if any) floats above the name
+      const objId = (!unk && t.objectId) || '';
+      const objS = objId ? size * 2.2 : 0;
+      // keep the whole name (and object) on screen (below the top bar) even for very close faces
+      py = Math.max(py, size * 1.3 + 64 + objS * 1.1);
       const half = size * gw / 2 + 4;
       px = Math.min(Math.max(px, Math.min(W / 2, half)), Math.max(W / 2, W - half));
       // head orientation from the 5-point pose estimate (damped)
@@ -107,9 +111,21 @@ export class Labels3D {
       rec.mesh.position.set(k.x, H - k.y, 0);
       rec.mesh.quaternion.copy(k.q);
       rec.mesh.scale.setScalar(k.s * ease);
+      if (rec.objWant !== objId) {
+        if (rec.obj) { this.scene.remove(rec.obj); rec.obj = null; }
+        rec.objWant = objId;
+        if (objId) { rec.obj = makeObject(objId); this.scene.add(rec.obj); rec.objBorn = now; }
+      }
+      if (rec.obj) {
+        const os = k.s * 2.2 * Math.min(1, (now - rec.objBorn) / 250);
+        rec.obj.position.set(k.x, H - k.y + k.s * 1.05 + os * 0.55, 0);
+        rec.obj.scale.setScalar(os);
+        animateObject(rec.obj, now / 1000);
+      }
+      rec.hasObj = !!rec.obj;
     }
-    for (const [id, rec] of this.meshes) if (!alive.has(id)) { this.scene.remove(rec.mesh); this.meshes.delete(id); }
+    for (const [id, rec] of this.meshes) if (!alive.has(id)) { this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); this.meshes.delete(id); }
     this.renderer.render(this.scene, this.camera);
   }
-  clear() { for (const [, r] of this.meshes) this.scene.remove(r.mesh); this.meshes.clear(); this.renderer.render(this.scene, this.camera); }
+  clear() { for (const [, r] of this.meshes) { this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); } this.meshes.clear(); this.renderer.render(this.scene, this.camera); }
 }

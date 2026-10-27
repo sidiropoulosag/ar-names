@@ -118,6 +118,7 @@ export class Api {
   grant(pid, viewerId) { return this.req('POST', `/people/${pid}/grants`, { json: { viewer_id: viewerId } }); }
   revoke(pid, viewerId) { return this.req('DELETE', `/people/${pid}/grants/${viewerId}`); }
   deletePerson(pid) { return this.req('DELETE', `/people/${pid}`); }
+  presence() { return this.req('POST', '/presence', { timeout: 6000 }); }   // 0.3.0+: 'I am online'
   recognize(faces) { return this.req('POST', '/recognize/embeddings', { json: { faces }, timeout: 5000 }); }
 }
 

@@ -80,7 +80,8 @@
   <p id="famCount" class="small hidden"></p>
   <ul id="pList"></ul>
   <p id="pEmpty" class="small">Δεν υπάρχουν καταχωρισμένα άτομα.</p>
-  <h2>Ρυθμίσεις</h2>
+  <h2 id="setTitle">Ρυθμίσεις</h2>
+  <p id="advNote" class="small hidden"></p>
   <label class="setting">Αυστηρότητα αναγνώρισης: <b id="thrVal"></b>
     <input id="thr" type="range" min="0.25" max="0.65" step="0.01">
     <span class="small">Χαμηλότερη = αναγνωρίζει πιο εύκολα (και από πλάι), αλλά με περισσότερα λάθη. Υψηλότερη = λιγότερα λάθη.</span>
@@ -98,6 +99,8 @@
 
   <h2>☁️ Server οικογένειας</h2>
   <p class="small">Με τον server, η αναγνώριση γίνεται από κοινό server της οικογένειας: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
+  <div id="srvAdv" class="adv-only">
+  <p class="small">🔧 Προχωρημένες ρυθμίσεις (για τον διαχειριστή)</p>
   <label class="setting">Διεύθυνση server
     <input id="srvUrl" type="text" inputmode="url" placeholder="κενό = μόνο σε αυτή τη συσκευή" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
   <p id="srvUrlNote" class="small"></p>
@@ -109,15 +112,24 @@
     <button id="srvLogout">Αποσύνδεση</button>
   </div>
   <label class="setting check"><input id="srvOn" type="checkbox"> Αναγνώριση μέσω server</label>
+  <p id="srvAdvInfo" class="small"></p>
+  </div>
   <p id="srvInfo" class="small"></p>
   <div id="srvMe" class="hidden">
-    <label class="setting">Το μήνυμά μου (φαίνεται πάνω από το όνομά μου)
-      <textarea id="srvMsg" rows="2" maxlength="300"></textarea></label>
-    <div class="row"><button id="srvMsgSave" class="primary">💾 Αποθήκευση μηνύματος</button></div>
-    <h3>Ποιος βλέπει το όνομα και το μήνυμά μου</h3>
+    <h3 id="dispTitle">Τι βλέπουν οι άλλοι πάνω από το κεφάλι μου</h3>
+    <p class="small disp-only">Διάλεξε ένα από τα τρία. Όσοι σε αναγνωρίζουν με την κάμερα βλέπουν το όνομά σου και μόνο αυτό που διάλεξες.</p>
+    <label class="setting check disp-only"><input type="radio" name="dispMode" value="message"> 💬 Μήνυμα 1</label>
+    <textarea id="srvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που φαίνεται πάνω από το όνομά σου"></textarea>
+    <label class="setting check disp-only"><input type="radio" name="dispMode" value="message2"> 💬 Μήνυμα 2</label>
+    <textarea id="srvMsg2" class="disp-only" rows="2" maxlength="300" placeholder="Ένα δεύτερο μήνυμα (π.χ. για άλλη περίσταση)"></textarea>
+    <label class="setting check disp-only"><input type="radio" name="dispMode" value="object3d"> 🧸 3D αντικείμενο πάνω από το κεφάλι</label>
+    <div id="objBox" class="disp-only"><div id="objPick"></div><canvas id="objPrev" width="120" height="120"></canvas></div>
+    <p id="srvDispOld" class="small adv-only hidden">⚠️ Χρειάζεται ενημέρωση server (0.3.0) για «Μήνυμα 2» και 3D αντικείμενα — τώρα φαίνεται μόνο το μήνυμα.</p>
+    <div class="row"><button id="srvMsgSave" class="primary">💾 Αποθήκευση</button></div>
+    <h3>Ποιος με βλέπει</h3>
     <label class="setting check"><input id="srvFamily" type="checkbox"> Όλη η οικογένεια</label>
     <ul id="srvMembers"></ul>
-    <p class="small">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
+    <p id="srvMembersNote" class="small">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
     <div class="row"><button id="srvDelMe" class="danger">🗑 Διαγραφή του προφίλ μου από τον server</button></div>
   </div>
 </div>

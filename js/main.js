@@ -4,6 +4,7 @@ import { Labels3D } from './labels3d.js';
 import { Gallery, Tracker } from './tracker.js';
 import * as db from './db.js';
 import * as server from './server.js';
+import { OBJECTS, objectInfo, previewObject, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
 
 const $ = (id) => document.getElementById(id);
 const video = $('video'), overlay = $('overlay'), guide = $('guide');
@@ -19,9 +20,44 @@ const stats = { fps: 0, det: 0, emb: 0, embN: 0, faces: 0, frames: 0, lastT: 0, 
 let facing = 'environment', stream = null, mode = 'scan', ready = false;
 const cfg = server.loadCfg();
 const api = new server.Api(cfg);
-window.__ar = { cfg, api, get srv() { return srv; }, tracker, detector, embedder, labels, stats, settings, gallery, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db };
+window.__ar = { cfg, api, get srv() { return srv; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db };
 
 function setStatus(t) { $('status').textContent = t; }
+
+// ---------- advanced mode (hidden): tap «Ρυθμίσεις» 7 times ----------
+// Normal users never see the server address, the token or the names of people who are not online.
+let adv = localStorage.getItem('ar-names-adv') === '1';
+function applyAdv() { document.body.classList.toggle('adv', adv); }
+applyAdv();
+{
+  let taps = 0, first = 0;
+  $('setTitle').addEventListener('click', () => {
+    const now = Date.now();
+    if (now - first > 4000) { taps = 0; first = now; }
+    if (++taps < 7) return;
+    taps = 0; adv = !adv; adv ? localStorage.setItem('ar-names-adv', '1') : localStorage.removeItem('ar-names-adv');
+    applyAdv();
+    const n = $('advNote'); n.textContent = adv ? '🔧 Προχωρημένες ρυθμίσεις: ενεργές' : 'Προχωρημένες ρυθμίσεις: κρυφές';
+    n.classList.remove('hidden'); setTimeout(() => n.classList.add('hidden'), 3000);
+    renderPeople(); if (cfg.url) refreshServer(); else syncServerUi();
+  });
+}
+// Server error in words a normal user understands (no "token", no addresses).
+function errMsg(e) {
+  if (!adv && e && (e.code === 'bad_token' || e.code === 'auth_required')) return 'το προφίλ σου δεν βρέθηκε στον server';
+  if (!adv && e && (e.code === 'offline' || e.code === 'timeout')) return 'εκτός σύνδεσης';
+  return server.errEl(e);
+}
+
+// ---------- server capabilities (from /health) ----------
+// 0.3.0+: features ['display','presence']; older servers have no 'features' -> message only, no online list.
+let caps = null; // null = unknown, else { version, features:Set }
+function noteHealth(h) { caps = { version: h.version || '', features: new Set(h.features || []) }; return h; }
+const hasCap = (f) => !!(caps && caps.features.has(f));
+// presence heartbeat: tells the server "I'm here" so others see me as online (recognition calls count too)
+setInterval(() => {
+  if (!document.hidden && cfg.url && cfg.token && hasCap('presence')) api.presence().catch(() => {});
+}, 60000);
 
 // ---------- boot ----------
 async function boot() {
@@ -158,10 +194,10 @@ async function reloadPeople() {
 }
 
 async function famFromPublic() {
-  const h = await api.health(6000);
+  const h = noteHealth(await api.health(6000));
   if (h.public_list) {
     const r = await api.peoplePublic();
-    Object.assign(fam, { people: r.people, count: r.count, mode: 'public' });
+    Object.assign(fam, { people: r.people, count: r.count, mode: 'public', onlineOnly: !!r.online_only, onlineCount: r.online_count });
   } else Object.assign(fam, { people: null, count: h.people, mode: 'count' });  // older server or list turned off
 }
 async function refreshFamily() {
@@ -171,6 +207,7 @@ async function refreshFamily() {
   try {
     if (cfg.token) {
       try {
+        if (!caps) try { noteHealth(await api.health(6000)); } catch (e) { /* the list call below reports it */ }
         const { people } = await api.people(); Object.assign(fam, { people, count: people.length, mode: 'member' });
         if (cfg.personId == null) { const me = await api.me(); cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg); }
       }
@@ -186,9 +223,13 @@ function renderPeople() {
   const people = localPeople;
   const ul = $('pList'); ul.innerHTML = '';
   const norm = (x) => (x || '').trim().toLocaleLowerCase('el');
-  const srvList = (cfg.url && fam.people) || [];
+  const isMe = (sp) => fam.mode === 'member' && sp.id != null && sp.id === cfg.personId;
+  // normal users: only people who are online now (+ yourself); older servers send no 'online' -> no other names
+  const srvList = ((cfg.url && fam.people) || []).filter((sp) => adv || sp.online === true || isMe(sp));
   const matched = new Set();
-  const srvTag = (sp) => `☁️ server · ${sp.active ? 'ενεργό' : 'ανολοκλήρωτο'}${fam.mode === 'member' && sp.id != null && sp.id === cfg.personId ? ' · εσύ' : ''}`;
+  const srvTag = (sp) => adv
+    ? `☁️ server · ${sp.active ? 'ενεργό' : 'ανολοκλήρωτο'}${sp.online ? ' · 🟢 online' : ''}${isMe(sp) ? ' · εσύ' : ''}${dispTag(sp.display)}`
+    : `☁️ ${isMe(sp) ? 'εσύ' : '🟢 online τώρα'}${dispTag(sp.display)}`;
   for (const p of people) {
     const sp = srvList.find((x) => !matched.has(x) && norm(x.name) === norm(p.name));   // same person on phone + server: one row
     if (sp) matched.add(sp);
@@ -211,7 +252,7 @@ function renderPeople() {
   for (const sp of srvList) {
     if (matched.has(sp)) continue;
     srvOnly++;
-    const me = fam.mode === 'member' && sp.id != null && sp.id === cfg.personId;
+    const me = isMe(sp);
     const li = document.createElement('li'); li.className = 'srv' + (me ? ' me' : '');
     li.innerHTML = '<div class="av">☁️</div><div class="nm"></div>';
     li.querySelector('.nm').innerHTML = `${escapeHtml(sp.name)}<small>${escapeHtml(srvTag(sp))}</small>`;
@@ -221,13 +262,28 @@ function renderPeople() {
   $('peopleCount').textContent = people.length + srvOnly;
   const fc = $('famCount');
   let t = '';
-  if (cfg.url && fam.count != null) {
+  const online = (fam.people || []).filter((sp) => sp.online === true).length;
+  const knowsOnline = fam.mode === 'public' ? fam.onlineOnly : (fam.people || []).some((sp) => 'online' in sp);
+  if (cfg.url && fam.count != null && !adv) {
+    if (knowsOnline || fam.mode === 'public') t = `☁️ Συνδεδεμένος ✓ · Online τώρα: ${fam.mode === 'public' ? (fam.onlineCount ?? online) : online}`;
+    else t = `☁️ Συνδεδεμένος ✓ · Οικογένεια: ${plural(fam.count)}`;
+    if (fam.mode === 'count' && !cfg.token && fam.count > 0) t += '. Για να δεις ποιος είναι online, καταχώρισε τον εαυτό σου («＋ Νέο άτομο»).';
+    if (fam.err) t = `☁️ Εκτός σύνδεσης — φαίνεται η τελευταία λίστα (${fam.err})`;
+  } else if (cfg.url && fam.count != null) {
     const onlyHere = people.length - matched.size;
     t = `Οικογένεια: ${plural(fam.count)}` + (fam.mode !== 'count' && onlyHere > 0 ? ` · ${plural(onlyHere)} μόνο σε αυτή τη συσκευή` : '');
     if (fam.mode === 'count' && fam.count > 0) t += ' στον server. Για να δεις ποιοι είναι, συνδέσου: καταχώρισε τον εαυτό σου («＋ Νέο άτομο») ή βάλε το token σου στις ρυθμίσεις.';
     if (fam.err) t += ` (⚠️ ${fam.err} — δείχνω την τελευταία λίστα)`;
-  } else if (cfg.url && fam.err) t = `☁️ Ο server της οικογένειας δεν απαντά τώρα (${fam.err}) — φαίνονται μόνο τα άτομα αυτής της συσκευής.`;
+  } else if (cfg.url && fam.err) t = adv ? `☁️ Ο server της οικογένειας δεν απαντά τώρα (${fam.err}) — φαίνονται μόνο τα άτομα αυτής της συσκευής.`
+    : '☁️ Εκτός σύνδεσης — φαίνονται μόνο τα άτομα αυτής της συσκευής.';
   fc.textContent = t; fc.classList.toggle('hidden', !t);
+}
+// what a person chose to show (only present when they allow you to see it)
+function dispTag(d) {
+  if (!d) return '';
+  if (d.mode === 'object3d') { const o = objectInfo(d.object_id); return ` · δείχνει ${o.emoji} ${o.name}`; }
+  if (d.text) return ` · 💬 «${d.text.length > 40 ? d.text.slice(0, 40) + '…' : d.text}»`;
+  return '';
 }
 function escapeHtml(s) { return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
@@ -484,11 +540,15 @@ async function serverStep(tracks, vw, vh, now) {
       if (!t) continue;
       t.embeds++;
       if (f.status === 'known') {
-        t.srvMiss = 0; t.srv = true; t.label = f.name; t.message = f.message || ''; t.personId = f.person_id; t.sim = f.similarity;
+        // 0.3.0 servers send only the item the person chose ('display'); older ones send 'message'
+        const d = f.display || { mode: 'message', text: f.message || '' };
+        t.srvMiss = 0; t.srv = true; t.label = f.name; t.personId = f.person_id; t.sim = f.similarity;
+        t.objectId = d.mode === 'object3d' ? (d.object_id || DEFAULT_OBJECT) : '';
+        t.message = d.mode === 'object3d' ? '' : (d.text ?? f.message ?? '');
         if (!t.recognisedAt) t.recognisedAt = performance.now();
       } else {
         t.srvMiss = (t.srvMiss || 0) + 1;
-        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.personId = null; }
+        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; }
       }
     }
   }).catch((e) => {
@@ -497,10 +557,11 @@ async function serverStep(tracks, vw, vh, now) {
     srv.offline = true;
     srv.retryAt = performance.now() + (e.status === 401 ? 15000 : 5000);
     if (!wasOffline) {
-      for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; }
+      for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; }
       tracker.relabel();
       const local = gallery.people.length ? 'συνεχίζω με τα άτομα αυτής της συσκευής' : 'θα ξαναδοκιμάσω σε λίγο';
-      setStatus(e.status === 401 ? '⚠️ Server: το token δεν ισχύει — δες τις Ρυθμίσεις' : `⚠️ Χωρίς σύνδεση με τον server — ${local}`);
+      setStatus(e.status === 401 ? (adv ? '⚠️ Server: το token δεν ισχύει — δες τις Ρυθμίσεις' : '⚠️ Το προφίλ σου δεν βρέθηκε — δες τις Ρυθμίσεις')
+        : `⚠️ Εκτός σύνδεσης — ${local}`);
     }
   }).finally(() => { srv.inflight = false; });
 }
@@ -544,7 +605,7 @@ function applyOpenEnrollment() {
 }
 async function checkOpenEnrollment() {
   if (!cfg.url) return srvOpen;
-  try { srvOpen = !!(await api.health(4000)).open_enrollment; srvReach = true; } catch { srvReach = false; /* keep last known */ }
+  try { srvOpen = !!noteHealth(await api.health(4000)).open_enrollment; srvReach = true; } catch { srvReach = false; /* keep last known */ }
   applyOpenEnrollment();
   return srvOpen;
 }
@@ -632,7 +693,7 @@ async function saveEnrollServer() {
       }
       cfg.token = r.token; cfg.personId = r.person.id; cfg.name = r.person.name; server.saveCfg(cfg);
       $('enFamKey').value = '';
-      showToken(r.token);
+      if (adv) showToken(r.token);   // normal users: the token stays on this phone, no technical screen
       syncServerUi();
     }
     if (!cfg.personId) { const me = await api.me(); cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg); }
@@ -664,7 +725,9 @@ async function saveEnrollServer() {
       setMsg(`${head} Χρειάζονται ακόμα ${need} λήψεις${miss.length ? ` — λείπουν: ${server.posesEl(miss)}` : ''}. Πάτα ξανά ▶ Αυτόματη λήψη ή 📸.`);
     }
   } catch (e) {
-    setMsg('⚠️ ' + (e.code === 'offline' || e.code === 'timeout' ? 'Ο server δεν απαντά. Έλεγξε τη διεύθυνση στις Ρυθμίσεις και ξαναπάτα «Αποθήκευση».' : 'Σφάλμα: ' + server.errEl(e)));
+    setMsg('⚠️ ' + (e.code === 'offline' || e.code === 'timeout'
+      ? (adv ? 'Ο server δεν απαντά. Έλεγξε τη διεύθυνση στις Ρυθμίσεις και ξαναπάτα «Αποθήκευση».' : 'Εκτός σύνδεσης. Δοκίμασε ξανά «Αποθήκευση» σε λίγο.')
+      : 'Σφάλμα: ' + errMsg(e)));
   } finally {
     $('enAuto').disabled = false;
     $('enSave').disabled = !en.samples.some((s) => s.blob && !s.sent);
@@ -710,7 +773,7 @@ function initServerUi() {
   $('srvTest').onclick = () => refreshServer(true);
   $('srvOn').onchange = () => {
     cfg.enabled = $('srvOn').checked; server.saveCfg(cfg); srv.offline = false;
-    for (const t of tracker.tracks) { t.srv = false; t.message = ''; }
+    for (const t of tracker.tracks) { t.srv = false; t.message = ''; t.objectId = ''; }
     tracker.relabel(); syncServerUi(); reloadPeople();
     setStatus(cfg.enabled ? '☁️ Αναγνώριση μέσω server' : 'Αναγνώριση στη συσκευή');
   };
@@ -720,12 +783,29 @@ function initServerUi() {
     syncServerUi(); $('srvMe').classList.add('hidden'); $('srvInfo').textContent = 'Αποσυνδέθηκες.'; tracker.relabel(); refreshFamily();
   };
   $('srvMsgSave').onclick = async () => {
-    try { await api.patchMe(cfg.personId, { message: $('srvMsg').value.trim() }); $('srvInfo').textContent = 'Το μήνυμα αποθηκεύτηκε ✓'; }
-    catch (e) { $('srvInfo').textContent = '⚠️ ' + server.errEl(e); }
+    const f = { message: $('srvMsg').value.trim() };
+    if (hasCap('display')) {
+      const mode = (document.querySelector('input[name=dispMode]:checked') || {}).value || 'message';
+      Object.assign(f, { message2: $('srvMsg2').value.trim(), display_mode: mode, object_id: dispObj });
+    }
+    try { await api.patchMe(cfg.personId, f); $('srvInfo').textContent = hasCap('display') ? 'Αποθηκεύτηκε ✓' : 'Το μήνυμα αποθηκεύτηκε ✓'; }
+    catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); }
   };
+  // object picker (from the registry in objects3d.js)
+  for (const o of OBJECTS) {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.obj = o.id; b.title = o.name;
+    if (o.thumb) { const im = new Image(); im.loading = 'lazy'; im.decoding = 'async'; im.alt = ''; im.width = im.height = 48; im.src = assetUrl(o.thumb); b.appendChild(im); }
+    else { const e = document.createElement('span'); e.className = 'emo'; e.textContent = o.emoji; b.appendChild(e); }
+    const t = document.createElement('span'); t.textContent = o.name; b.appendChild(t);
+    b.onclick = () => { pickObject(o.id); const r = document.querySelector('input[name=dispMode][value=object3d]'); r.checked = true; };
+    $('objPick').appendChild(b);
+  }
+  for (const r of document.querySelectorAll('input[name=dispMode]')) r.onchange = () => { if (r.value === 'object3d') pickObject(dispObj); };
+  $('srvMsg').onfocus = () => { document.querySelector('input[name=dispMode][value=message]').checked = true; };
+  $('srvMsg2').onfocus = () => { document.querySelector('input[name=dispMode][value=message2]').checked = true; };
   $('srvFamily').onchange = async () => {
     try { await api.patchMe(cfg.personId, { visibility: $('srvFamily').checked ? 'family' : 'selected' }); await refreshServer(); }
-    catch (e) { $('srvInfo').textContent = '⚠️ ' + server.errEl(e); $('srvFamily').checked = !$('srvFamily').checked; }
+    catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); $('srvFamily').checked = !$('srvFamily').checked; }
   };
   $('srvDelMe').onclick = async () => {
     if (!confirm('Διαγραφή του προφίλ σου από τον server; Σβήνονται οι φωτογραφίες, το μήνυμα και οι άδειες. Δεν αναιρείται.')) return;
@@ -733,54 +813,85 @@ function initServerUi() {
       await api.deletePerson(cfg.personId);
       Object.assign(cfg, { token: '', personId: null, name: '', enabled: false }); server.saveCfg(cfg);
       syncServerUi(); $('srvMe').classList.add('hidden'); $('srvInfo').textContent = 'Το προφίλ σου διαγράφηκε από τον server.'; refreshFamily();
-    } catch (e) { $('srvInfo').textContent = '⚠️ ' + server.errEl(e); }
+    } catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); }
   };
   const btnPeople = $('btnPeople').onclick;
-  $('btnPeople').onclick = () => { btnPeople(); if (cfg.url && cfg.token) refreshServer(); };
+  $('btnPeople').onclick = () => { btnPeople(); refreshServer(); };
+}
+
+let dispObj = DEFAULT_OBJECT;
+function pickObject(id) {
+  dispObj = objectInfo(id).id;
+  for (const b of $('objPick').children) b.classList.toggle('sel', b.dataset.obj === dispObj);
+  try { previewObject($('objPrev'), dispObj); } catch (e) { console.warn('preview', e); }
 }
 
 async function refreshServer(verbose = false) {
-  const info = $('srvInfo');
-  if (!cfg.url) { info.textContent = 'Χωρίς server: όλα γίνονται μόνο σε αυτή τη συσκευή. (Για server, γράψε διεύθυνση ή πάτα «Προεπιλεγμένος server».)'; return; }
+  const info = $('srvInfo'), advInfo = $('srvAdvInfo');
+  advInfo.textContent = '';
+  if (!cfg.url) {
+    info.textContent = '☁️ Εκτός σύνδεσης — όλα γίνονται μόνο σε αυτή τη συσκευή.';
+    if (adv) advInfo.textContent = 'Χωρίς server. (Για server, γράψε διεύθυνση ή πάτα «Προεπιλεγμένος server».)';
+    return;
+  }
   if (verbose) info.textContent = 'Έλεγχος…';
   try {
-    const h = await api.health();
+    const h = noteHealth(await api.health());
     srvOpen = !!h.open_enrollment; applyOpenEnrollment();
+    if (adv) advInfo.textContent = `Ο server απαντά ✓ · έκδοση ${h.version || '?'} · ${h.people} άτομα` + (hasCap('display') ? '' : ' · παλιά έκδοση (χωρίς «Μήνυμα 2» / 3D αντικείμενα / online)');
     if (!cfg.token) {
       $('srvMe').classList.add('hidden');
-      info.textContent = `Ο server απαντά ✓ (${h.people} άτομα). Για να μπεις, πάτα «＋ Νέο άτομο» και καταχώρισε τον εαυτό σου`
-        + (srvOpen ? '' : ' (θα χρειαστείς το κλειδί της οικογένειας)') + ', ή βάλε το token σου.';
+      info.textContent = '☁️ Συνδεδεμένος ✓ — δεν έχεις ακόμα προφίλ. Πάτα «＋ Νέο άτομο» και καταχώρισε τον εαυτό σου'
+        + (srvOpen ? '' : ' (θα χρειαστείς το κλειδί της οικογένειας)') + (adv ? ', ή βάλε το token σου.' : '.');
       return;
     }
     const me = await api.me();
     cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg);
     const { people } = await api.people();
     const e = me.enrollment;
-    info.textContent = `Συνδεδεμένος ως «${me.name}» ✓ — ` + (e.active ? `προφίλ έτοιμο (${e.frames} λήψεις).`
+    info.textContent = `☁️ Συνδεδεμένος ✓ ως «${me.name}» — ` + (e.active ? 'το προφίλ σου είναι έτοιμο.'
       : `λείπουν λήψεις: ${server.posesEl(e.missing_poses) || e.frames_still_needed}. Πάτα «＋ Νέο άτομο» για να τις προσθέσεις.`);
+    if (adv) advInfo.textContent += ` · προφίλ #${me.id}, ${e.frames} λήψεις`;
     $('srvMe').classList.remove('hidden');
-    if (document.activeElement !== $('srvMsg')) $('srvMsg').value = me.message || '';
+    // «Τι βλέπουν οι άλλοι»: message / message2 / 3D object (0.3.0+); older servers: the one message only
+    const disp = hasCap('display');
+    for (const el of document.querySelectorAll('#srvMe .disp-only')) el.classList.toggle('hidden', !disp);
+    $('srvDispOld').classList.toggle('hidden', disp);
+    $('dispTitle').textContent = disp ? 'Τι βλέπουν οι άλλοι πάνω από το κεφάλι μου' : 'Το μήνυμά μου (φαίνεται πάνω από το όνομά μου)';
+    const editing = [$('srvMsg'), $('srvMsg2')].includes(document.activeElement);
+    if (!editing) {
+      $('srvMsg').value = me.message || '';
+      $('srvMsg2').value = me.message2 || '';
+      const mode = disp ? (me.display_mode || 'message') : 'message';
+      const r = document.querySelector(`input[name=dispMode][value=${mode}]`); if (r) r.checked = true;
+      if (disp) pickObject(me.object_id || DEFAULT_OBJECT);
+    }
     const fam = me.visibility === 'family';
     $('srvFamily').checked = fam;
     const allowed = new Set(me.allowed_viewers.map((v) => (typeof v === 'object' ? v.id : v)));
     const ul = $('srvMembers'); ul.innerHTML = '';
-    const others = people.filter((p) => p.id !== me.id);
-    if (!others.length) ul.innerHTML = '<li class="small">Δεν υπάρχουν ακόμα άλλα μέλη.</li>';
+    // normal users: only people online now + those you already allowed (no full member list)
+    const others = people.filter((p) => p.id !== me.id && (adv || p.online === true || allowed.has(p.id)));
+    $('srvMembersNote').textContent = adv ? 'Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.'
+      : 'Φαίνονται όσοι είναι online τώρα και όσοι έχουν ήδη άδεια. Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.';
+    if (!others.length) ul.innerHTML = `<li class="small">${adv ? 'Δεν υπάρχουν ακόμα άλλα μέλη.' : 'Δεν είναι κανείς άλλος online τώρα.'}</li>`;
     for (const p of others) {
       const li = document.createElement('li');
       li.innerHTML = '<label class="setting check"><input type="checkbox"> <span></span></label>';
       const cb = li.querySelector('input');
-      li.querySelector('span').textContent = p.name + (p.active ? '' : ' (δεν έχει ολοκληρώσει την καταχώριση)');
+      li.querySelector('span').textContent = p.name + (p.online ? ' 🟢' : '') + (adv && !p.active ? ' (δεν έχει ολοκληρώσει την καταχώριση)' : '');
       cb.checked = fam || allowed.has(p.id); cb.disabled = fam; cb.dataset.id = p.id;
       cb.onchange = async () => {
         try { cb.checked ? await api.grant(me.id, p.id) : await api.revoke(me.id, p.id); info.textContent = 'Οι άδειες αποθηκεύτηκαν ✓'; }
-        catch (err) { cb.checked = !cb.checked; info.textContent = '⚠️ ' + server.errEl(err); }
+        catch (err) { cb.checked = !cb.checked; info.textContent = '⚠️ ' + errMsg(err); }
       };
       ul.appendChild(li);
     }
     syncServerUi();
   } catch (e) {
     $('srvMe').classList.add('hidden');
-    info.textContent = '⚠️ ' + server.errEl(e) + (e.code === 'offline' ? ' — έλεγξε τη διεύθυνση (αλλάζει κάθε φορά που ξεκινά ο server).' : '');
+    if (e.status === 401) info.textContent = adv ? '⚠️ ' + server.errEl(e) : '⚠️ Το προφίλ σου δεν βρέθηκε στον server (ίσως διαγράφηκε). Πάτα «＋ Νέο άτομο» για να καταχωριστείς ξανά.';
+    else info.textContent = '☁️ Εκτός σύνδεσης — θα ξαναδοκιμάσω όταν ανοίξεις πάλι τις ρυθμίσεις.';
+    if (adv) advInfo.textContent = '⚠️ ' + server.errEl(e) + (e.code === 'offline' ? ' — έλεγξε τη διεύθυνση.' : '');
   }
 }

@@ -29,7 +29,6 @@
   <div id="status" class="pill status">Φόρτωση…</div>
   <button id="btnFlip" class="pill" aria-label="Αλλαγή κάμερας">🔄</button>
 </header>
-<div id="stats" class="hidden"></div>
 <div id="hint" class="hint hidden"></div>
 
 <button id="btnEnroll" class="fab" aria-label="Νέο άτομο">＋ Νέο άτομο</button>
@@ -89,7 +88,6 @@
   <label class="setting">Εμβέλεια ανίχνευσης:
     <select id="optRange"><option value="384">Κοντά (ταχύτερο)</option><option value="512">Κανονική</option><option value="704">Μακριά / ομάδες (πιο αργό)</option></select></label>
   <label class="setting check"><input id="optUnknown" type="checkbox"> Δείξε «?» σε άγνωστα πρόσωπα</label>
-  <label class="setting check"><input id="optStats" type="checkbox"> Δείξε ταχύτητα (ms / fps)</label>
   <div class="row wrap">
     <button id="pExport">⬇ Αντίγραφο ασφαλείας</button>
     <label class="btn">⬆ Επαναφορά<input id="pImport" type="file" accept="application/json,.json" hidden></label>
@@ -134,10 +132,13 @@
     </div>
     <p id="srvDispOld" class="small adv-only hidden">⚠️ Χρειάζεται ενημέρωση server (0.3.0) για «Μήνυμα 2» και 3D αντικείμενα — τώρα φαίνεται μόνο το μήνυμα.</p>
     <div class="row"><button id="srvMsgSave" class="primary">💾 Αποθήκευση</button></div>
-    <h3>Ποιος με βλέπει</h3>
-    <label class="setting check"><input id="srvFamily" type="checkbox"> Όλη η οικογένεια</label>
-    <ul id="srvMembers"></ul>
-    <p id="srvMembersNote" class="small">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
+    <!-- v14: «Ποιος με βλέπει» hidden for now (logic kept; visibility unchanged) -->
+    <div id="srvVisBox" class="hidden">
+      <h3>Ποιος με βλέπει</h3>
+      <label class="setting check"><input id="srvFamily" type="checkbox"> Όλη η οικογένεια</label>
+      <ul id="srvMembers"></ul>
+      <p id="srvMembersNote" class="small">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
+    </div>
     <div class="row"><button id="srvDelMe" class="danger">🗑 Διαγραφή του προφίλ μου από τον server</button></div>
   </div>
 </div>

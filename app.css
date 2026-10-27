@@ -9,7 +9,6 @@ html,body{margin:0;height:100%;background:#000;color:#fff;font-family:system-ui,
 .pill{background:rgba(13,27,42,.72);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:10px 14px;font-size:16px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 button.pill{min-width:48px}
 .status{font-size:14px;max-width:55vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#stats{position:fixed;left:10px;top:calc(env(safe-area-inset-top) + 64px);font:12px/1.35 ui-monospace,Menlo,monospace;background:rgba(0,0,0,.55);padding:6px 8px;border-radius:8px;z-index:5;white-space:pre}
 .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;background:rgba(13,27,42,.8);padding:10px 14px;border-radius:12px;z-index:5;text-align:center;max-width:90vw}
 .fab{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom) + 20px);z-index:5;background:#1e88e5;color:#fff;border:0;border-radius:999px;padding:14px 20px;font-size:17px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.4)}
 button,.btn{background:#24384f;color:#fff;border:0;border-radius:12px;padding:12px 14px;font-size:16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}

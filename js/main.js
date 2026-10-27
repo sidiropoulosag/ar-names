@@ -169,9 +169,6 @@ async function loop() {
     await enrollFrame(res, vw, vh);
   }
   renderBubbles();
-  if (settings.showStats && stats.frames % 5 === 0) {
-    $('stats').textContent = `fps ${stats.fps.toFixed(0)}  πρόσωπα ${stats.faces}\nανίχνευση ${stats.det.toFixed(1)} ms (${detector.delegate})\nαναγνώριση ${stats.emb.toFixed(1)} ms/πρόσωπο`;
-  }
   schedule();
 }
 
@@ -515,9 +512,6 @@ $('optRange').value = String(settings.range);
 $('optRange').onchange = (e) => { settings.range = +e.target.value; db.saveSettings(settings); };
 $('optUnknown').checked = settings.showUnknown;
 $('optUnknown').onchange = (e) => { settings.showUnknown = e.target.checked; db.saveSettings(settings); };
-$('optStats').checked = settings.showStats;
-$('stats').classList.toggle('hidden', !settings.showStats);
-$('optStats').onchange = (e) => { settings.showStats = e.target.checked; db.saveSettings(settings); $('stats').classList.toggle('hidden', !settings.showStats); };
 
 // Service worker (sw.js: offline cache + COOP/COEP headers) is registered by coi-serviceworker.js,
 // which also reloads once so the page becomes crossOriginIsolated (multi-threaded WASM) on GitHub Pages.

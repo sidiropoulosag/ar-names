@@ -55,8 +55,12 @@ export async function importJSON(text) {
 }
 
 const SKEY = 'ar-names-settings';
-export const defaults = { threshold: 0.40, margin: 0.05, showUnknown: true, showStats: false, maxFaces: 12, range: 512 };
+export const defaults = { threshold: 0.40, margin: 0.05, showUnknown: true, maxFaces: 12, range: 512 };
 export function loadSettings() {
-  try { return { ...defaults, ...JSON.parse(localStorage.getItem(SKEY) || '{}') }; } catch { return { ...defaults }; }
+  try {
+    const s = { ...defaults, ...JSON.parse(localStorage.getItem(SKEY) || '{}') };
+    delete s.showStats;   // v14: the «ταχύτητα (ms / fps)» option was removed; ignore it in old saved settings
+    return s;
+  } catch { return { ...defaults }; }
 }
 export function saveSettings(s) { localStorage.setItem(SKEY, JSON.stringify(s)); }

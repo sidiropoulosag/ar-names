@@ -5,6 +5,14 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { makeObject, animateObject } from './objects3d.js';
 
 const tmpE = new THREE.Euler();
+// 0.5.0 text styles (per person, chosen in «Τι βλέπουν οι άλλοι»). All use the one bundled Greek font;
+// the look comes from extrusion / bevel / bending / material. 'bold' = the look before v15.
+export const TEXT_STYLES = {
+  bold:   { depth: 0.28, bevelThickness: 0.05,  bevelSize: 0.035, bevelSegments: 3, curveSegments: 5, arc: false },
+  curved: { depth: 0.22, bevelThickness: 0.08,  bevelSize: 0.05,  bevelSegments: 6, curveSegments: 8, arc: true },   // «Καμπυλωτό»
+  soft:   { depth: 0.06, bevelThickness: 0.018, bevelSize: 0.012, bevelSegments: 2, curveSegments: 6, arc: false },  // «Ήπιο»
+};
+export const styleOf = (s) => (Object.prototype.hasOwnProperty.call(TEXT_STYLES, s) ? s : 'bold');
 const clampS = (v) => (Number.isFinite(+v) && v !== null ? Math.min(2, Math.max(0.5, +v)) : 1);
 
 export class Labels3D {
@@ -22,6 +30,13 @@ export class Labels3D {
     this.matSide = new THREE.MeshStandardMaterial({ color: 0x1565c0, roughness: 0.4, metalness: 0.2 });
     this.matUnkFront = new THREE.MeshStandardMaterial({ color: 0xffc107, roughness: 0.4, emissive: 0x221100 });
     this.matUnkSide = new THREE.MeshStandardMaterial({ color: 0x8d5a00, roughness: 0.5 });
+    this.mats = {
+      bold: [this.matFront, this.matSide],
+      curved: [new THREE.MeshStandardMaterial({ color: 0xfff4e6, roughness: 0.25, metalness: 0.1, emissive: 0x2a1a0a }),
+        new THREE.MeshStandardMaterial({ color: 0xef6c00, roughness: 0.3, metalness: 0.25 })],
+      soft: [new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, emissive: 0x333344, transparent: true, opacity: 0.78 }),
+        new THREE.MeshStandardMaterial({ color: 0xb3d4ff, roughness: 0.9, transparent: true, opacity: 0.55 })],
+    };
     this.geoCache = new Map();
     this.meshes = new Map(); // track id -> {group, mesh, text}
     this.mirror = false; this.W = 1; this.H = 1;
@@ -35,16 +50,28 @@ export class Labels3D {
     Object.assign(this.camera, { left: 0, right: W, top: H, bottom: 0 });
     this.camera.updateProjectionMatrix();
   }
-  geometry(text) {
-    let g = this.geoCache.get(text);
+  geometry(text, style = 'bold') {
+    const st = TEXT_STYLES[styleOf(style)], ck = style + '\u0001' + text;
+    let g = this.geoCache.get(ck);
     if (g) return g;
-    g = new TextGeometry(text, { font: this.font, size: 1, depth: 0.28, curveSegments: 5,
-      bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.035, bevelSegments: 3 });
+    g = new TextGeometry(text, { font: this.font, size: 1, depth: st.depth, curveSegments: st.curveSegments,
+      bevelEnabled: true, bevelThickness: st.bevelThickness, bevelSize: st.bevelSize, bevelSegments: st.bevelSegments });
     g.computeBoundingBox();
-    const bb = g.boundingBox;
-    g.translate(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -0.14);
+    let bb = g.boundingBox;
+    g.translate(-(bb.min.x + bb.max.x) / 2, -bb.min.y, -st.depth / 2);
+    if (st.arc) {   // bend the line of text along a gentle arc (middle up, ends down), letters follow the curve
+      const w = bb.max.x - bb.min.x, R = Math.max(2.4, w * 1.15), pos = g.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), a = x / R, rr = R + y;
+        pos.setXY(i, rr * Math.sin(a), rr * Math.cos(a) - R);
+      }
+      pos.needsUpdate = true;
+      g.computeBoundingBox(); bb = g.boundingBox;
+      g.translate(-(bb.min.x + bb.max.x) / 2, -bb.min.y, 0);
+    }
     g.computeVertexNormals();
-    this.geoCache.set(text, g);
+    g.computeBoundingBox();
+    this.geoCache.set(ck, g);
     if (this.geoCache.size > 200) { const k = this.geoCache.keys().next().value; this.geoCache.get(k).dispose(); this.geoCache.delete(k); }
     return g;
   }
@@ -68,13 +95,14 @@ export class Labels3D {
       const showName = unk || t.showName !== false;
       const sz = (!unk && t.sizes) || null;
       const sN = clampS(sz && sz.name), sT = clampS(sz && sz.text), sO = clampS(sz && sz.object);
-      const key = showName ? text : '\u0000' + text;
+      const style = unk ? 'bold' : styleOf(t.style);
+      const key = (showName ? text : '\u0000' + text) + '\u0001' + style;
       let rec = this.meshes.get(t.id);
       if (!rec || rec.key !== key) {
         if (rec) { if (rec.mesh) this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); }
-        const mesh = showName ? new THREE.Mesh(this.geometry(text), unk ? [this.matUnkFront, this.matUnkSide] : [this.matFront, this.matSide]) : null;
-        if (mesh) this.scene.add(mesh);
-        rec = { mesh, key, text, born: now, sm: rec ? rec.sm : null };
+        const mesh = showName ? new THREE.Mesh(this.geometry(text, style), unk ? [this.matUnkFront, this.matUnkSide] : this.mats[style]) : null;
+        if (mesh) { if (style === 'soft') mesh.renderOrder = 2; this.scene.add(mesh); }
+        rec = { mesh, key, text, style, born: now, sm: rec ? rec.sm : null };
         this.meshes.set(t.id, rec);
       }
       // anchor above the head along the face's up direction (mouth -> eyes)

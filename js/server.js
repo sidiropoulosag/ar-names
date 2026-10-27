@@ -65,6 +65,12 @@ const CODE_EL = {
   offline: 'δεν υπάρχει σύνδεση τώρα',
   timeout: 'ο server άργησε να απαντήσει',
   validation: 'μη έγκυρα στοιχεία',
+  group_exists: 'υπάρχει ήδη ομάδα με αυτό το όνομα — αναζήτησέ την και μπες',
+  group_not_found: 'η ομάδα δεν υπάρχει πια',
+  short_query: 'γράψε τουλάχιστον 2 γράμματα',
+  not_member: 'μπορείς να διαλέξεις μόνο ομάδες όπου είσαι μέλος',
+  too_many_groups: 'έφτασες το μέγιστο αριθμό ομάδων',
+  too_many_requests: 'πολλές αιτήσεις — δοκίμασε σε λίγο',
 };
 export function errEl(e) {
   return CODE_EL[e && e.code] || (e && e.message) || 'άγνωστο σφάλμα';
@@ -119,6 +125,12 @@ export class Api {
   revoke(pid, viewerId) { return this.req('DELETE', `/people/${pid}/grants/${viewerId}`); }
   deletePerson(pid) { return this.req('DELETE', `/people/${pid}`); }
   presence() { return this.req('POST', '/presence', { timeout: 6000 }); }   // 0.3.0+: 'I am online'
+  // 0.5.0 groups
+  searchGroups(q) { return this.req('GET', '/groups?q=' + encodeURIComponent(q), { timeout: 6000 }); }
+  myGroups() { return this.req('GET', '/groups/mine', { timeout: 6000 }); }
+  createGroup(name) { return this.req('POST', '/groups', { json: { name } }); }
+  joinGroup(gid) { return this.req('POST', `/groups/${gid}/join`); }
+  leaveGroup(gid) { return this.req('POST', `/groups/${gid}/leave`); }
   recognize(faces) { return this.req('POST', '/recognize/embeddings', { json: { faces }, timeout: 5000 }); }
 }
 

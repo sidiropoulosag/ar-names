@@ -3,12 +3,12 @@
 //    (SharedArrayBuffer -> multi-threaded WASM) even on static hosts like GitHub Pages.
 // 2) Offline cache: everything the app fetches is cached; the full asset list is also precached in the background.
 // All paths are relative to this file, so it works under any subpath (e.g. /ar-names/).
-const CACHE = 'ar-names-v14.1';
+const CACHE = 'ar-names-v15';
 // 3D models (models3d/) are NEVER precached: each is cached on first use, in its own cache that survives app updates.
 const MODELS_CACHE = 'ar-names-models-1';
 const ASSETS = [
   './', 'index.html', 'coi-serviceworker.js', 'app.css', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
-  'js/main.js', 'js/ort.js', 'js/detector.js', 'js/embedder.js', 'js/labels3d.js', 'js/tracker.js', 'js/geometry.js', 'js/db.js', 'js/server.js', 'js/objects3d.js',
+  'js/main.js', 'js/ort.js', 'js/detector.js', 'js/embedder.js', 'js/labels3d.js', 'js/tracker.js', 'js/geometry.js', 'js/db.js', 'js/server.js', 'js/objects3d.js', 'js/chime.js',
   'vendor/ort/ort.wasm.min.mjs', 'vendor/ort/ort-wasm-simd-threaded.mjs', 'vendor/ort/ort-wasm-simd-threaded.wasm',
   'vendor/three/three.module.js', 'vendor/three/three.core.js',
   'vendor/three/addons/loaders/FontLoader.js', 'vendor/three/addons/geometries/TextGeometry.js',

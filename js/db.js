@@ -55,7 +55,7 @@ export async function importJSON(text) {
 }
 
 const SKEY = 'ar-names-settings';
-export const defaults = { threshold: 0.40, margin: 0.05, showUnknown: true, maxFaces: 12, range: 512 };
+export const defaults = { threshold: 0.40, margin: 0.05, showUnknown: true, maxFaces: 12, range: 512, sound: true };
 export function loadSettings() {
   try {
     const s = { ...defaults, ...JSON.parse(localStorage.getItem(SKEY) || '{}') };

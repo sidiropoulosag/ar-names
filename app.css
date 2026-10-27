@@ -82,3 +82,24 @@ body.adv .adv-only{display:block}
 #dispPrev .pv-face{font-size:34px;line-height:1}
 #dispPrev [hidden]{display:none}
 .dispItem:disabled+*,.setting.check:has(.dispItem:disabled){opacity:.5}
+
+/* v15: text styles + groups */
+#stylePick{display:flex;gap:8px;margin:2px 0 8px}
+#stylePick button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:10px;border:2px solid transparent;background:rgba(255,255,255,.07);color:inherit;font-size:13px}
+#stylePick button.sel{border-color:#64b5f6;background:rgba(100,181,246,.18)}
+.sty-demo{font-size:24px;line-height:1.1;color:#fff}
+.sty-bold{font-weight:800;text-shadow:0 2px 0 #1565c0,0 3px 6px rgba(0,0,0,.5)}
+.sty-curved{font-weight:800;color:#fff4e6;text-shadow:0 1px 0 #ef6c00,0 2px 0 #ef6c00,0 3px 5px rgba(0,0,0,.45);display:inline-block;transform:perspective(60px) rotateX(18deg);border-radius:40%}
+.sty-soft{font-weight:400;color:rgba(255,255,255,.78);text-shadow:0 1px 0 rgba(179,212,255,.6),0 2px 6px rgba(0,0,0,.25)}
+#dispPrev .pv-name.sty-curved,#dispPrev .pv-name.sty-soft{text-shadow:none}
+#dispPrev .pv-name svg{display:block;overflow:visible}
+#dispPrev .pv-name.sty-soft{font-weight:400;color:rgba(255,255,255,.78);text-shadow:0 1px 0 rgba(179,212,255,.6),0 2px 6px rgba(0,0,0,.25)}
+#srvPrivBox h4{margin:10px 0 4px;font-size:14px;opacity:.85}
+.grp-list{list-style:none;padding:0;margin:0}
+.grp-list li{display:flex;align-items:center;gap:8px;padding:4px 0;flex-wrap:wrap}
+.grp-list li .gname{flex:1;min-width:8em}
+.grp-list li .small{opacity:.75}
+.grp-list li button{padding:4px 10px;font-size:13px}
+#grpSearch{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid #3d5a80;background:#0d1b2a;color:#fff;margin:2px 0 4px}
+#grpNewName{font-size:16px;padding:10px 12px;min-width:0}
+#grpNewName{flex:1}

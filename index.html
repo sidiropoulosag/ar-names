@@ -88,6 +88,7 @@
   <label class="setting">Εμβέλεια ανίχνευσης:
     <select id="optRange"><option value="384">Κοντά (ταχύτερο)</option><option value="512">Κανονική</option><option value="704">Μακριά / ομάδες (πιο αργό)</option></select></label>
   <label class="setting check"><input id="optUnknown" type="checkbox"> Δείξε «?» σε άγνωστα πρόσωπα</label>
+  <label class="setting check"><input id="optSound" type="checkbox"> 🔔 Ήχος αναγνώρισης</label>
   <div class="row wrap">
     <button id="pExport">⬇ Αντίγραφο ασφαλείας</button>
     <label class="btn">⬆ Επαναφορά<input id="pImport" type="file" accept="application/json,.json" hidden></label>
@@ -124,6 +125,14 @@
     <textarea id="srvMsg2" class="disp-only" rows="2" maxlength="300" placeholder="Ένα δεύτερο μήνυμα (π.χ. για άλλη περίσταση)"></textarea>
     <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="object3d"> 🧸 3D αντικείμενο</label>
     <div id="objBox" class="disp-only"><div id="objPick"></div><canvas id="objPrev" width="120" height="120"></canvas></div>
+    <div id="styleBox" class="styles-only hidden">
+      <p class="small">✨ Στυλ γραμμάτων του ονόματος</p>
+      <div id="stylePick" role="radiogroup" aria-label="Στυλ γραμμάτων">
+        <button type="button" role="radio" data-style="bold"><span class="sty-demo sty-bold">Αα</span><span>Τολμηρό</span></button>
+        <button type="button" role="radio" data-style="curved"><span class="sty-demo sty-curved">Αα</span><span>Καμπυλωτό</span></button>
+        <button type="button" role="radio" data-style="soft"><span class="sty-demo sty-soft">Αα</span><span>Ήπιο</span></button>
+      </div>
+    </div>
     <div id="sizeBox" class="sizes-only">
       <label class="size"><span>Μέγεθος ονόματος</span><input id="szName" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
       <label class="size"><span>Μέγεθος σχολίου</span><input id="szText" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
@@ -138,6 +147,21 @@
       <label class="setting check"><input id="srvFamily" type="checkbox"> Όλοι</label>
       <ul id="srvMembers"></ul>
       <p id="srvMembersNote" class="small">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
+    </div>
+    <!-- v15 (server 0.5.0): «Ποιος με βλέπει» = Όλοι / ομάδες -->
+    <div id="srvPrivBox" class="groups-only hidden">
+      <h3>Ποιος με βλέπει</h3>
+      <label class="setting check"><input type="radio" name="privMode" id="privAll" value="everyone"> 🌍 Όλοι</label>
+      <label class="setting check"><input type="radio" name="privMode" id="privGroups" value="groups"> 👥 Μόνο οι ομάδες που διαλέγω</label>
+      <p id="privNote" class="small"></p>
+      <h4>Οι ομάδες μου</h4>
+      <ul id="grpMine" class="grp-list"></ul>
+      <h4>Βρες ομάδα</h4>
+      <input id="grpSearch" type="search" maxlength="40" placeholder="Γράψε όνομα ομάδας…" autocomplete="off">
+      <ul id="grpResults" class="grp-list"></ul>
+      <h4>Νέα ομάδα</h4>
+      <div class="row"><input id="grpNewName" type="text" maxlength="40" placeholder="Όνομα νέας ομάδας" autocomplete="off"><button id="grpCreate" type="button">＋ Δημιουργία</button></div>
+      <p id="grpInfo" class="small"></p>
     </div>
     <div class="row"><button id="srvDelMe" class="danger">🗑 Διαγραφή του προφίλ μου από τον server</button></div>
   </div>

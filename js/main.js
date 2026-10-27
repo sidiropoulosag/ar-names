@@ -4,6 +4,7 @@ import { Labels3D } from './labels3d.js';
 import { Gallery, Tracker } from './tracker.js';
 import * as db from './db.js';
 import * as server from './server.js';
+import { ChimeRounds, unlockAudio, chimeStats } from './chime.js';
 import { OBJECTS, objectInfo, previewObject, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
@@ -18,10 +19,11 @@ const frameCtx = frameCanvas.getContext('2d', { willReadFrequently: true });
 const gallery = new Gallery();
 const tracker = new Tracker(gallery, settings);
 const stats = { fps: 0, det: 0, emb: 0, embN: 0, faces: 0, frames: 0, lastT: 0, detSamples: [], embSamples: [], renderSamples: [] };
+const chimes = new ChimeRounds();
 let facing = 'environment', stream = null, mode = 'scan', ready = false;
 const cfg = server.loadCfg();
 const api = new server.Api(cfg);
-window.__ar = { cfg, api, get srv() { return srv; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db };
+window.__ar = { cfg, api, get srv() { return srv; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, chimes, chime: chimeStats, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db };
 
 function setStatus(t) { $('status').textContent = t; }
 
@@ -147,6 +149,8 @@ async function loop() {
     // draw first, then (at most) one embedding for this frame: the two models share one WASM runtime
     const r0 = performance.now();
     labels.render(tracks, vw, vh, settings.showUnknown, now);
+    // «Ήχος αναγνώρισης»: one soft chime when someone new is recognised (not for '?' faces)
+    chimes.update(tracks.filter((x) => x.label && x.missed <= 3).map((x) => (x.personId ? 'p' + x.personId : 'l' + x.label)), now, settings.sound !== false);
     const rdt = performance.now() - r0; stats.renderSamples.push(rdt); if (stats.renderSamples.length > 600) stats.renderSamples.shift();
     let useLocal = true, filter = null;
     if (serverOn()) {
@@ -288,7 +292,8 @@ function viewOf(d) {
   const sz = d.sizes || {};
   return { items, showName: items.includes('name'), text: texts.join('\n'),
     objectId: items.includes('object3d') ? (d.object_id || DEFAULT_OBJECT) : '',
-    sizes: d.sizes ? { name: +sz.name || 1, text: +sz.text || 1, object: +sz.object || 1 } : null };
+    sizes: d.sizes ? { name: +sz.name || 1, text: +sz.text || 1, object: +sz.object || 1 } : null,
+    style: d.style || 'bold' };   // 0.5.0 text style (older servers: the bold look)
 }
 function dispTag(d) {
   if (!d) return '';
@@ -460,7 +465,7 @@ async function enrollFromFiles(files) {
 }
 
 // ---------- UI wiring ----------
-$('btnStart').onclick = () => { goFullscreen(); start(); };
+$('btnStart').onclick = () => { unlockAudio(); goFullscreen(); start(); };
 
 // ---- Full screen / install (hides the browser address bar) ----
 const isStandalone = () => window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -512,6 +517,8 @@ $('optRange').value = String(settings.range);
 $('optRange').onchange = (e) => { settings.range = +e.target.value; db.saveSettings(settings); };
 $('optUnknown').checked = settings.showUnknown;
 $('optUnknown').onchange = (e) => { settings.showUnknown = e.target.checked; db.saveSettings(settings); };
+$('optSound').checked = settings.sound !== false;
+$('optSound').onchange = (e) => { settings.sound = e.target.checked; db.saveSettings(settings); if (e.target.checked) unlockAudio(); };
 
 // Service worker (sw.js: offline cache + COOP/COEP headers) is registered by coi-serviceworker.js,
 // which also reloads once so the page becomes crossOriginIsolated (multi-threaded WASM) on GitHub Pages.
@@ -565,11 +572,11 @@ async function serverStep(tracks, vw, vh, now) {
         // 0.4.0: 'display.items' (1-2 of name/message1/message2/object3d) + sizes; 0.3.0: one 'display.mode'; older: 'message'
         const v = viewOf(f.display || { mode: 'message', text: f.message || '' });
         t.srvMiss = 0; t.srv = true; t.label = f.name; t.personId = f.person_id; t.sim = f.similarity;
-        t.objectId = v.objectId; t.message = v.text; t.showName = v.showName; t.sizes = v.sizes;
+        t.objectId = v.objectId; t.message = v.text; t.showName = v.showName; t.sizes = v.sizes; t.style = v.style;
         if (!t.recognisedAt) t.recognisedAt = performance.now();
       } else {
         t.srvMiss = (t.srvMiss || 0) + 1;
-        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.showName = true; t.sizes = null; }
+        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.showName = true; t.sizes = null; t.style = null; }
       }
     }
   }).catch((e) => {
@@ -578,7 +585,7 @@ async function serverStep(tracks, vw, vh, now) {
     srv.offline = true;
     srv.retryAt = performance.now() + (e.status === 401 ? 15000 : 5000);
     if (!wasOffline) {
-      for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.showName = true; t.sizes = null; }
+      for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.showName = true; t.sizes = null; t.style = null; }
       tracker.relabel();
       const local = gallery.people.length ? 'συνεχίζω με τα άτομα αυτής της συσκευής' : 'θα ξαναδοκιμάσω σε λίγο';
       setStatus(e.status === 401 ? (adv ? '⚠️ Server: το token δεν ισχύει — δες τις Ρυθμίσεις' : '⚠️ Το προφίλ σου δεν βρέθηκε — δες τις Ρυθμίσεις')
@@ -797,7 +804,7 @@ function initServerUi() {
   $('srvTest').onclick = () => refreshServer(true);
   $('srvOn').onchange = () => {
     cfg.enabled = $('srvOn').checked; server.saveCfg(cfg); srv.offline = false;
-    for (const t of tracker.tracks) { t.srv = false; t.message = ''; t.objectId = ''; t.showName = true; t.sizes = null; }
+    for (const t of tracker.tracks) { t.srv = false; t.message = ''; t.objectId = ''; t.showName = true; t.sizes = null; t.style = null; }
     tracker.relabel(); syncServerUi(); reloadPeople();
     setStatus(cfg.enabled ? '☁️ Αναγνώριση μέσω server' : 'Αναγνώριση στη συσκευή');
   };
@@ -814,6 +821,7 @@ function initServerUi() {
       Object.assign(f, { message2: $('srvMsg2').value.trim(), object_id: dispObj });
       if (hasCap('combo')) f.display_items = items;
       else f.display_mode = ({ message1: 'message', message2: 'message2', object3d: 'object3d' })[items[0]] || 'message';
+      if (hasCap('styles')) f.text_style = dispStyle;
       if (hasCap('sizes')) Object.assign(f, { size_name: +$('szName').value, size_text: +$('szText').value, size_object: +$('szObj').value });
       const empty = [['message1', f.message, 'το Μήνυμα 1'], ['message2', f.message2, 'το Μήνυμα 2']].filter(([k, t]) => items.includes(k) && !t).map((x) => x[2]);
       if (empty.length) note = ` (${empty.join(' και ')} είναι κενό — δεν θα φαίνεται)`;
@@ -834,6 +842,8 @@ function initServerUi() {
   $('srvMsg').oninput = () => { autoPick('message1'); updatePreview(); };
   $('srvMsg2').oninput = () => { autoPick('message2'); updatePreview(); };
   for (const id of ['szName', 'szText', 'szObj']) $(id).oninput = () => { dispDirty = true; showSize(id); updatePreview(); };
+  for (const b of $('stylePick').children) b.onclick = () => { pickStyle(b.dataset.style); dispDirty = true; };
+  setupGroups();
   $('srvFamily').onchange = async () => {
     try { await api.patchMe(cfg.personId, { visibility: $('srvFamily').checked ? 'family' : 'selected' }); await refreshServer(); }
     catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); $('srvFamily').checked = !$('srvFamily').checked; }
@@ -850,7 +860,104 @@ function initServerUi() {
   $('btnPeople').onclick = () => { btnPeople(); refreshServer(); };
 }
 
-let dispObj = DEFAULT_OBJECT;
+let dispObj = DEFAULT_OBJECT, dispStyle = 'bold';
+const STYLE_NAMES = { bold: 'Τολμηρό', curved: 'Καμπυλωτό', soft: 'Ήπιο' };
+function pickStyle(st) {
+  dispStyle = STYLE_NAMES[st] ? st : 'bold';
+  for (const b of $('stylePick').children) { const on = b.dataset.style === dispStyle; b.classList.toggle('sel', on); b.setAttribute('aria-checked', on); }
+  updatePreview();
+}
+// «Ποιος με βλέπει» (server 0.5.0): Όλοι / only members of the groups I tick
+let privMe = null, grpSearchTimer = 0, grpSearchSeq = 0;
+function setupGroups() {
+  const info = (t) => { $('grpInfo').textContent = t; };
+  for (const id of ['privAll', 'privGroups']) $(id).onchange = async () => {
+    const mode = $('privGroups').checked ? 'groups' : 'everyone';
+    try { await api.patchMe(cfg.personId, { visibility: mode }); info(mode === 'everyone' ? 'Σε βλέπουν όλοι ✓' : 'Σε βλέπουν μόνο οι ομάδες που τσεκάρεις ✓'); await refreshGroups(); }
+    catch (e) { info('⚠️ ' + errMsg(e)); await refreshGroups(); }
+  };
+  $('grpSearch').oninput = () => { clearTimeout(grpSearchTimer); grpSearchTimer = setTimeout(searchGroups, 350); };
+  $('grpCreate').onclick = async () => {
+    const name = $('grpNewName').value.trim().replace(/\s+/g, ' ');
+    if (name.length < 2) return info('⚠️ Δώσε όνομα με τουλάχιστον 2 γράμματα.');
+    try {
+      const r = await api.createGroup(name);
+      $('grpNewName').value = '';
+      await seeMe(r.group.id, true, r.groups);
+      info(`Η ομάδα «${r.group.name}» φτιάχτηκε ✓ — πες στους άλλους να την αναζητήσουν και να μπουν.`);
+    } catch (e) { info('⚠️ ' + errMsg(e)); }
+  };
+}
+async function seeMe(gid, on, groups) {   // tick / untick «με βλέπει» for one of my groups
+  const ids = new Set((groups || []).filter((g) => g.sees_me).map((g) => g.id));
+  on ? ids.add(gid) : ids.delete(gid);
+  await api.patchMe(cfg.personId, { visible_groups: [...ids] });
+  await refreshGroups();
+}
+async function searchGroups() {
+  const q = $('grpSearch').value.trim(), ul = $('grpResults'), seq = ++grpSearchSeq;
+  if (q.length < 2) { ul.innerHTML = q ? '<li class="small">Γράψε τουλάχιστον 2 γράμματα.</li>' : ''; return; }
+  try {
+    const { groups } = await api.searchGroups(q);
+    if (seq !== grpSearchSeq) return;
+    ul.innerHTML = groups.length ? '' : '<li class="small">Δεν βρέθηκε ομάδα. Μπορείς να τη φτιάξεις παρακάτω.</li>';
+    for (const g of groups) {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="gname"></span><button type="button"></button>';
+      li.querySelector('.gname').textContent = g.name;
+      const b = li.querySelector('button');
+      if (g.member) { b.textContent = '✓ Είσαι μέλος'; b.disabled = true; }
+      else {
+        b.textContent = 'Συμμετοχή';
+        b.onclick = async () => {
+          b.disabled = true;
+          try { const r = await api.joinGroup(g.id); await seeMe(g.id, true, r.groups); $('grpInfo').textContent = `Μπήκες στην ομάδα «${g.name}» ✓`; searchGroups(); }
+          catch (e) { b.disabled = false; $('grpInfo').textContent = '⚠️ ' + errMsg(e); }
+        };
+      }
+      ul.appendChild(li);
+    }
+  } catch (e) { if (seq === grpSearchSeq) ul.innerHTML = `<li class="small">⚠️ ${escapeHtml(errMsg(e))}</li>`; }
+}
+async function refreshGroups(me = null) {
+  const box = $('srvPrivBox');
+  if (!hasCap('groups') || !cfg.token) { box.classList.add('hidden'); return; }
+  try {
+    if (!me) me = await api.me();
+    privMe = me;
+    const mode = (me.privacy && me.privacy.mode) || (me.visibility === 'family' ? 'everyone' : 'groups');
+    $('privAll').checked = mode === 'everyone'; $('privGroups').checked = mode === 'groups';
+    const { groups } = await api.myGroups();
+    const ul = $('grpMine'); ul.innerHTML = '';
+    const ticked = groups.filter((g) => g.sees_me).length;
+    $('privNote').textContent = mode === 'everyone'
+      ? 'Όποιος έχει την εφαρμογή σε αναγνωρίζει και βλέπει ό,τι διάλεξες πάνω από το κεφάλι σου.'
+      : (ticked ? 'Τσέκαρε ποιες ομάδες σε βλέπουν. Σε αναγνωρίζουν μόνο τα μέλη τους· οι άλλοι σε βλέπουν σαν άγνωστο πρόσωπο.'
+        : '⚠️ Δεν έχεις τσεκάρει καμία ομάδα — τώρα δεν σε αναγνωρίζει κανείς άλλος. Τσέκαρε μία από τις ομάδες σου (ή μπες / φτιάξε μία).');
+    if (!groups.length) ul.innerHTML = '<li class="small">Δεν είσαι ακόμα σε καμία ομάδα. Βρες μία ή φτιάξε νέα.</li>';
+    for (const g of groups) {
+      const li = document.createElement('li');
+      li.innerHTML = '<label class="check"><input type="checkbox"> <span class="gname"></span></label> <span class="small"></span><button type="button" class="danger">Αποχώρηση</button>';
+      li.querySelector('.gname').textContent = g.name;
+      const who = (g.member_names || []).filter(Boolean);
+      li.querySelector('.small').textContent = `${plural(g.members)}` + (who.length ? ': ' + who.slice(0, 6).join(', ') + (who.length > 6 ? '…' : '') : '');
+      const cb = li.querySelector('input');
+      cb.checked = !!g.sees_me; cb.disabled = mode !== 'groups'; cb.title = 'Με βλέπει';
+      cb.setAttribute('aria-label', `Η ομάδα «${g.name}» με βλέπει`);
+      cb.onchange = async () => {
+        try { await seeMe(g.id, cb.checked, groups); $('grpInfo').textContent = cb.checked ? `Η ομάδα «${g.name}» σε βλέπει ✓` : `Η ομάδα «${g.name}» δεν σε βλέπει πια ✓`; }
+        catch (e) { cb.checked = !cb.checked; $('grpInfo').textContent = '⚠️ ' + errMsg(e); }
+      };
+      li.querySelector('button').onclick = async () => {
+        if (!confirm(`Αποχώρηση από την ομάδα «${g.name}»;`)) return;
+        try { await api.leaveGroup(g.id); $('grpInfo').textContent = `Αποχώρησες από την ομάδα «${g.name}».`; await refreshGroups(); if ($('grpSearch').value.trim()) searchGroups(); }
+        catch (e) { $('grpInfo').textContent = '⚠️ ' + errMsg(e); }
+      };
+      ul.appendChild(li);
+    }
+    box.classList.remove('hidden');
+  } catch (e) { $('grpInfo').textContent = '⚠️ ' + errMsg(e); }
+}
 function pickObject(id) {
   dispObj = objectInfo(id).id;
   for (const b of $('objPick').children) b.classList.toggle('sel', b.dataset.obj === dispObj);
@@ -896,8 +1003,15 @@ function updatePreview() {   // tiny HTML mock of the label (no WebGL), only on 
   if (!hasCap('sizes')) return;
   const items = selItems(), pv = $('dispPrev');
   const name = pv.querySelector('.pv-name'), bub = pv.querySelector('.pv-bub'), obj = pv.querySelector('.pv-obj');
-  name.hidden = !items.includes('name'); name.textContent = cfg.name || 'Όνομα';
-  name.style.fontSize = (20 * +$('szName').value).toFixed(0) + 'px';
+  name.hidden = !items.includes('name');
+  const nm = cfg.name || 'Όνομα', fpx = 20 * +$('szName').value, st = hasCap('styles') ? dispStyle : 'bold';
+  name.className = 'pv-name sty-' + st;
+  name.style.fontSize = fpx.toFixed(0) + 'px';
+  if (st === 'curved') {   // the name on a gentle arc, like the 3D label
+    const w = Math.max(60, nm.length * fpx * 0.72), h = fpx * 1.6;
+    name.innerHTML = `<svg width="${w.toFixed(0)}" height="${h.toFixed(0)}" viewBox="0 0 ${w.toFixed(0)} ${h.toFixed(0)}" aria-hidden="true"><path id="pvArc" d="M 4 ${(h - 2).toFixed(1)} Q ${(w / 2).toFixed(1)} ${(-h * 0.35).toFixed(1)} ${(w - 4).toFixed(1)} ${(h - 2).toFixed(1)}" fill="none"/><text text-anchor="middle" font-weight="800" font-size="${fpx.toFixed(0)}" fill="#fff4e6" stroke="#ef6c00" stroke-width="${(fpx / 14).toFixed(2)}" paint-order="stroke"><textPath href="#pvArc" startOffset="50%"></textPath></text></svg>`;
+    name.querySelector('textPath').textContent = nm;
+  } else name.textContent = nm;
   const texts = [['message1', 'srvMsg'], ['message2', 'srvMsg2']].filter(([k]) => items.includes(k)).map(([, id]) => $(id).value.trim()).filter(Boolean);
   bub.hidden = !texts.length; bub.textContent = texts.join('\n');
   bub.style.fontSize = (13 * +$('szText').value).toFixed(1) + 'px';
@@ -946,6 +1060,7 @@ async function refreshServer(verbose = false) {
     for (const el of document.querySelectorAll('#srvMe .disp-only')) el.classList.toggle('hidden', !disp);
     for (const el of document.querySelectorAll('#srvMe .combo-only')) el.classList.toggle('hidden', !dispMulti);
     for (const el of document.querySelectorAll('#srvMe .sizes-only')) el.classList.toggle('hidden', !(disp && hasCap('sizes')));
+    for (const el of document.querySelectorAll('#srvMe .styles-only')) el.classList.toggle('hidden', !(disp && hasCap('styles')));
     $('srvDispOld').classList.toggle('hidden', dispMulti);
     $('srvDispOld').textContent = disp ? '⚠️ Χρειάζεται ενημέρωση server (0.4.0) για 2 επιλογές μαζί και μεγέθη — τώρα φαίνεται το όνομα + μία επιλογή.'
       : '⚠️ Χρειάζεται ενημέρωση server (0.4.0) για «Μήνυμα 2», 3D αντικείμενα και μεγέθη — τώρα φαίνεται μόνο το μήνυμα.';
@@ -957,9 +1072,11 @@ async function refreshServer(verbose = false) {
       if (disp) {
         setItems(Array.isArray(me.display_items) && dispMulti ? me.display_items : ['name', ITEM_OF_MODE[me.display_mode] || 'message1']);
         setSizes(me.sizes);
+        pickStyle(me.text_style || 'bold');
         pickObject(me.object_id || DEFAULT_OBJECT);
       }
     }
+    refreshGroups(me);   // 0.5.0 only; hidden on older servers
     const fam = me.visibility === 'family';
     $('srvFamily').checked = fam;
     const allowed = new Set(me.allowed_viewers.map((v) => (typeof v === 'object' ? v.id : v)));

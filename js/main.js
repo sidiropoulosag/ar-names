@@ -270,8 +270,8 @@ function renderPeople() {
     if (fam.err) t = `☁️ Εκτός σύνδεσης — φαίνεται η τελευταία λίστα (${fam.err})`;
   } else if (cfg.url && fam.count != null) {
     const onlyHere = people.length - matched.size;
-    t = `Οικογένεια: ${plural(fam.count)}` + (fam.mode !== 'count' && onlyHere > 0 ? ` · ${plural(onlyHere)} μόνο σε αυτή τη συσκευή` : '');
-    if (fam.mode === 'count' && fam.count > 0) t += ' στον server. Για να δεις ποιοι είναι, συνδέσου: καταχώρισε τον εαυτό σου («＋ Νέο άτομο») ή βάλε το token σου στις ρυθμίσεις.';
+    t = `Στο δίκτυο: ${plural(fam.count)}` + (fam.mode !== 'count' && onlyHere > 0 ? ` · ${plural(onlyHere)} μόνο σε αυτή τη συσκευή` : '');
+    if (fam.mode === 'count' && fam.count > 0) t += '. Για να δεις ποιοι είναι, συνδέσου: καταχώρισε τον εαυτό σου («＋ Νέο άτομο») ή βάλε το token σου στις ρυθμίσεις.';
     if (fam.err) t += ` (⚠️ ${fam.err} — δείχνω την τελευταία λίστα)`;
   } else if (cfg.url && fam.err) t = adv ? `☁️ Ο server της οικογένειας δεν απαντά τώρα (${fam.err}) — φαίνονται μόνο τα άτομα αυτής της συσκευής.`
     : '☁️ Εκτός σύνδεσης — φαίνονται μόνο τα άτομα αυτής της συσκευής.';
@@ -649,7 +649,7 @@ function setupEnrollServer(existing, keepCheck = false) {
     $('enName').disabled = false;
     if (on) {
       const hint = () => setMsg(srvOpen === true ? 'Γράψε το όνομά σου και πάτα ▶ Αυτόματη λήψη.'
-        : 'Γράψε το όνομά σου, το κλειδί της οικογένειας και πάτα ▶ Αυτόματη λήψη.');
+        : 'Γράψε το όνομά σου, το κλειδί πρόσβασης και πάτα ▶ Αυτόματη λήψη.');
       applyOpenEnrollment(); hint();
       const shown = $('enMsg').textContent;
       checkOpenEnrollment().then(() => {
@@ -657,7 +657,7 @@ function setupEnrollServer(existing, keepCheck = false) {
         if (srvReach === false && !en.auto && !en.samples.length) {
           // Server unreachable: fall back to on-device enrollment (the user can tick ☁️ again to retry).
           $('enToSrv').checked = false; $('enSrvFields').classList.add('hidden');
-          setMsg('Ο server της οικογένειας δεν απαντά τώρα — η καταχώριση θα γίνει μόνο σε αυτή τη συσκευή. Βάλε όνομα και πάτα ▶ (ή τσέκαρε ξανά το ☁️ για να ξαναδοκιμάσεις).');
+          setMsg('Δεν υπάρχει σύνδεση τώρα — η καταχώριση θα γίνει μόνο σε αυτή τη συσκευή. Βάλε όνομα και πάτα ▶ (ή τσέκαρε ξανά το ☁️ για να ξαναδοκιμάσεις).');
         } else if ($('enMsg').textContent === shown) hint();
       });
     }
@@ -705,7 +705,7 @@ async function saveEnrollServer() {
       const name = $('enName').value.trim(), key = $('enFamKey').value.trim();
       if (!name) { setMsg('Γράψε το όνομά σου.'); return; }
       if (!key && srvOpen !== true) await checkOpenEnrollment();
-      if (!key && srvOpen !== true) { applyOpenEnrollment(); setMsg('Χρειάζεται το κλειδί της οικογένειας (στο ζητάει μόνο αυτή τη φορά).'); return; }
+      if (!key && srvOpen !== true) { applyOpenEnrollment(); setMsg('Χρειάζεται το κλειδί πρόσβασης (στο ζητάει μόνο αυτή τη φορά).'); return; }
       setMsg('Δημιουργία του προφίλ σου στον server…');
       let r;
       try {
@@ -771,7 +771,7 @@ $('tokOk').onclick = () => { $('tokVal').value = ''; $('tokSheet').classList.add
 function syncServerUi() {
   $('srvUrl').value = cfg.url || '';
   $('srvUrlNote').textContent = !cfg.url ? 'Χωρίς server: όλα γίνονται μόνο σε αυτή τη συσκευή.'
-    : server.isDefaultUrl(cfg) ? 'Ο server της οικογένειας (προεπιλογή). Άδειασε το πεδίο για χρήση μόνο στη συσκευή.'
+    : server.isDefaultUrl(cfg) ? 'Ο προεπιλεγμένος server. Άδειασε το πεδίο για χρήση μόνο στη συσκευή.'
       : 'Δική σου διεύθυνση. Άδειο = μόνο στη συσκευή.';
   $('srvDefault').classList.toggle('hidden', server.isDefaultUrl(cfg));
   $('srvToken').value = cfg.token || '';
@@ -779,7 +779,7 @@ function syncServerUi() {
   $('srvOn').disabled = !(cfg.url && cfg.token);
   syncEnrollBtn();
   $('privacyNote').textContent = serverOn()
-    ? 'Λειτουργία server: για την αναγνώριση στέλνεται στον server της οικογένειας μόνο ένα αριθμητικό αποτύπωμα κάθε προσώπου (όχι εικόνα).'
+    ? 'Λειτουργία server: για την αναγνώριση στέλνεται στον server μόνο ένα αριθμητικό αποτύπωμα κάθε προσώπου (όχι εικόνα).'
     : 'Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.';
 }
 function initServerUi() {
@@ -929,7 +929,7 @@ async function refreshServer(verbose = false) {
     if (!cfg.token) {
       $('srvMe').classList.add('hidden');
       info.textContent = '☁️ Συνδεδεμένος ✓ — δεν έχεις ακόμα προφίλ. Πάτα «＋ Νέο άτομο» και καταχώρισε τον εαυτό σου'
-        + (srvOpen ? '' : ' (θα χρειαστείς το κλειδί της οικογένειας)') + (adv ? ', ή βάλε το token σου.' : '.');
+        + (srvOpen ? '' : ' (θα χρειαστείς το κλειδί πρόσβασης)') + (adv ? ', ή βάλε το token σου.' : '.');
       return;
     }
     const me = await api.me();

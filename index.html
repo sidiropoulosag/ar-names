@@ -52,11 +52,11 @@
     <input id="enName" type="text" placeholder="Όνομα (π.χ. Μαρία)" maxlength="40" autocomplete="off">
   </div>
   <div id="enSrv" class="hidden">
-    <label class="setting check"><input id="enToSrv" type="checkbox"> ☁️ Καταχώριση του εαυτού μου στον server της οικογένειας</label>
+    <label class="setting check"><input id="enToSrv" type="checkbox"> ☁️ Καταχώριση του εαυτού μου στο δίκτυο</label>
     <div id="enSrvFields">
       <textarea id="enSrvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που θα φαίνεται πάνω από το όνομά σου (προαιρετικό)"></textarea>
-      <label class="setting check"><input id="enSrvFamily" type="checkbox"> Να βλέπει το μήνυμά μου όλη η οικογένεια</label>
-      <input id="enFamKey" type="password" placeholder="Κλειδί οικογένειας" autocomplete="off">
+      <label class="setting check"><input id="enSrvFamily" type="checkbox"> Να βλέπουν το μήνυμά μου όλοι</label>
+      <input id="enFamKey" type="password" placeholder="Κλειδί πρόσβασης" autocomplete="off">
     </div>
   </div>
   <div id="enMsg" class="msg">Βάλε όνομα και κοίτα την κάμερα.</div>
@@ -96,8 +96,8 @@
   <button id="pAddNew" class="hidden" style="margin-top:8px">＋ Προσθήκη νέου προφίλ</button>
   <p class="small">Καταχώριζε μόνο άτομα που συμφωνούν. Όσα άτομα δεν έχουν ☁️ μένουν μόνο σε αυτή τη συσκευή.</p>
 
-  <h2>☁️ Server οικογένειας</h2>
-  <p class="small">Με τον server, η αναγνώριση γίνεται από κοινό server της οικογένειας: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
+  <h2>☁️ Online προφίλ</h2>
+  <p class="small">Με το online προφίλ, η αναγνώριση γίνεται από κοινό server: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
   <div id="srvAdv" class="adv-only">
   <p class="small">🔧 Προχωρημένες ρυθμίσεις (για τον διαχειριστή)</p>
   <label class="setting">Διεύθυνση server
@@ -135,7 +135,7 @@
     <!-- v14: «Ποιος με βλέπει» hidden for now (logic kept; visibility unchanged) -->
     <div id="srvVisBox" class="hidden">
       <h3>Ποιος με βλέπει</h3>
-      <label class="setting check"><input id="srvFamily" type="checkbox"> Όλη η οικογένεια</label>
+      <label class="setting check"><input id="srvFamily" type="checkbox"> Όλοι</label>
       <ul id="srvMembers"></ul>
       <p id="srvMembersNote" class="small">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
     </div>

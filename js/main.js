@@ -960,7 +960,12 @@ async function refreshGroups(me = null) {
 }
 function pickObject(id) {
   dispObj = objectInfo(id).id;
-  for (const b of $('objPick').children) b.classList.toggle('sel', b.dataset.obj === dispObj);
+  const box = $('objPick'); let sel = null;
+  for (const b of box.children) { b.classList.toggle('sel', b.dataset.obj === dispObj); if (b.dataset.obj === dispObj) sel = b; }
+  if (sel && box.clientHeight) {   // ~44 objects: keep the chosen one visible inside the scrolling grid (not the page)
+    const r = sel.getBoundingClientRect(), br = box.getBoundingClientRect();
+    if (r.top < br.top) box.scrollTop += r.top - br.top - 4; else if (r.bottom > br.bottom) box.scrollTop += r.bottom - br.bottom + 4;
+  }
   try { previewObject($('objPrev'), dispObj); } catch (e) { console.warn('preview', e); }
   updatePreview();
 }

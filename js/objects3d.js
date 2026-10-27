@@ -3,7 +3,7 @@
 //   { id, name, emoji, url: 'models3d/<file>.glb', thumb: 'models3d/thumbs/<file>.png' }   (a glTF model), or
 //   { id, name, emoji, build: (THREE) => THREE.Object3D }                                   (three.js primitives)
 // id: a-z, 0-9, - or _, max 32 (the server stores only the id). Models are auto-scaled to 1 unit tall,
-// centred, and loop their 'Flying_Idle' animation (or their first one).
+// centred, and loop their 'Flying_Idle' / 'idle' animation (or their first moving one).
 // Models are loaded only when someone actually needs one (a recognised person chose it, or it is picked in
 // Settings); the service worker caches each file on first use — nothing is precached.
 import * as THREE from 'three';
@@ -56,9 +56,19 @@ function smiley() {
   return g;
 }
 
-const MODELS = Array.from({ length: 17 }, (_, i) => {
+// m01–m17: flying creatures; m18–m41: Kenney «Cube Pets» animals (CC0, see licenses/), texture in models3d/Textures/.
+const MODEL_NAMES = [
+  'Ριγέ Ζουζούνι', 'Γελαστό Ζουζούνι', 'Πορτοκαλί Δρακάκι', 'Μωβ Νυχτερίδα', 'Μωβ Σπουργίτης', 'Κυκλωπάκι',
+  'Τριματάκι', 'Κρανιάκι', 'Μασκοφόρος', 'Ιπτάμενο Αστεράκι', 'Πράσινος Βασιλιάς', 'Μωβ Χταποδάκι',
+  'Κίτρινος Μάγος', 'Πορτοκαλί Νυχτερίδα', 'Κόκκινο Αγγελάκι', 'Ροζ Διαβολάκι', 'Πράσινη Νυχτερίδα', 'Ελεφαντάκι',
+  'Γουρουνάκι', 'Γατούλα', 'Καστοράκι', 'Καμπιούλα', 'Μαϊμουδίτσα', 'Αγελαδίτσα',
+  'Λιονταράκι', 'Καβουράκι', 'Κοτοπουλάκι', 'Πολικό Αρκουδάκι', 'Κουνελάκι', 'Αγριογουρουνάκι',
+  'Μελισσούλα', 'Παπαγαλάκι', 'Καμηλοπάρδαλη', 'Αλεπουδίτσα', 'Ελαφάκι', 'Ψαράκι',
+  'Κοάλα', 'Σκυλάκι', 'Τιγράκι', 'Παντάκι', 'Πιγκουινάκι',
+];
+const MODELS = MODEL_NAMES.map((name, i) => {
   const n = String(i + 1).padStart(2, '0');
-  return { id: 'm' + n, name: `Πλάσμα ${i + 1}`, emoji: '👾', url: `models3d/m${n}.glb`, thumb: `models3d/thumbs/m${n}.png` };
+  return { id: 'm' + n, name, emoji: '👾', url: `models3d/m${n}.glb`, thumb: `models3d/thumbs/m${n}.png` };
 });
 export const OBJECTS = [
   ...MODELS,
@@ -92,7 +102,9 @@ export function loadModel(info) {
       const norm = new THREE.Group(); norm.add(scene);
       scene.position.sub(c); norm.scale.setScalar(k);
       scene.traverse((o) => { if (o.isMesh) o.frustumCulled = false; });   // skinned + animated: never cull
-      const clip = g.animations.find((a) => a.name === 'Flying_Idle') || g.animations[0] || null;
+      const A = g.animations, low = (a) => (a.name || '').toLowerCase();
+      const clip = A.find((a) => a.name === 'Flying_Idle') || A.find((a) => low(a) === 'idle') || A.find((a) => /idle/.test(low(a)))
+        || A.find((a) => low(a) !== 'static' && a.duration > 0) || A[0] || null;    // idle loop if the model has one
       return { scene: norm, clip, clone };
     });
     p.catch(() => models.delete(info.id));   // retry next time (e.g. was offline)

@@ -62,8 +62,8 @@ textarea,input[type=password]{width:100%;font:inherit;font-size:16px;padding:10p
 .adv-only{display:none}
 body.adv .adv-only{display:block}
 #objBox{display:flex;gap:12px;align-items:flex-start;margin:6px 0 10px}
-#objPick{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;flex:1;max-height:220px;overflow-y:auto}
-#objPick button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px;font-size:11px;min-width:0}
+#objPick{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;flex:1;max-height:236px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#objPick button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px;font-size:11px;line-height:1.15;min-width:0;text-align:center;overflow-wrap:anywhere;hyphens:auto}
 #objPick button img{width:48px;height:48px;object-fit:contain}
 #objPick button .emo{font-size:30px;line-height:48px;height:48px}
 #objPick button.sel{outline:3px solid #4fc3f7}

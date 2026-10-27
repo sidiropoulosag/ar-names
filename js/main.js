@@ -380,7 +380,21 @@ async function enrollFromFiles(files) {
 }
 
 // ---------- UI wiring ----------
-$('btnStart').onclick = start;
+$('btnStart').onclick = () => { goFullscreen(); start(); };
+
+// ---- Full screen / install (hides the browser address bar) ----
+const isStandalone = () => window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function goFullscreen() {
+  if (isStandalone()) return;
+  const el = document.documentElement;
+  try { const p = (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el, { navigationUI: 'hide' }); p?.catch?.(() => {}); } catch (_) {}
+}
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; if (!isStandalone()) $('btnInstall').classList.remove('hidden'); });
+window.addEventListener('appinstalled', () => { deferredInstall = null; $('btnInstall').classList.add('hidden'); });
+$('btnInstall').onclick = async () => { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch (_) {} deferredInstall = null; $('btnInstall').classList.add('hidden'); };
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !isStandalone()) $('iosHint').classList.remove('hidden');
+
 $('btnFlip').onclick = () => openCamera(facing === 'user' ? 'environment' : 'user');
 $('btnEnroll').onclick = () => openEnroll();
 $('btnPeople').onclick = openPeople;

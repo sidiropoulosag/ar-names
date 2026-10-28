@@ -748,7 +748,8 @@ async function saveEnrollServer() {
     if (enr && enr.active) {
       cfg.enabled = true; server.saveCfg(cfg); syncServerUi(); tracker.relabel();
       setMsg(`${head} ✅ Το προφίλ σου είναι έτοιμο (${enr.frames} λήψεις). Η αναγνώριση μέσω server ενεργοποιήθηκε.`);
-      setTimeout(() => { if (mode === 'enroll' && $('tokSheet').classList.contains('hidden')) closeEnroll(); }, 3500);
+      setStatus('Αποθηκεύτηκε ✓ Το προφίλ σου είναι έτοιμο.');
+      setTimeout(() => { if (mode === 'enroll' && $('tokSheet').classList.contains('hidden')) closeEnroll(); }, 1200);   // v17: close soon after a successful save
     } else {
       const miss = enr ? enr.missing_poses : [];
       const need = enr ? enr.frames_still_needed : 0;
@@ -826,8 +827,15 @@ function initServerUi() {
       const empty = [['message1', f.message, 'το Μήνυμα 1'], ['message2', f.message2, 'το Μήνυμα 2']].filter(([k, t]) => items.includes(k) && !t).map((x) => x[2]);
       if (empty.length) note = ` (${empty.join(' και ')} είναι κενό — δεν θα φαίνεται)`;
     }
-    try { await api.patchMe(cfg.personId, f); dispDirty = false; $('srvInfo').textContent = (hasCap('display') ? 'Αποθηκεύτηκε ✓' : 'Το μήνυμα αποθηκεύτηκε ✓') + note; }
-    catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); }
+    const btn = $('srvMsgSave'); btn.disabled = true;
+    try {
+      await api.patchMe(cfg.personId, f); dispDirty = false;
+      const ok = (hasCap('display') ? 'Αποθηκεύτηκε ✓' : 'Το μήνυμα αποθηκεύτηκε ✓') + note;
+      $('srvInfo').textContent = ok;
+      closePeople(); setStatus(ok);   // v17: a successful save closes the settings panel
+    }
+    catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); }   // failure: panel stays open with the error
+    finally { btn.disabled = false; }
   };
   // object picker (from the registry in objects3d.js)
   for (const o of OBJECTS) {

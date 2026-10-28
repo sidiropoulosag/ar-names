@@ -103,3 +103,4 @@ body.adv .adv-only{display:block}
 #grpSearch{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:1px solid #3d5a80;background:#0d1b2a;color:#fff;margin:2px 0 4px}
 #grpNewName{font-size:16px;padding:10px 12px;min-width:0}
 #grpNewName{flex:1}
+.why{position:absolute;left:0;top:0;background:rgba(13,27,42,.75);color:#ffd27a;font-size:11px;line-height:1.2;padding:2px 6px;border-radius:8px;white-space:nowrap;will-change:transform}

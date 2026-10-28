@@ -7,10 +7,13 @@
 <meta name="theme-color" content="#0d1b2a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Ονόματα AR</title>
+<title>Noera</title>
+<meta name="application-name" content="Noera">
+<meta name="apple-mobile-web-app-title" content="Noera">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="app.css">
 <script type="importmap">
 { "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
@@ -36,12 +39,12 @@
 <!-- Start (needed for camera permission on iOS) -->
 <div id="start" class="sheet center">
   <div class="card">
-    <h1>Ονόματα AR</h1>
+    <h1>Noera</h1>
     <p>Η κάμερα αναγνωρίζει τα άτομα που έχεις καταχωρίσει και δείχνει το όνομά τους σε 3D πάνω από το κεφάλι.</p>
     <p id="privacyNote" class="small">Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.</p>
     <button id="btnStart" class="primary big" disabled>Φόρτωση μοντέλων…</button>
     <p id="loadErr" class="err"></p>
-    <button id="btnInstall" class="hidden">📲 Εγκατάσταση στην αρχική οθόνη (πλήρης οθόνη)</button>
+    <button id="btnInstall" class="hidden">📲 Εγκατάσταση του Noera στην αρχική οθόνη</button>
     <p id="iosHint" class="small hidden">Για πλήρη οθόνη: πάτα το κουμπί Κοινοποίηση (τετράγωνο με βέλος) και μετά «Προσθήκη στην οθόνη Έναρξης».</p>
   </div>
 </div>

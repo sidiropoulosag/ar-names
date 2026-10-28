@@ -23,7 +23,7 @@ const chimes = new ChimeRounds();
 let facing = 'environment', stream = null, mode = 'scan', ready = false;
 const cfg = server.loadCfg();
 const api = new server.Api(cfg);
-window.__ar = { cfg, api, get srv() { return srv; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, chimes, chime: chimeStats, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db };
+window.__ar = { cfg, api, get srv() { return srv; }, srvOrder: (...a) => srvOrder(...a), renderWhy: (...a) => renderWhy(...a), get srvLimits() { return { batch: SRV_BATCH, max: SRV_MAX_FACES }; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, chimes, chime: chimeStats, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db };
 
 function setStatus(t) { $('status').textContent = t; }
 
@@ -172,7 +172,7 @@ async function loop() {
     labels.render([], vw, vh, false, now);
     await enrollFrame(res, vw, vh);
   }
-  renderBubbles();
+  renderBubbles(); renderWhy(mode === 'scan' ? tracks : [], vw, vh);
   schedule();
 }
 
@@ -498,7 +498,7 @@ $('enOne').onclick = () => { en.oneShot = true; };
 $('enFile').onchange = (ev) => { enrollFromFiles([...ev.target.files]); ev.target.value = ''; };
 $('pExport').onclick = async () => {
   const blob = new Blob([await db.exportJSON()], { type: 'application/json' });
-  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `ar-names-backup-${new Date().toISOString().slice(0, 10)}.json` });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `noera-backup-${new Date().toISOString().slice(0, 10)}.json` });
   document.body.appendChild(a); a.click(); a.remove();
 };
 $('pImport').onchange = async (ev) => {
@@ -539,13 +539,39 @@ boot();
 // ======================================================================
 function serverOn() { return !!(cfg.enabled && cfg.url && cfg.token); }
 const SRV_INTERVAL = 400; // at most 2.5 recognise calls per second
-const srv = { inflight: false, last: 0, offline: false, retryAt: 0, calls: 0, ok: 0, lastError: null };
+// v18 multi-face: every face in view is checked (safety limit SRV_MAX_FACES for CPU / battery), in batches of
+// SRV_BATCH per request. Most overdue first (never-checked faces before everyone else), so nobody starves; among
+// equally due faces the larger / more centred ones go first. Known faces are re-checked every 1.5 s, unknown 350 ms.
+const SRV_BATCH = 4, SRV_MAX_FACES = 12, SRV_RECHECK_KNOWN = 1500, SRV_RECHECK_UNKNOWN = 350;
+const SRV_MIN_PX = 36, SRV_MAX_YAW = 75;
+const srv = { inflight: false, last: 0, offline: false, retryAt: 0, calls: 0, ok: 0, lastError: null, batches: [] };
+
+function whyNot(t) {   // why this face is not sent to the server (null = it is sent)
+  if (t.missed > 0) return 'lost';
+  if (t.wpx < SRV_MIN_PX) return 'small';
+  if (Math.abs(t.pose.yaw) > SRV_MAX_YAW) return 'turned';
+  return null;
+}
+function srvOrder(tracks, vw, vh, now) {
+  const asp = vh ? vw / vh : 1, diag = Math.hypot(0.5 * asp, 0.5);   // box is normalised 0..1
+  const live = tracks.filter((t) => !whyNot(t))
+    .map((t) => {
+      const due = now - (t.srvAt || 0) - (t.srv ? SRV_RECHECK_KNOWN : SRV_RECHECK_UNKNOWN);
+      const bx = (t.box.x0 + t.box.x1) / 2, by = (t.box.y0 + t.box.y1) / 2;
+      const centre = 1 - Math.min(1, Math.hypot((bx - 0.5) * asp, by - 0.5) / diag);
+      return { t, due, never: !t.srvAt, prio: t.wpx * (0.5 + centre) };
+    });
+  // safety cap: if more than SRV_MAX_FACES are in view, keep the largest / most centred ones
+  const kept = live.sort((a, b) => b.prio - a.prio).slice(0, SRV_MAX_FACES);
+  return kept.filter((x) => x.due > 0)
+    .sort((a, b) => (b.never - a.never) || (Math.round(b.due / 250) - Math.round(a.due / 250)) || (b.prio - a.prio))
+    .map((x) => x.t);
+}
 
 async function serverStep(tracks, vw, vh, now) {
   if (srv.inflight || now - srv.last < SRV_INTERVAL) return;
   if (srv.offline && now < srv.retryAt) return;
-  const cand = tracks.filter((t) => t.missed === 0 && t.wpx >= 36 && Math.abs(t.pose.yaw) <= 75 &&
-    now - (t.srvAt || 0) > (t.srv ? 1500 : 350)).sort((a, b) => (a.srvAt || 0) - (b.srvAt || 0)).slice(0, 3);
+  const cand = srvOrder(tracks, vw, vh, now).slice(0, SRV_BATCH);
   if (!cand.length) return; // no faces in view -> no network traffic
   srv.last = now;
   const faces = [];
@@ -559,6 +585,7 @@ async function serverStep(tracks, vw, vh, now) {
       faces.push({ id: t.id, box: [t.box.x0, t.box.y0, t.box.x1, t.box.y1], embedding: Array.from(e, (v) => Math.round(v * 1e5) / 1e5) });
     } catch (err) { console.warn(err); }
   }
+  srv.batches.push(faces.map((f) => f.id)); if (srv.batches.length > 50) srv.batches.shift();
   if (!faces.length) return;
   srv.inflight = true; srv.calls++;
   api.recognize(faces).then((r) => {
@@ -571,11 +598,11 @@ async function serverStep(tracks, vw, vh, now) {
       if (f.status === 'known') {
         // 0.4.0: 'display.items' (1-2 of name/message1/message2/object3d) + sizes; 0.3.0: one 'display.mode'; older: 'message'
         const v = viewOf(f.display || { mode: 'message', text: f.message || '' });
-        t.srvMiss = 0; t.srv = true; t.label = f.name; t.personId = f.person_id; t.sim = f.similarity;
+        t.srvMiss = 0; t.srvUnknownAt = 0; t.srv = true; t.label = f.name; t.personId = f.person_id; t.sim = f.similarity;
         t.objectId = v.objectId; t.message = v.text; t.showName = v.showName; t.sizes = v.sizes; t.style = v.style;
         if (!t.recognisedAt) t.recognisedAt = performance.now();
       } else {
-        t.srvMiss = (t.srvMiss || 0) + 1;
+        t.srvMiss = (t.srvMiss || 0) + 1; t.srvUnknownAt = performance.now();
         if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.showName = true; t.sizes = null; t.style = null; }
       }
     }
@@ -592,6 +619,29 @@ async function serverStep(tracks, vw, vh, now) {
         : `⚠️ Εκτός σύνδεσης — ${local}`);
     }
   }).finally(() => { srv.inflight = false; });
+}
+
+// v18: «γιατί άγνωστο» — small hint under faces without a name, ONLY in the hidden advanced mode
+const WHY_TEXT = { small: 'πολύ μικρό / μακριά', turned: 'πολύ γυρισμένο', lost: 'χάθηκε', unknown: 'δεν αναγνωρίστηκε', wait: 'έλεγχος…' };
+const whyEls = new Map();
+function renderWhy(tracks, vw, vh) {
+  const live = new Set();
+  if (adv && mode === 'scan' && serverOn() && !srv.offline && vw) {
+    const W = labels.W, H = labels.H, sc = Math.max(W / vw, H / vh), ox = (W - vw * sc) / 2, oy = (H - vh * sc) / 2;
+    for (const t of tracks) {
+      if (t.label || t.missed > 3) continue;
+      const k = whyNot(t) || (t.srvUnknownAt ? 'unknown' : 'wait');
+      t.why = k; live.add(t.id);
+      let el = whyEls.get(t.id);
+      if (!el) { el = document.createElement('div'); el.className = 'why'; $('bubbles').appendChild(el); whyEls.set(t.id, el); }
+      const txt = '? ' + WHY_TEXT[k];
+      if (el.textContent !== txt) el.textContent = txt;
+      let x0 = t.box.x0 * vw * sc + ox, x1 = t.box.x1 * vw * sc + ox; const y1 = t.box.y1 * vh * sc + oy;
+      if (labels.mirror) [x0, x1] = [W - x1, W - x0];
+      el.style.transform = `translate(${(x0 + x1) / 2}px, ${y1 + 4}px) translate(-50%, 0)`;
+    }
+  }
+  for (const [id, el] of whyEls) if (!live.has(id)) { el.remove(); whyEls.delete(id); }
 }
 
 // message bubbles above the 3D names (server mode only; local people have no message)

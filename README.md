@@ -1,4 +1,4 @@
-# AR Ονόματα — ονόματα σε 3D πάνω από πρόσωπα (PWA, 100% στη συσκευή)
+# Noera — ονόματα σε 3D πάνω από πρόσωπα (PWA, 100% στη συσκευή)
 
 [English below](#english)
 
@@ -37,7 +37,7 @@
 ---
 
 <a id="english"></a>
-# AR Names — 3D name labels above recognised faces (on-device PWA)
+# Noera — 3D name labels above recognised faces (on-device PWA)
 
 ## Features
 - **Enroll:** front camera, guided multi-angle capture (straight, side, other side, chin up/down), plus single-shot or from-photo. Stored under a name in IndexedDB. Many people.

@@ -1217,7 +1217,7 @@ async function refreshServer(verbose = false) {
   }
 }
 
-// ---------- v21: screenshot («Στιγμιότυπο») ----------
+// ---------- v21/v22: screenshot («Στιγμιότυπο») ----------
 // One PNG of what the camera screen shows: the video frame the labels were drawn for (mirrored like on screen),
 // the three.js overlay (3D names / objects), the message bubbles and (advanced) «why» hints. No UI chrome.
 // The WebGL canvas has no preserveDrawingBuffer (keeps every frame fast): the scene is re-rendered and copied
@@ -1300,16 +1300,18 @@ async function takeShot() {
     if (!blob) throw new Error('toBlob');
     const name = shotName();
     window.__ar.lastShot = { blob, name, width: c.width, height: c.height, size: blob.size, type: blob.type, via: '' };
-    // mobile (installed PWA / TWA): the share sheet lets him save it to the gallery; elsewhere a download
-    const file = typeof File === 'function' ? new File([blob], name, { type: 'image/png' }) : null;
-    const mobile = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad/i.test(navigator.userAgent);
-    if (file && mobile && navigator.canShare && navigator.share && navigator.canShare({ files: [file] }) && !window.__ar.noShare) {
+    // v22: save straight away like a normal screenshot (blob download → Downloads/gallery), on mobile too.
+    // Web Share only as a fallback when the download attempt itself throws.
+    try {
+      if (window.__ar.failDownload) throw new Error('download (test)');
+      download(blob, name); window.__ar.lastShot.via = 'download'; toast('Στιγμιότυπο αποθηκεύτηκε ✓');
+    } catch (de) {
+      console.warn('download failed, share fallback', de);
+      const file = typeof File === 'function' ? new File([blob], name, { type: 'image/png' }) : null;
+      if (!(file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] }))) throw de;
       try { await navigator.share({ files: [file], title: 'Noera' }); window.__ar.lastShot.via = 'share'; toast('Στιγμιότυπο αποθηκεύτηκε ✓'); }
-      catch (e) {
-        if (e && e.name === 'AbortError') { window.__ar.lastShot.via = 'share-cancel'; }
-        else { download(blob, name); window.__ar.lastShot.via = 'download'; toast('Στιγμιότυπο αποθηκεύτηκε ✓'); }
-      }
-    } else { download(blob, name); window.__ar.lastShot.via = 'download'; toast('Στιγμιότυπο αποθηκεύτηκε ✓'); }
+      catch (e) { if (e && e.name === 'AbortError') window.__ar.lastShot.via = 'share-cancel'; else throw e; }
+    }
     return window.__ar.lastShot;
   } catch (e) {
     console.warn(e); toast('Δεν έγινε το στιγμιότυπο'); return null;

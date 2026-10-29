@@ -106,3 +106,22 @@ body.adv .adv-only{display:block}
 .why{position:absolute;left:0;top:0;background:rgba(13,27,42,.75);color:#ffd27a;font-size:11px;line-height:1.2;padding:2px 6px;border-radius:8px;white-space:nowrap;will-change:transform}
 
 #srvInfo .info-enroll{margin-top:6px}
+
+/* v21: screenshot shutter (bottom centre), flash, toast */
+.shutter{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 16px);width:64px;height:64px;margin-left:-32px;padding:0;z-index:5;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.14);border:3px solid rgba(255,255,255,.95);
+  box-shadow:0 0 16px rgba(255,255,255,.35),0 0 2px rgba(255,255,255,.6),0 3px 12px rgba(0,0,0,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:transform .14s ease,box-shadow .2s ease;touch-action:manipulation}
+.shutter span{display:block;width:48px;height:48px;border-radius:50%;background:#fff;box-shadow:inset 0 -2px 4px rgba(0,0,0,.12);transition:transform .14s ease,background .14s}
+.shutter:active,.shutter.press{transform:scale(.92);box-shadow:0 0 24px rgba(255,255,255,.55),0 3px 10px rgba(0,0,0,.35)}
+.shutter:active span,.shutter.press span{transform:scale(.84);background:#e9f3ff}
+.shutter:disabled{opacity:1}
+.shutter:focus-visible{outline:2px solid #64b5f6;outline-offset:3px}
+#flash{position:fixed;inset:0;z-index:30;background:#fff;opacity:0;pointer-events:none}
+#flash.on{animation:shotflash .35s ease-out}
+@keyframes shotflash{0%{opacity:.75}100%{opacity:0}}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 96px);transform:translate(-50%,8px);z-index:31;background:rgba(13,27,42,.9);color:#fff;
+  padding:9px 16px;border-radius:999px;font-size:15px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 3px 12px rgba(0,0,0,.35)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* narrow phones: keep «＋ Νέο άτομο» clear of the centred shutter */
+@media (max-width:420px){.fab{right:12px;padding:12px 14px;font-size:15px}}

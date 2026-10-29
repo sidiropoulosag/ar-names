@@ -48,3 +48,25 @@ export class ChimeRounds {
     this.last = now; this.play(); return true;
   }
 }
+
+// v21: a soft camera "shutter" for the screenshot button (only when «Ήχος αναγνώρισης» is on).
+// Synthesised: a tiny band-passed noise tick followed by a gentle low click. Very quiet.
+export function playShutter(volume = 0.05) {
+  if (!ctx || ctx.state === 'closed') return false;
+  try {
+    if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
+    const t0 = ctx.currentTime + 0.005, sr = ctx.sampleRate, len = Math.floor(sr * 0.09);
+    const b = ctx.createBuffer(1, len, sr), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) { const t = i / len; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3); }
+    const src = ctx.createBufferSource(); src.buffer = b;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2400; bp.Q.value = 0.8;
+    const g = ctx.createGain(); g.gain.setValueAtTime(volume, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+    src.connect(bp); bp.connect(g); g.connect(ctx.destination); src.start(t0); src.stop(t0 + 0.1);
+    const o = ctx.createOscillator(), og = ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(520, t0 + 0.05); o.frequency.exponentialRampToValueAtTime(300, t0 + 0.12);
+    og.gain.setValueAtTime(0.0001, t0 + 0.05); og.gain.exponentialRampToValueAtTime(volume * 0.8, t0 + 0.06); og.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+    o.connect(og); og.connect(ctx.destination); o.start(t0 + 0.05); o.stop(t0 + 0.16);
+    chimeStats.shutter = (chimeStats.shutter || 0) + 1;
+    return true;
+  } catch (e) { return false; }
+}

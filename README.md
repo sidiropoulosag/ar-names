@@ -13,6 +13,7 @@
 2. Πάτα «📷 Άνοιγμα κάμερας» και δώσε άδεια κάμερας.
 3. Προαιρετικά: «Προσθήκη στην οθόνη αφετηρίας» (Safari: κουμπί κοινοποίησης → Προσθήκη στην οθόνη αφετηρίας. Chrome: ⋮ → Εγκατάσταση εφαρμογής).
 4. 🔄 πάνω δεξιά = αλλαγή μπροστινής/πίσω κάμερας.
+5. ⚪ κάτω στο κέντρο = στιγμιότυπο (εικόνα της κάμερας μαζί με τα ονόματα / 3D αντικείμενα). Στο κινητό ανοίγει η κοινοποίηση για «Αποθήκευση» στη συλλογή, αλλού κατεβαίνει ως `noera-ΕΕΕΕΜΜΗΗ-ΩΩΛΛΔΔ.png`.
 
 **Φιλοξενία:** η κάμερα θέλει **https**. Ανέβασε τον φάκελο (ή το zip αποσυμπιεσμένο) σε οποιαδήποτε στατική φιλοξενία https, π.χ. Netlify Drop, GitHub Pages ή Cloudflare Pages. Στον υπολογιστή: `python3 serve.py` και μετά http://localhost:8080. Μετά το πρώτο άνοιγμα δουλεύει και χωρίς internet, μέσω service worker.
 
@@ -46,7 +47,7 @@
 - **Fully on-device and offline-capable:** all JS, WASM and models are self-hosted. A service worker caches everything. No network calls with face data, ever.
 
 ## How to open
-Open the HTTPS URL in Safari (iOS 16.4+) or Chrome (Android), tap «📷 Άνοιγμα κάμερας», allow the camera. 🔄 switches front/back camera. Optionally add to the home screen.
+Open the HTTPS URL in Safari (iOS 16.4+) or Chrome (Android), tap «📷 Άνοιγμα κάμερας», allow the camera. 🔄 switches front/back camera. The round shutter at the bottom centre saves a screenshot (camera frame + 3D names/objects + bubbles) via the share sheet on mobile, or as a `noera-YYYYMMDD-HHMMSS.png` download. Optionally add to the home screen.
 Self-hosting: any static HTTPS host works (GitHub Pages, Netlify, Cloudflare Pages…). `serve.py` is a local server that sends COOP/COEP headers. On hosts that can't send them, the service worker adds them after the first load (one automatic reload), which enables multi-threaded WASM. Camera needs HTTPS (or localhost).
 
 ## Pipeline (why it's fast)

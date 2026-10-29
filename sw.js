@@ -3,7 +3,7 @@
 //    (SharedArrayBuffer -> multi-threaded WASM) even on static hosts like GitHub Pages.
 // 2) Offline cache: everything the app fetches is cached; the full asset list is also precached in the background.
 // All paths are relative to this file, so it works under any subpath (e.g. /ar-names/).
-const CACHE = 'ar-names-v20';
+const CACHE = 'ar-names-v21';
 // 3D models (models3d/) are NEVER precached: each is cached on first use, in its own cache that survives app updates.
 const MODELS_CACHE = 'ar-names-models-1';
 const ASSETS = [

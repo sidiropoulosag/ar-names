@@ -4,7 +4,7 @@ import { Labels3D } from './labels3d.js';
 import { Gallery, Tracker } from './tracker.js';
 import * as db from './db.js';
 import * as server from './server.js';
-import { ChimeRounds, unlockAudio, chimeStats } from './chime.js';
+import { ChimeRounds, unlockAudio, chimeStats, playShutter } from './chime.js';
 import { OBJECTS, objectInfo, previewObject, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
@@ -173,6 +173,7 @@ async function loop() {
     await enrollFrame(res, vw, vh);
   }
   renderBubbles(); renderWhy(mode === 'scan' ? tracks : [], vw, vh);
+  syncShot();
   schedule();
 }
 
@@ -310,7 +311,7 @@ function dispTag(d) {
 function escapeHtml(s) { return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 function openPeople() {
-  $('people').classList.remove('hidden');
+  $('people').classList.remove('hidden'); syncShot();
   refreshFamily(); clearInterval(fam.timer);
   fam.timer = setInterval(() => { if (!document.hidden) refreshFamily(); }, 15000);   // live while the list is open
 }
@@ -343,7 +344,7 @@ function infoWithEnroll(text) {
   b.onclick = () => { closePeople(); openEnroll(); };
   info.appendChild(document.createElement('br')); info.appendChild(b);
 }
-function closePeople() { $('people').classList.add('hidden'); clearInterval(fam.timer); fam.timer = 0; }
+function closePeople() { $('people').classList.add('hidden'); syncShot(); clearInterval(fam.timer); fam.timer = 0; }
 function famOnFocus() { if (!document.hidden && Date.now() - fam.at > 3000) refreshFamily(); }
 document.addEventListener('visibilitychange', famOnFocus);
 window.addEventListener('focus', famOnFocus);
@@ -367,7 +368,7 @@ function openEnroll(existing = null) {
   $('enThumbs').innerHTML = '';
   $('enSave').disabled = true;
   en.steps = STEPS; en.srvMode = false;
-  $('enroll').classList.remove('hidden');
+  $('enroll').classList.remove('hidden'); syncShot();
   $('btnEnroll').classList.add('hidden');
   $('hint').classList.add('hidden');
   renderSteps();
@@ -1215,3 +1216,104 @@ async function refreshServer(verbose = false) {
     if (adv) advInfo.textContent = '⚠️ ' + server.errEl(e) + (e.code === 'offline' ? ' — έλεγξε τη διεύθυνση.' : '');
   }
 }
+
+// ---------- v21: screenshot («Στιγμιότυπο») ----------
+// One PNG of what the camera screen shows: the video frame the labels were drawn for (mirrored like on screen),
+// the three.js overlay (3D names / objects), the message bubbles and (advanced) «why» hints. No UI chrome.
+// The WebGL canvas has no preserveDrawingBuffer (keeps every frame fast): the scene is re-rendered and copied
+// synchronously in the same task, so its drawing buffer is still valid.
+let shotBusy = false;
+function cameraVisible() {
+  return ready && mode === 'scan' && !!video.videoWidth && ['people', 'enroll', 'start', 'tokSheet'].every((id) => $(id).classList.contains('hidden'));
+}
+function syncShot() { $('btnShot').classList.toggle('hidden', !cameraVisible()); }
+function roundRect(g, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+// draw an HTML overlay element (bubble / why) onto the 2D context at its on-screen place and look
+function drawHtmlLabel(g, el) {
+  const r = el.getBoundingClientRect(); if (!r.width || !r.height) return;
+  const cs = getComputedStyle(el), pl = parseFloat(cs.paddingLeft) || 0, pt = parseFloat(cs.paddingTop) || 0;
+  const fs = parseFloat(cs.fontSize) || 16, lh = parseFloat(cs.lineHeight) || fs * 1.3, rad = parseFloat(cs.borderTopLeftRadius) || 0;
+  g.save();
+  if (el.classList.contains('bubble')) { g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 10; g.shadowOffsetY = 2; }
+  g.fillStyle = cs.backgroundColor; roundRect(g, r.left, r.top, r.width, r.height, rad); g.fill();
+  g.restore();
+  g.save();
+  g.fillStyle = cs.color; g.font = `${cs.fontWeight} ${fs}px ${cs.fontFamily}`; g.textBaseline = 'middle';
+  const center = cs.textAlign === 'center', maxW = r.width - 2 * pl + 1;
+  const lines = [];
+  for (const para of (el.textContent || '').split('\n')) {   // wrap like the browser (word by word)
+    let cur = '';
+    for (const w of para.split(/(\s+)/)) {
+      const t = cur + w;
+      if (cur && g.measureText(t.trimEnd()).width > maxW) { lines.push(cur.trimEnd()); cur = w.trimStart(); } else cur = t;
+    }
+    lines.push(cur.trimEnd());
+  }
+  g.textAlign = center ? 'center' : 'left';
+  const x = center ? r.left + r.width / 2 : r.left + pl, y0 = r.top + pt + lh / 2;
+  lines.forEach((ln, i) => g.fillText(ln, x, y0 + i * lh));
+  g.restore();
+}
+function composeShot() {
+  const W = window.innerWidth, H = window.innerHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const c = document.createElement('canvas'); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  // the frame the current labels belong to (frameCanvas), else the live video; object-fit: cover
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const src = frameCanvas.width === vw && frameCanvas.height === vh ? frameCanvas : video;
+  const sc = Math.max(W / vw, H / vh), dw = vw * sc, dh = vh * sc;
+  g.save(); if (labels.mirror) { g.translate(W, 0); g.scale(-1, 1); }   // like #video.mirror (CSS scaleX(-1))
+  g.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh); g.restore();
+  // three.js overlay: render now and copy in the same task (no preserveDrawingBuffer needed)
+  try { labels.renderer.render(labels.scene, labels.camera); g.drawImage(overlay, 0, 0, W, H); } catch (e) { console.warn(e); }
+  for (const el of $('bubbles').children) drawHtmlLabel(g, el);
+  return c;
+}
+const pad2 = (n) => String(n).padStart(2, '0');
+function shotName(d = new Date()) {
+  return `noera-${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}.png`;
+}
+let toastT = 0;
+function toast(t) {
+  const n = $('toast'); n.textContent = t; n.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => n.classList.remove('show'), 2200);
+}
+function download(blob, name) {
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+async function takeShot() {
+  if (shotBusy || !cameraVisible()) return null;
+  shotBusy = true;
+  const b = $('btnShot'); b.classList.add('press'); setTimeout(() => b.classList.remove('press'), 160);
+  try {
+    const c = composeShot();
+    const fl = $('flash'); fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on');
+    if (settings.sound !== false) playShutter();
+    const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+    if (!blob) throw new Error('toBlob');
+    const name = shotName();
+    window.__ar.lastShot = { blob, name, width: c.width, height: c.height, size: blob.size, type: blob.type, via: '' };
+    // mobile (installed PWA / TWA): the share sheet lets him save it to the gallery; elsewhere a download
+    const file = typeof File === 'function' ? new File([blob], name, { type: 'image/png' }) : null;
+    const mobile = matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad/i.test(navigator.userAgent);
+    if (file && mobile && navigator.canShare && navigator.share && navigator.canShare({ files: [file] }) && !window.__ar.noShare) {
+      try { await navigator.share({ files: [file], title: 'Noera' }); window.__ar.lastShot.via = 'share'; toast('Στιγμιότυπο αποθηκεύτηκε ✓'); }
+      catch (e) {
+        if (e && e.name === 'AbortError') { window.__ar.lastShot.via = 'share-cancel'; }
+        else { download(blob, name); window.__ar.lastShot.via = 'download'; toast('Στιγμιότυπο αποθηκεύτηκε ✓'); }
+      }
+    } else { download(blob, name); window.__ar.lastShot.via = 'download'; toast('Στιγμιότυπο αποθηκεύτηκε ✓'); }
+    return window.__ar.lastShot;
+  } catch (e) {
+    console.warn(e); toast('Δεν έγινε το στιγμιότυπο'); return null;
+  } finally { shotBusy = false; }
+}
+$('btnShot').onclick = () => { takeShot(); };
+window.__ar.shot = takeShot; window.__ar.shotName = shotName; window.__ar.composeShot = composeShot; window.__ar.frameCanvas = frameCanvas;

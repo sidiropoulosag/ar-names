@@ -39,6 +39,16 @@
 <button id="btnShot" class="shutter hidden" type="button" aria-label="Στιγμιότυπο" title="Στιγμιότυπο"><span></span></button>
 <div id="flash" aria-hidden="true"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<!-- v24 (server 0.6.0): received hearts / messages (top card) + floating emoji; not part of screenshots -->
+<div id="pingCards" aria-live="polite"></div>
+<div id="pingFx" aria-hidden="true"></div>
+<!-- v24: tap a recognised person -> send a reaction or a short message -->
+<div id="pingSheet" class="panel bottom hidden" role="dialog" aria-labelledby="pingTitle">
+  <div class="phead"><h3 id="pingTitle">Στείλε</h3><button id="pingClose" type="button" class="pill" aria-label="Κλείσιμο">✕</button></div>
+  <div id="pingEmojis" class="ping-emojis"></div>
+  <div class="row ping-row"><input id="pingText" type="text" maxlength="80" placeholder="Γράψε κάτι σύντομο…" enterkeyhint="send" autocomplete="off"><button id="pingSend" type="button" class="primary">Αποστολή</button></div>
+  <p id="pingInfo" class="small"></p>
+</div>
 
 <!-- Start (needed for camera permission on iOS) -->
 <div id="start" class="sheet center">
@@ -172,6 +182,12 @@
       <h4>Νέα ομάδα</h4>
       <div class="row"><input id="grpNewName" type="text" maxlength="40" placeholder="Όνομα νέας ομάδας" autocomplete="off"><button id="grpCreate" type="button">＋ Δημιουργία</button></div>
       <p id="grpInfo" class="small"></p>
+    </div>
+    <!-- v24 (server 0.6.0) -->
+    <div id="pingBox" class="pings-only hidden">
+      <h3>💌 Μηνύματα</h3>
+      <label class="setting check"><input id="srvPings" type="checkbox"> Δέχομαι μηνύματα</label>
+      <p class="small">Όσοι σε βλέπουν στην κάμερα μπορούν να σε πατήσουν και να σου στείλουν μια καρδιά ❤️, ένα 👋 ή ένα σύντομο μήνυμα. Εμφανίζεται για λίγα δευτερόλεπτα στην οθόνη σου.</p>
     </div>
     <div class="row"><button id="srvDelMe" class="danger">🗑 Διαγραφή του προφίλ μου από τον server</button></div>
   </div>

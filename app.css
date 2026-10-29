@@ -134,3 +134,27 @@ body.adv .adv-only{display:block}
 .msg-hist .mh-pick{flex:1;text-align:left;background:none;border:0;color:#fff;font:inherit;font-size:15px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;cursor:pointer;justify-content:flex-start}
 .msg-hist .mh-del{flex:0 0 44px;background:none;border:0;font-size:18px;cursor:pointer}
 .msg-hist:empty,textarea.hidden+.msg-hist{display:none}
+/* v24: pings — send sheet, received card, floating emoji */
+#pingSheet{z-index:12}
+#pingSheet h3{margin:4px 0;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pingSheet .pill{padding:6px 12px}
+.ping-emojis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.ping-emojis button{font-size:34px;line-height:1;padding:10px 0;justify-content:center;border-radius:16px;background:#1b3047;transition:transform .12s}
+.ping-emojis button:active{transform:scale(.9)}
+.ping-row input{min-width:0;font-size:16px}
+#pingInfo{min-height:1.2em;margin:2px 0 0}
+#pingInfo.bad{color:#ff8a80;opacity:1}
+#pingCards{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top) + 60px);z-index:32;display:flex;justify-content:center;pointer-events:none}
+.ping-card{max-width:min(92vw,460px);background:rgba(255,255,255,.96);color:#0d1b2a;border-radius:20px;padding:12px 18px;font-size:18px;line-height:1.3;
+  box-shadow:0 6px 24px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;pointer-events:auto;word-break:break-word;
+  animation:pcIn .38s cubic-bezier(.2,1.4,.4,1) both}
+.ping-card.out{animation:pcOut .3s ease-in both}
+.ping-card .pc-from{font-weight:bold;white-space:nowrap}
+.ping-card .pc-emo{font-size:36px;line-height:1;animation:pcPop .7s ease-out .15s both}
+@keyframes pcIn{from{opacity:0;transform:translateY(-24px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes pcOut{to{opacity:0;transform:translateY(-16px) scale(.96)}}
+@keyframes pcPop{0%{transform:scale(.3)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+#pingFx{position:fixed;inset:0;z-index:31;pointer-events:none;overflow:hidden}
+.ping-float{position:absolute;bottom:-60px;font-size:44px;line-height:1;animation:pfUp 2.6s ease-out forwards;will-change:transform,opacity}
+@keyframes pfUp{0%{transform:translate(0,0) scale(.6);opacity:0}12%{opacity:1}100%{transform:translate(var(--dx,0px),-75vh) scale(1.25);opacity:0}}
+@media (prefers-reduced-motion:reduce){.ping-card,.ping-card .pc-emo{animation:none}.ping-float{display:none}}

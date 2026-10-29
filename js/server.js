@@ -71,6 +71,10 @@ const CODE_EL = {
   not_member: 'μπορείς να διαλέξεις μόνο ομάδες όπου είσαι μέλος',
   too_many_groups: 'έφτασες το μέγιστο αριθμό ομάδων',
   too_many_requests: 'πολλές αιτήσεις — δοκίμασε σε λίγο',
+  pings_off: 'δεν δέχεται μηνύματα αυτή τη στιγμή',
+  bad_emoji: 'άγνωστη αντίδραση',
+  bad_text: 'γράψε ένα σύντομο μήνυμα',
+  text_too_long: 'το μήνυμα είναι πολύ μεγάλο (έως 80 χαρακτήρες)',
 };
 export function errEl(e) {
   return CODE_EL[e && e.code] || (e && e.message) || 'άγνωστο σφάλμα';
@@ -131,6 +135,9 @@ export class Api {
   createGroup(name) { return this.req('POST', '/groups', { json: { name } }); }
   joinGroup(gid) { return this.req('POST', `/groups/${gid}/join`); }
   leaveGroup(gid) { return this.req('POST', `/groups/${gid}/leave`); }
+  // 0.6.0 pings: a reaction / short text to someone you can see; received ones (marked delivered)
+  sendPing(pid, kind, content) { return this.req('POST', `/people/${pid}/pings`, { json: { kind, content }, timeout: 8000 }); }
+  pings() { return this.req('GET', '/me/pings', { timeout: 5000 }); }
   recognize(faces) { return this.req('POST', '/recognize/embeddings', { json: { faces }, timeout: 5000 }); }
 }
 

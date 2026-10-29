@@ -70,3 +70,23 @@ export function playShutter(volume = 0.05) {
     return true;
   } catch (e) { return false; }
 }
+
+// v24: a soft "ping" for a received heart / message (only when «Ήχος αναγνώρισης» is on): three light notes.
+export function playPing(volume = 0.06) {
+  chimeStats.pings = (chimeStats.pings || 0) + 1;
+  if (!ctx || ctx.state === 'closed') return false;
+  try {
+    if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
+    const t0 = ctx.currentTime + 0.01;
+    const out = ctx.createGain(); out.gain.value = volume; out.connect(ctx.destination);
+    for (const [f, dt, len] of [[783.99, 0, 0.5], [1046.5, 0.09, 0.6], [1318.5, 0.18, 0.9]]) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + dt);
+      g.gain.exponentialRampToValueAtTime(1, t0 + dt + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + len);
+      o.connect(g); g.connect(out); o.start(t0 + dt); o.stop(t0 + dt + len + 0.05);
+    }
+    return true;
+  } catch (e) { return false; }
+}

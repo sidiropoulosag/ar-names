@@ -4,7 +4,8 @@ import { Labels3D } from './labels3d.js';
 import { Gallery, Tracker } from './tracker.js';
 import * as db from './db.js';
 import * as server from './server.js';
-import { ChimeRounds, unlockAudio, chimeStats, playShutter } from './chime.js';
+import { ChimeRounds, unlockAudio, chimeStats, playShutter, playPing } from './chime.js';
+import { PING_EMOJI, PING_TEXT_MAX, CardQueue, sendTitle } from './pings.js';
 import { OBJECTS, objectInfo, previewObject, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
@@ -742,10 +743,11 @@ async function serverStep(tracks, vw, vh, now) {
         const v = viewOf(f.display || { mode: 'message', text: f.message || '' });
         t.srvMiss = 0; t.srvUnknownAt = 0; t.srv = true; t.label = f.name; t.personId = f.person_id; t.sim = f.similarity;
         t.objectId = v.objectId; t.message = v.text; t.showName = v.showName; t.sizes = v.sizes; t.style = v.style;
+        t.isSelf = !!f.is_self; t.acceptsPings = f.accepts_pings !== false;   // 0.6.0 (older servers: no pings cap anyway)
         if (!t.recognisedAt) t.recognisedAt = performance.now();
       } else {
         t.srvMiss = (t.srvMiss || 0) + 1; t.srvUnknownAt = performance.now();
-        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.showName = true; t.sizes = null; t.style = null; }
+        if (t.srv && t.srvMiss >= 2) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.isSelf = false; t.showName = true; t.sizes = null; t.style = null; }
       }
     }
   }).catch((e) => {
@@ -1278,6 +1280,8 @@ async function refreshServer(verbose = false) {
     for (const el of document.querySelectorAll('#srvMe .combo-only')) el.classList.toggle('hidden', !dispMulti);
     for (const el of document.querySelectorAll('#srvMe .sizes-only')) el.classList.toggle('hidden', !(disp && hasCap('sizes')));
     for (const el of document.querySelectorAll('#srvMe .styles-only')) el.classList.toggle('hidden', !(disp && hasCap('styles')));
+    for (const el of document.querySelectorAll('#srvMe .pings-only')) el.classList.toggle('hidden', !hasCap('pings'));
+    if (hasCap('pings')) { ping.accept = me.accept_pings !== false; $('srvPings').checked = ping.accept; }
     $('srvDispOld').classList.toggle('hidden', dispMulti);
     $('srvDispOld').textContent = disp ? '⚠️ Χρειάζεται ενημέρωση server (0.4.0) για 2 επιλογές μαζί και μεγέθη — τώρα φαίνεται το όνομα + μία επιλογή.'
       : '⚠️ Χρειάζεται ενημέρωση server (0.4.0) για «Μήνυμα 2», 3D αντικείμενα και μεγέθη — τώρα φαίνεται μόνο το μήνυμα.';
@@ -1332,7 +1336,7 @@ async function refreshServer(verbose = false) {
 // synchronously in the same task, so its drawing buffer is still valid.
 let shotBusy = false;
 function cameraVisible() {
-  return ready && mode === 'scan' && !!video.videoWidth && ['people', 'enroll', 'start', 'tokSheet'].every((id) => $(id).classList.contains('hidden'));
+  return ready && mode === 'scan' && !!video.videoWidth && ['people', 'enroll', 'start', 'tokSheet', 'pingSheet'].every((id) => $(id).classList.contains('hidden'));
 }
 function syncShot() { $('btnShot').classList.toggle('hidden', !cameraVisible()); }
 function roundRect(g, x, y, w, h, r) {
@@ -1428,3 +1432,141 @@ async function takeShot() {
 $('btnShot').onclick = () => { takeShot(); };
 window.__ar.shot = takeShot; window.__ar.shotName = shotName; window.__ar.composeShot = composeShot; window.__ar.frameCanvas = frameCanvas;
 
+
+
+// ---------- v24 (server 0.6.0 'pings'): tap a recognised person -> ❤️ / 👋 / short text; received = top card ----------
+// Only in server mode, for people the server recognised (it re-checks permission: a person you can't see = not found).
+// Hidden on-device only and on older servers (no 'pings' in /health features).
+const ping = { target: null, busy: false, accept: null, polls: 0, pollErr: 0, lastPoll: 0, sent: [], received: [], hinted: false };
+const PING_HINT_KEY = 'ar-names-ping-hint';
+try { ping.hinted = !!localStorage.getItem(PING_HINT_KEY); } catch (e) { /* private mode */ }
+const pingsOn = () => serverOn() && !srv.offline && hasCap('pings');
+// on-screen rectangle of a recognised face + its 3D name (the name sits above the head)
+function pingRect(t) {
+  const vw = video.videoWidth, vh = video.videoHeight; if (!vw || !t.box) return null;
+  const W = labels.W, H = labels.H, sc = Math.max(W / vw, H / vh), ox = (W - vw * sc) / 2, oy = (H - vh * sc) / 2;
+  let x0 = t.box.x0 * vw * sc + ox, x1 = t.box.x1 * vw * sc + ox; const y0 = t.box.y0 * vh * sc + oy, y1 = t.box.y1 * vh * sc + oy;
+  if (labels.mirror) [x0, x1] = [W - x1, W - x0];
+  const rec = labels.meshes.get(t.id), cx = (x0 + x1) / 2, half = Math.max((x1 - x0) / 2, 70);
+  const top = rec && Number.isFinite(rec.top) ? Math.min(y0, rec.top) : y0 - (y1 - y0) * 0.8;
+  return { l: cx - half - 12, r: cx + half + 12, t: top - 12, b: y1 + 12, cx, cy: (y0 + y1) / 2 };
+}
+const pingable = (t) => t.srv && t.personId && t.label && t.missed <= 3;
+function pingHit(x, y) {
+  let best = null, bd = Infinity;
+  for (const t of tracker.tracks) {
+    if (!pingable(t)) continue;
+    const r = pingRect(t); if (!r || x < r.l || x > r.r || y < r.t || y > r.b) continue;
+    const d = Math.hypot(x - r.cx, y - r.cy); if (d < bd) { bd = d; best = t; }
+  }
+  return best;
+}
+function openPing(personId, name) {
+  if (!pingsOn()) return false;
+  ping.target = { personId, name };
+  $('pingTitle').textContent = sendTitle(name);
+  $('pingInfo').textContent = ''; $('pingInfo').classList.remove('bad');
+  $('pingText').value = '';
+  $('pingSheet').classList.remove('hidden'); syncShot();
+  return true;
+}
+function closePing() { ping.target = null; $('pingSheet').classList.add('hidden'); $('pingText').blur(); syncShot(); }
+$('stage').addEventListener('click', (ev) => {
+  if (!pingsOn() || mode !== 'scan' || !ready) return;
+  if (!['people', 'enroll', 'start', 'tokSheet'].every((id) => $(id).classList.contains('hidden'))) return;
+  const t = pingHit(ev.clientX, ev.clientY);
+  if (!t) { if (ping.target && !$('pingText').value.trim()) closePing(); return; }
+  if (t.isSelf) { toast('Αυτός είσαι εσύ 🙂'); return; }
+  if (t.acceptsPings === false) { toast(`${t.label}: δεν δέχεται μηνύματα τώρα`); return; }
+  openPing(t.personId, t.label);
+});
+async function sendPing(kind, content) {
+  const tg = ping.target; if (!tg || ping.busy) return null;
+  if (kind === 'text') {
+    content = content.replace(/\s+/g, ' ').trim();
+    if (!content) { $('pingText').focus(); return null; }
+    if ([...content].length > PING_TEXT_MAX) { $('pingInfo').textContent = `Έως ${PING_TEXT_MAX} χαρακτήρες.`; $('pingInfo').classList.add('bad'); return null; }
+  }
+  ping.busy = true; for (const b of $('pingSheet').querySelectorAll('button:not(#pingClose)')) b.disabled = true;
+  $('pingInfo').classList.remove('bad'); $('pingInfo').textContent = 'Αποστολή…';
+  const rec = { to: tg.personId, kind, content, at: Date.now(), ok: false, code: '' };
+  ping.sent.push(rec); if (ping.sent.length > 50) ping.sent.shift();
+  try {
+    await api.sendPing(tg.personId, kind, content);
+    rec.ok = true;
+    closePing(); toast(kind === 'emoji' ? `Στάλθηκε ${content} ✓` : 'Στάλθηκε ✓');
+  } catch (e) {
+    rec.code = e.code || String(e.status);
+    const msg = e.code === 'not_found' ? 'Δεν μπορείς να στείλεις σε αυτό το άτομο.'
+      : e.code === 'pings_off' ? `${tg.name}: δεν δέχεται μηνύματα τώρα.`
+      : e.status === 429 ? 'Πολύ γρήγορα — περίμενε λίγο και ξαναστείλε.'
+      : e.code === 'offline' || e.code === 'timeout' ? 'Δεν υπάρχει σύνδεση — δοκίμασε ξανά.'
+      : 'Δεν στάλθηκε: ' + errMsg(e);
+    $('pingInfo').textContent = '⚠️ ' + msg; $('pingInfo').classList.add('bad');
+  } finally {
+    ping.busy = false; for (const b of $('pingSheet').querySelectorAll('button')) b.disabled = false;
+  }
+  return rec;
+}
+for (const em of PING_EMOJI) {
+  const b = document.createElement('button'); b.type = 'button'; b.textContent = em; b.setAttribute('aria-label', 'Στείλε ' + em);
+  b.onclick = () => sendPing('emoji', em); $('pingEmojis').appendChild(b);
+}
+$('pingSend').onclick = () => sendPing('text', $('pingText').value);
+$('pingText').onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); sendPing('text', $('pingText').value); } };
+$('pingClose').onclick = closePing;
+$('srvPings').onchange = async () => {
+  const on = $('srvPings').checked;
+  try { await api.patchMe(cfg.personId, { accept_pings: on }); ping.accept = on; toast(on ? 'Δέχεσαι μηνύματα ✓' : 'Δεν δέχεσαι μηνύματα'); }
+  catch (e) { $('srvPings').checked = !on; $('srvInfo').textContent = '⚠️ ' + errMsg(e); }
+};
+
+// received: one card at a time (~5 s), a floating emoji (a heart floats up for ❤️), soft sound + vibration
+function floatFx(em, n = 7) {
+  const fx = $('pingFx'), W = window.innerWidth;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('span'); s.className = 'ping-float'; s.textContent = em;
+    s.style.left = Math.round(W * (0.2 + 0.6 * Math.random())) + 'px';
+    s.style.setProperty('--dx', Math.round((Math.random() - 0.5) * 120) + 'px');
+    s.style.animationDelay = (i * 0.14).toFixed(2) + 's'; s.style.fontSize = (34 + Math.random() * 24).toFixed(0) + 'px';
+    fx.appendChild(s); setTimeout(() => s.remove(), 3200 + i * 140);
+  }
+}
+const cards = new CardQueue((p, ms, done) => {
+  const c = document.createElement('div'); c.className = 'ping-card'; c.setAttribute('role', 'status');
+  const from = document.createElement('span'); from.className = 'pc-from'; from.textContent = `💌 ${p.from_name}:`;
+  const body = document.createElement('span'); body.className = p.kind === 'emoji' ? 'pc-emo' : 'pc-text'; body.textContent = p.content;
+  c.append(from, body); $('pingCards').appendChild(c);
+  floatFx(p.kind === 'emoji' ? p.content : '💌', p.kind === 'emoji' ? 7 : 3);
+  if (settings.sound !== false) playPing();
+  try { navigator.vibrate && navigator.vibrate([60, 40, 60]); } catch (e) { /* not supported */ }
+  let gone = false;
+  const end = () => { if (gone) return; gone = true; c.classList.add('out'); setTimeout(() => { c.remove(); done(); }, 300); };
+  c.onclick = end; setTimeout(end, ms);
+});
+async function pollPings() {
+  if (ping.polling || document.hidden || !pingsOn() || ping.accept === false) return;
+  ping.polling = true; ping.lastPoll = Date.now();
+  try {
+    const r = await api.pings(); ping.polls++; ping.pollErr = 0;
+    for (const p of (r && r.pings) || []) { ping.received.push(p); if (ping.received.length > 50) ping.received.shift(); cards.push(p); }
+  } catch (e) { ping.pollErr++; }
+  finally { ping.polling = false; }
+}
+setInterval(() => {
+  // the sheet only makes sense over the live camera
+  if (ping.target && (!pingsOn() || mode !== 'scan' || !['people', 'enroll', 'start', 'tokSheet'].every((id) => $(id).classList.contains('hidden')))) closePing();
+  // one-time hint the first time someone you can message is on screen
+  if (!ping.hinted && pingsOn() && mode === 'scan' && cameraVisible() && tracker.tracks.some((t) => pingable(t) && !t.isSelf && t.acceptsPings !== false)) {
+    ping.hinted = true; try { localStorage.setItem(PING_HINT_KEY, '1'); } catch (e) { /* ignore */ }
+    toast('💌 Πάτα πάνω σε κάποιον για να του στείλεις ❤️ ή μήνυμα');
+  }
+  // 2 s while the camera runs; slower when idle or after errors
+  const every = ready ? (ping.pollErr ? 10000 : 2000) : 15000;
+  if (Date.now() - ping.lastPoll >= every - 100) pollPings();
+}, 1000);
+Object.assign(window.__ar, {
+  ping, cards, openPing, closePing, sendPing: (k, c) => sendPing(k, c), pollPings, pingHit,
+  pingSpot: (trackId) => { const t = tracker.tracks.find((x) => x.id === trackId); return t ? pingRect(t) : null; },
+  pingsOn,
+});

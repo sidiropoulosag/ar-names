@@ -23,9 +23,61 @@ const chimes = new ChimeRounds();
 let facing = 'environment', stream = null, mode = 'scan', ready = false;
 const cfg = server.loadCfg();
 const api = new server.Api(cfg);
-window.__ar = { cfg, api, get srv() { return srv; }, srvOrder: (...a) => srvOrder(...a), renderWhy: (...a) => renderWhy(...a), get srvLimits() { return { batch: SRV_BATCH, max: SRV_MAX_FACES }; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, chimes, chime: chimeStats, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db };
+window.__ar = { cfg, api, get srv() { return srv; }, srvOrder: (...a) => srvOrder(...a), renderWhy: (...a) => renderWhy(...a), get srvLimits() { return { batch: SRV_BATCH, max: SRV_MAX_FACES }; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, chimes, chime: chimeStats, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db, openEnroll: (...a) => openEnroll(...a) };
 
 function setStatus(t) { $('status').textContent = t; }
+
+// ---------- v23: saved messages history (on this device only) ----------
+// Every message saved with «Αποθήκευση» is remembered (deduped, most recent first, max 30). Under each message
+// field: «🕘 Αποθηκευμένα (n)» opens the list; tap a message to put it in the field, «🗑️» removes it.
+const MSG_HIST_KEY = 'ar-names-msg-history', MSG_HIST_MAX = 30;
+function msgHistLoad() {
+  try { const a = JSON.parse(localStorage.getItem(MSG_HIST_KEY) || '[]'); return Array.isArray(a) ? a.filter((x) => typeof x === 'string' && x.trim()) : []; }
+  catch (_) { return []; }
+}
+function msgHistSave(a) { try { localStorage.setItem(MSG_HIST_KEY, JSON.stringify(a.slice(0, MSG_HIST_MAX))); } catch (_) {} }
+const msgKey = (t) => t.trim().replace(/\s+/g, ' ').toLocaleLowerCase('el');
+function msgHistAdd(...texts) {   // later arguments end up first
+  let a = msgHistLoad();
+  for (const raw of texts) {
+    const t = (raw || '').trim(); if (!t) continue;
+    a = [t, ...a.filter((x) => msgKey(x) !== msgKey(t))];
+  }
+  msgHistSave(a); renderMsgHist();
+}
+function msgHistDel(t) { msgHistSave(msgHistLoad().filter((x) => x !== t)); renderMsgHist(); }
+const msgHistOpen = new Set();
+function renderMsgHist() {
+  const list = msgHistLoad();
+  for (const box of document.querySelectorAll('.msg-hist')) {
+    const field = $(box.dataset.for), open = msgHistOpen.has(box.dataset.for) && list.length > 0;
+    box.classList.toggle('hidden', !list.length);
+    box.replaceChildren();
+    if (!list.length) continue;
+    const tg = document.createElement('button'); tg.type = 'button'; tg.className = 'mh-toggle';
+    tg.textContent = `🕘 Αποθηκευμένα μηνύματα (${list.length}) ${open ? '▴' : '▾'}`;
+    tg.setAttribute('aria-expanded', String(open));
+    tg.onclick = () => { open ? msgHistOpen.delete(box.dataset.for) : msgHistOpen.add(box.dataset.for); renderMsgHist(); };
+    box.appendChild(tg);
+    if (!open) continue;
+    const ul = document.createElement('ul'); ul.className = 'mh-list';
+    for (const t of list) {
+      const li = document.createElement('li');
+      const pick = document.createElement('button'); pick.type = 'button'; pick.className = 'mh-pick'; pick.textContent = t; pick.title = 'Χρήση αυτού του μηνύματος';
+      pick.onclick = () => {
+        field.value = t; dispDirty = true;
+        field.dispatchEvent(new Event('input', { bubbles: true }));   // same as typing: ticks the item, updates the preview
+        msgHistOpen.delete(box.dataset.for); renderMsgHist();
+      };
+      const del = document.createElement('button'); del.type = 'button'; del.className = 'mh-del'; del.textContent = '🗑️';
+      del.setAttribute('aria-label', 'Διαγραφή αποθηκευμένου μηνύματος'); del.title = 'Διαγραφή';
+      del.onclick = () => msgHistDel(t);
+      li.append(pick, del); ul.appendChild(li);
+    }
+    box.appendChild(ul);
+  }
+}
+window.__ar.msgHist = { load: msgHistLoad, add: msgHistAdd, del: msgHistDel, render: renderMsgHist };
 
 // ---------- advanced mode (hidden): tap «Ρυθμίσεις» 7 times ----------
 // Normal users never see the server address, the token or the names of people who are not online.
@@ -63,29 +115,82 @@ setInterval(() => {
 }, 60000);
 
 // ---------- boot ----------
+// v23: if the camera permission is already granted (2nd start onwards), the camera opens by itself — no tap on
+// «Άνοιγμα κάμερας». Permissions API where it knows 'camera' (Chrome/Android, Safari 16+); elsewhere we remember in
+// localStorage that the camera started successfully once and try. Any failure -> the normal button.
+const CAM_OK_KEY = 'ar-names-cam-ok';
+async function cameraAlreadyAllowed() {
+  try {
+    if (navigator.permissions && navigator.permissions.query) {
+      const st = (await navigator.permissions.query({ name: 'camera' })).state;
+      window.__ar.camPerm = st;
+      if (st !== 'granted') { if (st === 'denied') localStorage.removeItem(CAM_OK_KEY); return false; }
+      return true;
+    }
+  } catch (_) { /* 'camera' not a known permission name here -> fallback */ }
+  window.__ar.camPerm = 'unknown';
+  return localStorage.getItem(CAM_OK_KEY) === '1';
+}
+const camAllowedP = (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? cameraAlreadyAllowed() : Promise.resolve(false);
+function showStartButton(err) {
+  $('start').classList.remove('hidden');
+  $('btnStart').disabled = false; $('btnStart').textContent = '📷 Άνοιγμα κάμερας';
+  if (err) $('loadErr').textContent = err;
+}
+// the chime's AudioContext still needs a user gesture: unlock it on the first touch/click after an auto-start
+function unlockAudioOnFirstTouch() {
+  const evs = ['pointerdown', 'touchstart', 'click', 'keydown'];
+  const h = () => { unlockAudio(); evs.forEach((e) => document.removeEventListener(e, h, true)); };
+  evs.forEach((e) => document.addEventListener(e, h, { capture: true, passive: true }));
+}
+
 async function boot() {
   try {
     setStatus('Φόρτωση μοντέλων…');
+    camAllowedP.then((ok) => { if (ok && !ready) $('btnStart').textContent = 'Φόρτωση μοντέλων… η κάμερα θα ανοίξει αυτόματα'; });
     const t0 = performance.now();
     await Promise.all([detector.init(settings.maxFaces), embedder.init(), labels.init(new URL('../fonts/dejavu_sans_bold_greek.typeface.json', import.meta.url).href)]);
     stats.loadMs = Math.round(performance.now() - t0);
     stats.delegate = detector.delegate;
     await reloadPeople();
     refreshFamily();
-    $('btnStart').disabled = false; $('btnStart').textContent = '📷 Άνοιγμα κάμερας';
     setStatus('Έτοιμο');
-    if (new URLSearchParams(location.search).has('autostart')) start();
+    const auto = new URLSearchParams(location.search).has('autostart') || await camAllowedP;
+    if (auto && !camStarting && !ready) {
+      window.__ar.autoStarted = true;
+      $('btnStart').disabled = true; $('btnStart').textContent = 'Άνοιγμα κάμερας…';
+      unlockAudioOnFirstTouch();
+      start({ auto: true });
+    } else if (!camStarting && !ready) showStartButton();
   } catch (e) {
     console.error(e);
     $('loadErr').textContent = 'Σφάλμα φόρτωσης: ' + (e && e.message || e);
   }
 }
 
-async function start() {
+let camStarting = false;
+async function start(opts = {}) {
+  if (camStarting || ready) return;   // never start twice (auto-start + tap)
+  camStarting = true;
+  $('btnStart').disabled = true;
+  if (!opts.auto) $('start').classList.add('hidden');
+  try {
+    await openCamera(facing);
+  } catch (e) {
+    console.warn('camera start failed', e);
+    camStarting = false;
+    if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+    if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) localStorage.removeItem(CAM_OK_KEY);
+    showStartButton(opts.auto ? '' : 'Η κάμερα δεν άνοιξε: ' + (e && (e.message || e.name) || e));
+    window.__ar.camError = String(e && (e.name || e.message) || e);
+    return;
+  }
+  localStorage.setItem(CAM_OK_KEY, '1');
+  $('loadErr').textContent = '';
   $('start').classList.add('hidden');
-  await openCamera(facing);
   stats.camStart = performance.now();
   ready = true;
+  camStarting = false;
   loop();
 }
 
@@ -315,13 +420,14 @@ function openPeople() {
   refreshFamily(); clearInterval(fam.timer);
   fam.timer = setInterval(() => { if (!document.hidden) refreshFamily(); }, 15000);   // live while the list is open
 }
-// «＋ Νέο άτομο» only until this device has its owner's profile (server token, or the on-device «me» person);
-// afterwards adding / re-enrolling is in Settings («Προσθήκη νέου προφίλ») and in advanced mode.
+// «＋ Νέο άτομο» (and, v23, «＋ Προσθήκη νέου προφίλ» in the Άτομα panel) only while this device has NO owner's
+// profile (server token, or the on-device «me» person). Once you have one, both are hidden; a dead token (v20) or
+// «Αποσύνδεση / επαναφορά» clears it and both come back.
 function hasOwnProfile() { return !!cfg.token || (localPeople || []).some((p) => p.me); }
 function syncEnrollBtn() {
   const own = hasOwnProfile();
   $('btnEnroll').classList.toggle('hidden', own || mode === 'enroll');
-  $('pAddNew').classList.toggle('hidden', !own);
+  $('pAddNew').classList.toggle('hidden', own);
   $('pResetDevice').classList.toggle('hidden', !own);
 }
 // v20: the server says the stored token is dead (profile deleted in the dashboard / token changed).
@@ -491,7 +597,7 @@ async function enrollFromFiles(files) {
 }
 
 // ---------- UI wiring ----------
-$('btnStart').onclick = () => { unlockAudio(); goFullscreen(); start(); };
+$('btnStart').onclick = () => { if (camStarting || ready) return; unlockAudio(); goFullscreen(); start(); };
 
 // ---- Full screen / install (hides the browser address bar) ----
 const isStandalone = () => window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -508,7 +614,7 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !isStandalone()) $('iosHint
 
 $('btnFlip').onclick = () => openCamera(facing === 'user' ? 'environment' : 'user');
 $('btnEnroll').onclick = () => openEnroll();
-$('pAddNew').onclick = () => { closePeople(); openEnroll(); };
+$('pAddNew').onclick = () => { if (hasOwnProfile()) return syncEnrollBtn(); closePeople(); openEnroll(); };
 // v20: «Αποσύνδεση / επαναφορά αυτής της συσκευής» — forget my profile on THIS phone only (server profile untouched)
 $('pResetDevice').onclick = async () => {
   if (!confirm('Να ξεχάσει αυτή η συσκευή το προφίλ σου;\nΤο προφίλ στον server ΔΕΝ διαγράφεται. Μετά θα εμφανιστεί ξανά το «＋ Νέο άτομο».')) return;
@@ -922,6 +1028,7 @@ function initServerUi() {
     const btn = $('srvMsgSave'); btn.disabled = true;
     try {
       await api.patchMe(cfg.personId, f); dispDirty = false;
+      msgHistAdd(f.message2, f.message);   // v23: remember what I typed (most recent first)
       const ok = (hasCap('display') ? 'Αποθηκεύτηκε ✓' : 'Το μήνυμα αποθηκεύτηκε ✓') + note;
       $('srvInfo').textContent = ok;
       closePeople(); setStatus(ok);   // v17: a successful save closes the settings panel
@@ -944,6 +1051,7 @@ function initServerUi() {
   for (const b of itemBoxes()) b.onchange = () => { dispDirty = true; syncItems(b); if (b.value === 'object3d' && b.checked) pickObject(dispObj); };
   $('srvMsg').oninput = () => { autoPick('message1'); updatePreview(); };
   $('srvMsg2').oninput = () => { autoPick('message2'); updatePreview(); };
+  renderMsgHist();
   for (const id of ['szName', 'szText', 'szObj']) $(id).oninput = () => { dispDirty = true; showSize(id); updatePreview(); };
   for (const b of $('stylePick').children) b.onclick = () => { pickStyle(b.dataset.style); dispDirty = true; };
   setupGroups();
@@ -1319,3 +1427,4 @@ async function takeShot() {
 }
 $('btnShot').onclick = () => { takeShot(); };
 window.__ar.shot = takeShot; window.__ar.shotName = shotName; window.__ar.composeShot = composeShot; window.__ar.frameCanvas = frameCanvas;
+

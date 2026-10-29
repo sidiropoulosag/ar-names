@@ -125,3 +125,12 @@ body.adv .adv-only{display:block}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 /* narrow phones: keep «＋ Νέο άτομο» clear of the centred shutter */
 @media (max-width:420px){.fab{right:12px;padding:12px 14px;font-size:15px}}
+/* v23: saved messages under «Μήνυμα» / «Μήνυμα 2» */
+.msg-hist{margin:-2px 0 8px}
+.msg-hist .mh-toggle{background:none;border:0;color:#9ecbff;font-size:14px;padding:4px 2px;cursor:pointer}
+.msg-hist .mh-list{list-style:none;margin:4px 0 0;padding:0;max-height:220px;overflow:auto;border:1px solid #3d5a80;border-radius:12px;background:#0d1b2a}
+.msg-hist .mh-list li{display:flex;align-items:stretch;border-top:1px solid #1f3550}
+.msg-hist .mh-list li:first-child{border-top:0}
+.msg-hist .mh-pick{flex:1;text-align:left;background:none;border:0;color:#fff;font:inherit;font-size:15px;padding:10px 12px;white-space:pre-wrap;word-break:break-word;cursor:pointer;justify-content:flex-start}
+.msg-hist .mh-del{flex:0 0 44px;background:none;border:0;font-size:18px;cursor:pointer}
+.msg-hist:empty,textarea.hidden+.msg-hist{display:none}

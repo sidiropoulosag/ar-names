@@ -129,8 +129,10 @@
     <label class="setting check combo-only"><input type="checkbox" class="dispItem" value="name"> 🏷️ Όνομα</label>
     <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="message1"> 💬 Σχόλιο / Μήνυμα 1</label>
     <textarea id="srvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που φαίνεται πάνω από το κεφάλι σου"></textarea>
+    <div class="msg-hist hidden" data-for="srvMsg"></div>
     <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="message2"> 💬 Μήνυμα 2</label>
     <textarea id="srvMsg2" class="disp-only" rows="2" maxlength="300" placeholder="Ένα δεύτερο μήνυμα (π.χ. για άλλη περίσταση)"></textarea>
+    <div class="msg-hist hidden" data-for="srvMsg2"></div>
     <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="object3d"> 🧸 3D αντικείμενο</label>
     <div id="objBox" class="disp-only"><div id="objPick"></div><canvas id="objPrev" width="120" height="120"></canvas></div>
     <div id="styleBox" class="styles-only hidden">

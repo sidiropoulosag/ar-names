@@ -213,7 +213,11 @@ async function refreshFamily() {
         const { people } = await api.people(); Object.assign(fam, { people, count: people.length, mode: 'member' });
         if (cfg.personId == null) { const me = await api.me(); cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg); }
       }
-      catch (e) { if (e.status !== 401) throw e; await famFromPublic(); }   // token no longer valid
+      catch (e) {
+        if (e.status !== 401 && !isDeadToken(e)) throw e;
+        if (isDeadToken(e) && forgetServerProfile()) setStatus('⚠️ Το προφίλ σου δεν βρέθηκε στον server (ίσως διαγράφηκε). Πάτα «＋ Νέο άτομο» για να καταχωριστείς ξανά.');
+        await famFromPublic();
+      }   // token no longer valid
     } else await famFromPublic();
     fam.err = '';
   } catch (e) { fam.err = server.errEl(e); }
@@ -317,6 +321,27 @@ function syncEnrollBtn() {
   const own = hasOwnProfile();
   $('btnEnroll').classList.toggle('hidden', own || mode === 'enroll');
   $('pAddNew').classList.toggle('hidden', !own);
+  $('pResetDevice').classList.toggle('hidden', !own);
+}
+// v20: the server says the stored token is dead (profile deleted in the dashboard / token changed).
+// Only the server's own answer counts (code 'bad_token', or 404 from /people/me) — never a network error.
+function isDeadToken(e, fromMe = false) { return !!e && (e.code === 'bad_token' || (fromMe && e.status === 404)); }
+// Forget this device's server profile (token + my id) so «＋ Νέο άτομο» comes back. Nothing is deleted on the server.
+function forgetServerProfile() {
+  if (!cfg.token && cfg.personId == null) return false;
+  Object.assign(cfg, { token: '', personId: null, name: '', enabled: false }); server.saveCfg(cfg);
+  srv.offline = false;
+  for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.showName = true; t.sizes = null; t.style = null; }
+  tracker.relabel(); $('srvMe').classList.add('hidden'); syncServerUi();
+  if (mode === 'enroll' && !en.person) setupEnrollServer(null, true);   // enrolment open: show name + key fields again
+  return true;
+}
+// A message in the settings panel with a «＋ Νέο άτομο» button right under it.
+function infoWithEnroll(text) {
+  const info = $('srvInfo'); info.textContent = text;
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'primary info-enroll'; b.textContent = '＋ Νέο άτομο';
+  b.onclick = () => { closePeople(); openEnroll(); };
+  info.appendChild(document.createElement('br')); info.appendChild(b);
 }
 function closePeople() { $('people').classList.add('hidden'); clearInterval(fam.timer); fam.timer = 0; }
 function famOnFocus() { if (!document.hidden && Date.now() - fam.at > 3000) refreshFamily(); }
@@ -483,6 +508,16 @@ if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !isStandalone()) $('iosHint
 $('btnFlip').onclick = () => openCamera(facing === 'user' ? 'environment' : 'user');
 $('btnEnroll').onclick = () => openEnroll();
 $('pAddNew').onclick = () => { closePeople(); openEnroll(); };
+// v20: «Αποσύνδεση / επαναφορά αυτής της συσκευής» — forget my profile on THIS phone only (server profile untouched)
+$('pResetDevice').onclick = async () => {
+  if (!confirm('Να ξεχάσει αυτή η συσκευή το προφίλ σου;\nΤο προφίλ στον server ΔΕΝ διαγράφεται. Μετά θα εμφανιστεί ξανά το «＋ Νέο άτομο».')) return;
+  forgetServerProfile();
+  for (const p of localPeople) if (p.me) { delete p.me; await db.putPerson(p); }
+  await reloadPeople(); syncEnrollBtn();
+  infoWithEnroll('Η συσκευή επανήλθε ✓ — πάτα «＋ Νέο άτομο» για να καταχωριστείς ξανά.');
+  setStatus('Η συσκευή επανήλθε — πάτα «＋ Νέο άτομο».');
+  refreshFamily();
+};
 $('btnPeople').onclick = openPeople;
 $('pClose').onclick = closePeople;
 $('enCancel').onclick = closeEnroll;
@@ -608,6 +643,7 @@ async function serverStep(tracks, vw, vh, now) {
     }
   }).catch((e) => {
     srv.lastError = e;
+    if (isDeadToken(e) && forgetServerProfile()) { setStatus('⚠️ Το προφίλ σου δεν βρέθηκε στον server (ίσως διαγράφηκε). Πάτα «＋ Νέο άτομο» για να καταχωριστείς ξανά.'); refreshFamily(); return; }
     const wasOffline = srv.offline;
     srv.offline = true;
     srv.retryAt = performance.now() + (e.status === 401 ? 15000 : 5000);
@@ -806,6 +842,11 @@ async function saveEnrollServer() {
       setMsg(`${head} Χρειάζονται ακόμα ${need} λήψεις${miss.length ? ` — λείπουν: ${server.posesEl(miss)}` : ''}. Πάτα ξανά ▶ Αυτόματη λήψη ή 📸.`);
     }
   } catch (e) {
+    if (isDeadToken(e) && forgetServerProfile()) {
+      setupEnrollServer(null, true);
+      setMsg('Το παλιό σου προφίλ δεν υπάρχει πια στον server. Γράψε το όνομά σου και πάτα ξανά «Αποθήκευση» για νέο προφίλ (οι λήψεις κρατήθηκαν).');
+      return;
+    }
     setMsg('⚠️ ' + (e.code === 'offline' || e.code === 'timeout'
       ? (adv ? 'Ο server δεν απαντά. Έλεγξε τη διεύθυνση στις Ρυθμίσεις και ξαναπάτα «Αποθήκευση».' : 'Εκτός σύνδεσης. Δοκίμασε ξανά «Αποθήκευση» σε λίγο.')
       : 'Σφάλμα: ' + errMsg(e)));
@@ -884,7 +925,10 @@ function initServerUi() {
       $('srvInfo').textContent = ok;
       closePeople(); setStatus(ok);   // v17: a successful save closes the settings panel
     }
-    catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); }   // failure: panel stays open with the error
+    catch (e) {   // failure: panel stays open with the error
+      if (isDeadToken(e) && forgetServerProfile()) infoWithEnroll('⚠️ Το προφίλ σου δεν βρέθηκε στον server (ίσως διαγράφηκε). Πάτα «＋ Νέο άτομο» για να καταχωριστείς ξανά.');
+      else $('srvInfo').textContent = '⚠️ ' + errMsg(e);
+    }
     finally { btn.disabled = false; }
   };
   // object picker (from the registry in objects3d.js)
@@ -1105,11 +1149,12 @@ async function refreshServer(verbose = false) {
     if (adv) advInfo.textContent = `Ο server απαντά ✓ · έκδοση ${h.version || '?'} · ${h.people} άτομα` + (hasCap('display') ? '' : ' · παλιά έκδοση (χωρίς «Μήνυμα 2» / 3D αντικείμενα / online)');
     if (!cfg.token) {
       $('srvMe').classList.add('hidden');
-      info.textContent = '☁️ Συνδεδεμένος ✓ — δεν έχεις ακόμα προφίλ. Πάτα «＋ Νέο άτομο» και καταχώρισε τον εαυτό σου'
-        + (srvOpen ? '' : ' (θα χρειαστείς το κλειδί πρόσβασης)') + (adv ? ', ή βάλε το token σου.' : '.');
+      infoWithEnroll('☁️ Συνδεδεμένος ✓ — δεν έχεις ακόμα προφίλ. Πάτα «＋ Νέο άτομο» και καταχώρισε τον εαυτό σου'
+        + (srvOpen ? '' : ' (θα χρειαστείς το κλειδί πρόσβασης)') + (adv ? ', ή βάλε το token σου.' : '.'));
       return;
     }
-    const me = await api.me();
+    let me;
+    try { me = await api.me(); } catch (e) { e.fromMe = true; throw e; }
     cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg);
     const { people } = await api.people();
     const e = me.enrollment;
@@ -1164,7 +1209,8 @@ async function refreshServer(verbose = false) {
     syncServerUi();
   } catch (e) {
     $('srvMe').classList.add('hidden');
-    if (e.status === 401) info.textContent = adv ? '⚠️ ' + server.errEl(e) : '⚠️ Το προφίλ σου δεν βρέθηκε στον server (ίσως διαγράφηκε). Πάτα «＋ Νέο άτομο» για να καταχωριστείς ξανά.';
+    if (isDeadToken(e, e.fromMe)) { forgetServerProfile(); infoWithEnroll('⚠️ Το προφίλ σου δεν βρέθηκε στον server (ίσως διαγράφηκε). Πάτα «＋ Νέο άτομο» για να καταχωριστείς ξανά.'); }
+    else if (e.status === 401) info.textContent = adv ? '⚠️ ' + server.errEl(e) : '⚠️ Το προφίλ σου δεν βρέθηκε στον server (ίσως διαγράφηκε). Πάτα «＋ Νέο άτομο» για να καταχωριστείς ξανά.';
     else info.textContent = '☁️ Εκτός σύνδεσης — θα ξαναδοκιμάσω όταν ανοίξεις πάλι τις ρυθμίσεις.';
     if (adv) advInfo.textContent = '⚠️ ' + server.errEl(e) + (e.code === 'offline' ? ' — έλεγξε τη διεύθυνση.' : '');
   }

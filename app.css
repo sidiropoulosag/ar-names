@@ -104,3 +104,5 @@ body.adv .adv-only{display:block}
 #grpNewName{font-size:16px;padding:10px 12px;min-width:0}
 #grpNewName{flex:1}
 .why{position:absolute;left:0;top:0;background:rgba(13,27,42,.75);color:#ffd27a;font-size:11px;line-height:1.2;padding:2px 6px;border-radius:8px;white-space:nowrap;will-change:transform}
+
+#srvInfo .info-enroll{margin-top:6px}

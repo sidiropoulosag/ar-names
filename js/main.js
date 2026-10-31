@@ -4,9 +4,10 @@ import { Labels3D } from './labels3d.js';
 import { Gallery, Tracker } from './tracker.js';
 import * as db from './db.js';
 import * as server from './server.js';
-import { ChimeRounds, unlockAudio, chimeStats, playShutter, playPing } from './chime.js';
+import { ChimeRounds, unlockAudio, resumeAudio, audioState, chimeStats, playShutter, playPing } from './chime.js';
 import { PING_EMOJI, PING_TEXT_MAX, CardQueue, sendTitle } from './pings.js';
 import { OBJECTS, objectInfo, previewObject, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
+import { ortInfo, ORT_1T_KEY, IOS } from './ort.js';
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
 const $ = (id) => document.getElementById(id);
@@ -24,7 +25,7 @@ const chimes = new ChimeRounds();
 let facing = 'environment', stream = null, mode = 'scan', ready = false;
 const cfg = server.loadCfg();
 const api = new server.Api(cfg);
-window.__ar = { cfg, api, get srv() { return srv; }, srvOrder: (...a) => srvOrder(...a), renderWhy: (...a) => renderWhy(...a), get srvLimits() { return { batch: SRV_BATCH, max: SRV_MAX_FACES }; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, chimes, chime: chimeStats, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db, openEnroll: (...a) => openEnroll(...a) };
+window.__ar = { ortInfo, IOS, cfg, api, get srv() { return srv; }, srvOrder: (...a) => srvOrder(...a), renderWhy: (...a) => renderWhy(...a), get srvLimits() { return { batch: srvBatch(), max: SRV_MAX_FACES, interval: srvInterval() }; }, get caps() { return caps; }, get adv() { return adv; }, tracker, detector, embedder, labels, stats, settings, gallery, chimes, chime: chimeStats, get mode() { return mode; }, get fam() { return fam; }, get ready() { return ready; }, db, openEnroll: (...a) => openEnroll(...a) };
 
 function setStatus(t) { $('status').textContent = t; }
 
@@ -125,8 +126,11 @@ async function cameraAlreadyAllowed() {
     if (navigator.permissions && navigator.permissions.query) {
       const st = (await navigator.permissions.query({ name: 'camera' })).state;
       window.__ar.camPerm = st;
-      if (st !== 'granted') { if (st === 'denied') localStorage.removeItem(CAM_OK_KEY); return false; }
-      return true;
+      if (st === 'granted') return true;
+      if (st === 'denied') { localStorage.removeItem(CAM_OK_KEY); return false; }
+      // v26 iOS Safari: often answers 'prompt' even after the camera was allowed (the grant is per visit unless the
+      // site setting says «Allow»). The camera worked here before -> open it by itself; iOS asks again if it must.
+      return IOS && localStorage.getItem(CAM_OK_KEY) === '1';
     }
   } catch (_) { /* 'camera' not a known permission name here -> fallback */ }
   window.__ar.camPerm = 'unknown';
@@ -144,13 +148,38 @@ function unlockAudioOnFirstTouch() {
   const h = () => { unlockAudio(); evs.forEach((e) => document.removeEventListener(e, h, true)); };
   evs.forEach((e) => document.addEventListener(e, h, { capture: true, passive: true }));
 }
+// v26 iOS: the AudioContext becomes 'suspended' / 'interrupted' after a call, Siri or the app going to the background;
+// any later touch resumes it (only if it was unlocked once by a user gesture)
+for (const ev of ['touchend', 'pointerdown']) document.addEventListener(ev, resumeAudio, { capture: true, passive: true });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) resumeAudio(); });
+window.__ar.audioState = audioState;
 
+// v26: ask the browser to keep IndexedDB/localStorage (iOS Safari may otherwise clear site data after weeks unused)
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch (_) {}
+// v26 perf: iOS without WASM threads (or a slow phone) -> smaller detector input, fewer faces per server batch,
+// a local embedding every 2nd frame. Also switched on automatically when detection is measured slow.
+const perf = { slow: false, auto: false, frame: 0 };
+window.__ar.perf = perf;
 async function boot() {
   try {
     setStatus('Φόρτωση μοντέλων…');
     camAllowedP.then((ok) => { if (ok && !ready) $('btnStart').textContent = 'Φόρτωση μοντέλων… η κάμερα θα ανοίξει αυτόματα'; });
     const t0 = performance.now();
-    await Promise.all([detector.init(settings.maxFaces), embedder.init(), labels.init(new URL('../fonts/dejavu_sans_bold_greek.typeface.json', import.meta.url).href)]);
+    const inits = Promise.all([detector.init(settings.maxFaces), embedder.init(), labels.init(new URL('../fonts/dejavu_sans_bold_greek.typeface.json', import.meta.url).href)]);
+    // v26: a multi-threaded WASM start that fails (or hangs, see ort.js) -> reload once and retry; if it fails again,
+    // remember «1 thread» on this device (7 days) and reload once more
+    const FB = 'ar-names-ort-fallback';
+    try { await inits; try { sessionStorage.removeItem(FB); } catch (_) {} }
+    catch (e) {
+      let fb = null; try { fb = sessionStorage.getItem(FB); } catch (_) {}
+      if (ortInfo.threads > 1 && fb !== '2') {
+        console.warn('threaded WASM start failed (' + (fb ? 'again -> 1 thread' : 'retry') + ')', e);
+        try { sessionStorage.setItem(FB, fb ? '2' : '1'); if (fb) localStorage.setItem(ORT_1T_KEY, String(Date.now())); } catch (_) {}
+        location.reload(); return;
+      }
+      throw e;
+    }
+    perf.slow = ortInfo.threads <= 1;
     stats.loadMs = Math.round(performance.now() - t0);
     stats.delegate = detector.delegate;
     await reloadPeople();
@@ -243,8 +272,15 @@ async function loop() {
   // grab the video frame ONCE into a CPU canvas; detector and embedder both read from it (one GPU->CPU readback per frame)
   if (frameCanvas.width !== vw || frameCanvas.height !== vh) { frameCanvas.width = vw; frameCanvas.height = vh; }
   frameCtx.drawImage(video, 0, 0, vw, vh);
-  try { res = await detector.detect(frameCanvas, vw, vh, mode === 'scan' ? settings.range : 384); } catch (e) { console.warn(e); return schedule(); }
+  const long = mode === 'scan' ? (perf.slow ? Math.min(settings.range, 384) : settings.range) : 384;
+  try { res = await detector.detect(frameCanvas, vw, vh, long); } catch (e) { console.warn(e); return schedule(); }
   const dt = performance.now() - t0;
+  perf.frame++;
+  // measured slow (e.g. ~>110 ms per detection after warm-up) -> slow mode; back when clearly fast again
+  if (stats.frames > 30) {
+    if (!perf.slow && stats.det > 110) { perf.slow = true; perf.auto = true; }
+    else if (perf.slow && perf.auto && stats.det < 45) { perf.slow = false; perf.auto = false; }
+  }
   stats.det = ema(stats.det, dt); stats.detSamples.push(dt); if (stats.detSamples.length > 600) stats.detSamples.shift();
   if (stats.lastT) stats.fps = ema(stats.fps, 1000 / (now - stats.lastT));
   stats.lastT = now; stats.frames++;
@@ -264,7 +300,7 @@ async function loop() {
       // people saved only on this phone keep working: faces the server doesn't know are matched locally too
       if (!useLocal && gallery.people.length) { useLocal = true; filter = (x) => !x.srv && (x.srvMiss || 0) >= 1; }
     }
-    const t = useLocal ? tracker.pick(filter) : null;
+    const t = useLocal && !(perf.slow && perf.frame % 2) ? tracker.pick(filter) : null;
     if (t) {
       const e0 = performance.now();
       try {
@@ -638,7 +674,14 @@ let deferredInstall = null;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; if (!isStandalone()) $('btnInstall').classList.remove('hidden'); });
 window.addEventListener('appinstalled', () => { deferredInstall = null; $('btnInstall').classList.add('hidden'); });
 $('btnInstall').onclick = async () => { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch (_) {} deferredInstall = null; $('btnInstall').classList.add('hidden'); };
-if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !isStandalone()) $('iosHint').classList.remove('hidden');
+// v26: iOS Safari has no install prompt -> a small hint (Safari only: other iOS browsers have no «Add to Home Screen»
+// for web apps on older iOS). ✕ closes it for good.
+const IOS_HINT_KEY = 'ar-names-ios-hint-closed';
+const iosSafari = IOS && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|YaBrowser|DuckDuckGo/i.test(navigator.userAgent);
+let iosHintClosed = false; try { iosHintClosed = localStorage.getItem(IOS_HINT_KEY) === '1'; } catch (_) {}
+if (iosSafari && !isStandalone() && !iosHintClosed) $('iosHint').classList.remove('hidden');
+$('iosHintClose').onclick = () => { $('iosHint').classList.add('hidden'); try { localStorage.setItem(IOS_HINT_KEY, '1'); } catch (_) {} };
+window.__ar.iosSafari = iosSafari;
 
 $('btnFlip').onclick = () => openCamera(facing === 'user' ? 'environment' : 'user');
 $('btnEnroll').onclick = () => openEnroll();
@@ -673,8 +716,13 @@ $('enOne').onclick = () => { en.oneShot = true; };
 $('enFile').onchange = (ev) => { enrollFromFiles([...ev.target.files]); ev.target.value = ''; };
 $('pExport').onclick = async () => {
   const blob = new Blob([await db.exportJSON()], { type: 'application/json' });
-  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `noera-backup-${new Date().toISOString().slice(0, 10)}.json` });
-  document.body.appendChild(a); a.click(); a.remove();
+  const name = `noera-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  // v26 iOS: share sheet («Αποθήκευση στα Αρχεία») when possible, else the normal download
+  if (IOS && navigator.canShare && navigator.share) {
+    const f = new File([blob], name, { type: 'application/json' });
+    if (navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f] }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  }
+  download(blob, name);
 };
 $('pImport').onchange = async (ev) => {
   const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
@@ -709,7 +757,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v25';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v26';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -784,6 +832,8 @@ const SRV_INTERVAL = 400; // at most 2.5 recognise calls per second
 // equally due faces the larger / more centred ones go first. Known faces are re-checked every 1.5 s, unknown 350 ms.
 const SRV_BATCH = 4, SRV_MAX_FACES = 12, SRV_RECHECK_KNOWN = 1500, SRV_RECHECK_UNKNOWN = 350;
 const SRV_MIN_PX = 36, SRV_MAX_YAW = 75;
+// v26 slow mode (iOS without threads / slow phone): 2 faces per request, every 700 ms -> the camera stays smooth
+const srvBatch = () => (perf.slow ? 2 : SRV_BATCH), srvInterval = () => (perf.slow ? 700 : SRV_INTERVAL);
 const srv = { inflight: false, last: 0, offline: false, retryAt: 0, calls: 0, ok: 0, lastError: null, batches: [] };
 
 function whyNot(t) {   // why this face is not sent to the server (null = it is sent)
@@ -809,9 +859,9 @@ function srvOrder(tracks, vw, vh, now) {
 }
 
 async function serverStep(tracks, vw, vh, now) {
-  if (srv.inflight || now - srv.last < SRV_INTERVAL) return;
+  if (srv.inflight || now - srv.last < srvInterval()) return;
   if (srv.offline && now < srv.retryAt) return;
-  const cand = srvOrder(tracks, vw, vh, now).slice(0, SRV_BATCH);
+  const cand = srvOrder(tracks, vw, vh, now).slice(0, srvBatch());
   if (!cand.length) return; // no faces in view -> no network traffic
   srv.last = now;
   const faces = [];
@@ -1509,6 +1559,20 @@ async function takeShot() {
     if (!blob) throw new Error('toBlob');
     const name = shotName();
     window.__ar.lastShot = { blob, name, width: c.width, height: c.height, size: blob.size, type: blob.type, via: '' };
+    // v26 iOS: a blob download ends up in Files, not in Photos -> the share sheet with the image file
+    // («Αποθήκευση εικόνας» puts it in Photos). Elsewhere (Android/desktop) unchanged: download.
+    const file = typeof File === 'function' ? new File([blob], name, { type: 'image/png' }) : null;
+    if (IOS && file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] })) {
+      try { await shareShot(file); return window.__ar.lastShot; }
+      catch (e) {
+        if (e && e.name === 'NotAllowedError') {   // the tap's user activation expired while the image was encoded
+          pendingShot = file; window.__ar.lastShot.via = 'share-pending';
+          $('shotSave').classList.remove('hidden'); clearTimeout(shotSaveT); shotSaveT = setTimeout(hideShotSave, 15000);
+          return window.__ar.lastShot;
+        }
+        console.warn('share failed, download fallback', e);
+      }
+    }
     // v22: save straight away like a normal screenshot (blob download → Downloads/gallery), on mobile too.
     // Web Share only as a fallback when the download attempt itself throws.
     try {
@@ -1516,7 +1580,6 @@ async function takeShot() {
       download(blob, name); window.__ar.lastShot.via = 'download'; toast('Στιγμιότυπο αποθηκεύτηκε ✓');
     } catch (de) {
       console.warn('download failed, share fallback', de);
-      const file = typeof File === 'function' ? new File([blob], name, { type: 'image/png' }) : null;
       if (!(file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] }))) throw de;
       try { await navigator.share({ files: [file], title: 'Noera' }); window.__ar.lastShot.via = 'share'; toast('Στιγμιότυπο αποθηκεύτηκε ✓'); }
       catch (e) { if (e && e.name === 'AbortError') window.__ar.lastShot.via = 'share-cancel'; else throw e; }
@@ -1526,6 +1589,18 @@ async function takeShot() {
     console.warn(e); toast('Δεν έγινε το στιγμιότυπο'); return null;
   } finally { shotBusy = false; }
 }
+let pendingShot = null, shotSaveT = 0;
+function hideShotSave() { pendingShot = null; $('shotSave').classList.add('hidden'); }
+async function shareShot(file) {
+  try {
+    await navigator.share({ files: [file] });
+    window.__ar.lastShot.via = 'share'; toast('Στιγμιότυπο ✓');
+  } catch (e) { if (e && e.name === 'AbortError') { window.__ar.lastShot.via = 'share-cancel'; return; } throw e; }
+}
+$('shotSave').onclick = async () => {
+  const f = pendingShot; hideShotSave(); if (!f) return;
+  try { await shareShot(f); } catch (e) { console.warn(e); try { download(f, f.name); window.__ar.lastShot.via = 'download'; toast('Στιγμιότυπο αποθηκεύτηκε ✓'); } catch (_) { toast('Δεν έγινε το στιγμιότυπο'); } }
+};
 $('btnShot').onclick = () => { takeShot(); };
 window.__ar.shot = takeShot; window.__ar.shotName = shotName; window.__ar.composeShot = composeShot; window.__ar.frameCanvas = frameCanvas;
 

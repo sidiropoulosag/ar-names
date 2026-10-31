@@ -7,7 +7,7 @@ export function unlockAudio() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     if (!ctx) ctx = new AC();
-    if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
+    if (ctx.state !== 'running' && ctx.state !== 'closed' && ctx.resume) ctx.resume().catch(() => {});   // iOS: 'suspended' or 'interrupted'
     // a silent 1-sample buffer: unlocks iOS Safari inside the user gesture
     const b = ctx.createBuffer(1, 1, 22050), s = ctx.createBufferSource();
     s.buffer = b; s.connect(ctx.destination); s.start(0);
@@ -54,7 +54,7 @@ export class ChimeRounds {
 export function playShutter(volume = 0.05) {
   if (!ctx || ctx.state === 'closed') return false;
   try {
-    if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
+    if (ctx.state !== 'running' && ctx.state !== 'closed' && ctx.resume) ctx.resume().catch(() => {});   // iOS: 'suspended' or 'interrupted'
     const t0 = ctx.currentTime + 0.005, sr = ctx.sampleRate, len = Math.floor(sr * 0.09);
     const b = ctx.createBuffer(1, len, sr), d = b.getChannelData(0);
     for (let i = 0; i < len; i++) { const t = i / len; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 3); }
@@ -76,7 +76,7 @@ export function playPing(volume = 0.06) {
   chimeStats.pings = (chimeStats.pings || 0) + 1;
   if (!ctx || ctx.state === 'closed') return false;
   try {
-    if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
+    if (ctx.state !== 'running' && ctx.state !== 'closed' && ctx.resume) ctx.resume().catch(() => {});   // iOS: 'suspended' or 'interrupted'
     const t0 = ctx.currentTime + 0.01;
     const out = ctx.createGain(); out.gain.value = volume; out.connect(ctx.destination);
     for (const [f, dt, len] of [[783.99, 0, 0.5], [1046.5, 0.09, 0.6], [1318.5, 0.18, 0.9]]) {
@@ -90,3 +90,8 @@ export function playPing(volume = 0.06) {
     return true;
   } catch (e) { return false; }
 }
+// v26 iOS: resume a context that iOS suspended / interrupted (call, Siri, background); call from a touch handler
+export function resumeAudio() {
+  try { if (ctx && ctx.state !== 'running' && ctx.state !== 'closed' && ctx.resume) ctx.resume().catch(() => {}); } catch (e) { /* ignore */ }
+}
+export const audioState = () => (ctx ? ctx.state : 'none');

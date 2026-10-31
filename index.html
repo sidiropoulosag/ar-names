@@ -21,7 +21,7 @@
 </head>
 <body>
 <div id="stage">
-  <video id="video" playsinline muted autoplay></video>
+  <video id="video" playsinline webkit-playsinline muted autoplay disablepictureinpicture></video>
   <canvas id="overlay"></canvas>
   <canvas id="guide"></canvas>
   <div id="bubbles"></div>
@@ -39,6 +39,10 @@
 <button id="btnShot" class="shutter hidden" type="button" aria-label="Στιγμιότυπο" title="Στιγμιότυπο"><span></span></button>
 <div id="flash" aria-hidden="true"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+<!-- v26 iOS Safari (not installed): one small, closable hint; never shown again once closed -->
+<div id="iosHint" class="hidden" role="note"><span>Για πλήρη οθόνη: Κοινοποίηση <span class="ios-share" aria-hidden="true">⬆︎</span> → «Προσθήκη στην αρχική οθόνη»</span><button id="iosHintClose" type="button" aria-label="Κλείσιμο">✕</button></div>
+<!-- v26 iOS: when the share sheet could not open straight after the shutter (no user gesture left), one more tap saves it -->
+<button id="shotSave" class="hidden" type="button">📥 Αποθήκευση στιγμιότυπου</button>
 <button id="updBar" class="hidden" type="button">Νέα έκδοση ✓ — πάτα για ανανέωση</button>
 <!-- v24 (server 0.6.0): received hearts / messages (top card) + floating emoji; not part of screenshots -->
 <div id="pingCards" aria-live="polite"></div>
@@ -60,7 +64,6 @@
     <button id="btnStart" class="primary big" disabled>Φόρτωση μοντέλων…</button>
     <p id="loadErr" class="err"></p>
     <button id="btnInstall" class="hidden">📲 Εγκατάσταση του Noera στην αρχική οθόνη</button>
-    <p id="iosHint" class="small hidden">Για πλήρη οθόνη: πάτα το κουμπί Κοινοποίηση (τετράγωνο με βέλος) και μετά «Προσθήκη στην οθόνη Έναρξης».</p>
   </div>
 </div>
 

@@ -8,7 +8,7 @@ import { ChimeRounds, unlockAudio, resumeAudio, audioState, chimeStats, playShut
 import { PING_EMOJI, PING_TEXT_MAX, CardQueue, sendTitle } from './pings.js';
 import { OBJECTS, objectInfo, previewObject, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
 import { ortInfo, ORT_1T_KEY, IOS } from './ort.js';
-import { t as tr, setLang, getLang, savedLang, guessLang, applyI18n, locale, dict as I18N } from './i18n.js';
+import { t as tr, setLang, getLang, savedLang, guessLang, applyI18n, locale, dict as I18N, LANGS } from './i18n.js';
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
 const $ = (id) => document.getElementById(id);
@@ -461,6 +461,7 @@ function dispTag(d) {
 function escapeHtml(s) { return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
 function openPeople() {
+  setGo('main');   // v29: always opens on the main menu
   $('people').classList.remove('hidden'); syncShot();
   refreshFamily(); clearInterval(fam.timer);
   fam.timer = setInterval(() => { if (!document.hidden) refreshFamily(); }, 15000);   // live while the list is open
@@ -496,6 +497,50 @@ function infoWithEnroll(text) {
   info.appendChild(document.createElement('br')); info.appendChild(b);
 }
 function closePeople() { $('people').classList.add('hidden'); syncShot(); clearInterval(fam.timer); fam.timer = 0; }
+// ---------- v29: Settings = main menu + sub-pages ----------
+// Rows show only when their page has something to show (profile: a server is set; who / messages: my server
+// profile and a server that supports them). «‹ Πίσω» (or Esc) returns to the menu; ✕ closes as before.
+const SET_PAGES = ['main', 'people', 'profile', 'look', 'who', 'pings', 'lang', 'adv'];
+let setPage = 'main';
+function pageAvailable(pg) {
+  const me = !$('srvMe').classList.contains('hidden');
+  if (pg === 'profile') return !!cfg.url;
+  if (pg === 'who') return me && (!$('srvPrivBox').classList.contains('hidden') || !$('srvVisBox').classList.contains('hidden'));
+  if (pg === 'pings') return me && !$('pingBox').classList.contains('hidden');
+  return SET_PAGES.includes(pg);
+}
+function syncMenu() {
+  const me = !$('srvMe').classList.contains('hidden');
+  $('people').classList.toggle('has-me', me);
+  for (const r of document.querySelectorAll('#people .srow')) r.classList.toggle('hidden', !pageAvailable(r.dataset.go));
+  const L = LANGS.find((l) => l.id === getLang()); $('mLangSub').textContent = L ? `${L.flag} ${L.label}` : '';
+  for (const b of document.querySelectorAll('#people .set-lang')) b.setAttribute('aria-checked', String(b.dataset.lang === getLang()));
+  const row = document.querySelector(`#people .srow[data-go="${setPage}"] b`); $('subTitle').textContent = row ? row.textContent : '';
+  if (setPage !== 'main' && !pageAvailable(setPage)) setGo('main');
+}
+function setGo(pg) {
+  if (!SET_PAGES.includes(pg)) pg = 'main';
+  setPage = pg; $('people').dataset.page = pg;
+  for (const sec of document.querySelectorAll('#people .spage')) sec.classList.toggle('on', sec.dataset.page === pg);
+  const row = document.querySelector(`#people .srow[data-go="${pg}"] b`);
+  $('subTitle').textContent = row ? row.textContent : '';
+  $('subTitle').classList.toggle('hidden', pg === 'main'); $('setTitle').classList.toggle('hidden', pg !== 'main');
+  $('pBack').classList.toggle('hidden', pg === 'main');
+  $('setBody').scrollTop = 0;
+  if (pg === 'look' && !$('srvMe').classList.contains('hidden')) { try { pickObject(dispObj); } catch (_) {} }
+  syncMenu();
+}
+for (const r of document.querySelectorAll('#people .srow')) r.onclick = () => setGo(r.dataset.go);
+$('pBack').onclick = () => setGo('main');
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('people').classList.contains('hidden') && setPage !== 'main') { e.preventDefault(); setGo('main'); }
+});
+{ const mo = new MutationObserver(() => syncMenu()); for (const id of ['srvMe', 'srvPrivBox', 'srvVisBox', 'pingBox']) mo.observe($(id), { attributes: true, attributeFilter: ['class'] }); }
+for (const b of document.querySelectorAll('#people .set-lang')) b.onclick = () => {
+  if (b.dataset.lang === getLang()) return;
+  $('optLang').value = b.dataset.lang; $('optLang').dispatchEvent(new Event('change'));
+};
+window.__ar.setNav = { go: (pg) => setGo(pg), get page() { return setPage; }, available: (pg) => pageAvailable(pg) };
 function famOnFocus() { if (!document.hidden && Date.now() - fam.at > 3000) refreshFamily(); }
 document.addEventListener('visibilitychange', famOnFocus);
 window.addEventListener('focus', famOnFocus);
@@ -765,7 +810,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v28';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v29';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -859,7 +904,7 @@ $('optLang').onchange = () => { setLang($('optLang').value); toast(tr('lang.chan
 // redraw everything that was written by code (static HTML texts are done by applyI18n inside setLang)
 window.addEventListener('langchange', () => {
   for (const [el, f] of dynText) { try { el.textContent = f(); } catch (e) { console.warn('i18n', e); } }
-  $('optLang').value = getLang();
+  $('optLang').value = getLang(); $('advNote').classList.add('hidden');   // v29: the 3-s note is in the old language
   if (mode === 'enroll') capInfo();
   renderMsgHist(); renderPeople(); syncServerUi();
   for (const b of $('pingEmojis').children) if (b.dataset.em) b.setAttribute('aria-label', tr('ping.sendEmoji', { em: b.dataset.em }));
@@ -1185,6 +1230,7 @@ function syncServerUi() {
   $('srvOn').disabled = !(cfg.url && cfg.token);
   syncEnrollBtn();
   $('privacyNote').textContent = tr(serverOn() ? 'privacy.server' : 'privacy.local');
+  syncMenu();
 }
 function initServerUi() {
   syncServerUi();
@@ -1234,6 +1280,7 @@ function initServerUi() {
     catch (e) {   // failure: panel stays open with the error
       if (isDeadToken(e) && forgetServerProfile()) infoWithEnroll(tr('srv.profileGone'));
       else $('srvInfo').textContent = '⚠️ ' + errMsg(e);
+      if (setPage !== 'profile') toast('⚠️ ' + errMsg(e));   // v29: the info line lives on «Το προφίλ μου»
     }
     finally { btn.disabled = false; }
   };
@@ -1265,6 +1312,7 @@ function initServerUi() {
       syncServerUi(); $('srvMe').classList.add('hidden'); setText($('srvInfo'), lt('srv.deleted')); refreshFamily();
     } catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); }
   };
+  $('srvMsgSave2').onclick = () => $('srvMsgSave').click();   // v29: same save from «Εμφάνιση και ήχος»
   const btnPeople = $('btnPeople').onclick;
   $('btnPeople').onclick = () => { btnPeople(); refreshServer(); };
 }
@@ -1397,6 +1445,7 @@ function syncItems(changed = null) {
   }
   const n = selItems().length;
   $('dispHint').textContent = dispMulti ? tr('disp.hintTwo', { n, warn }) : tr('disp.hintOne', { warn });
+  $('dispHint2').textContent = $('dispHint').textContent;   // v29: same hint next to the 3D object («Εμφάνιση»)
   updatePreview();
 }
 function autoPick(item) {   // typing a message / tapping an object ticks it, if there is room
@@ -1467,11 +1516,11 @@ async function refreshServer(verbose = false) {
     // «Τι βλέπουν οι άλλοι»: 0.4.0 two items + sizes; 0.3.0 one item; older servers: the one message only
     const disp = hasCap('display');
     dispMulti = disp && hasCap('combo');
-    for (const el of document.querySelectorAll('#srvMe .disp-only')) el.classList.toggle('hidden', !disp);
-    for (const el of document.querySelectorAll('#srvMe .combo-only')) el.classList.toggle('hidden', !dispMulti);
-    for (const el of document.querySelectorAll('#srvMe .sizes-only')) el.classList.toggle('hidden', !(disp && hasCap('sizes')));
-    for (const el of document.querySelectorAll('#srvMe .styles-only')) el.classList.toggle('hidden', !(disp && hasCap('styles')));
-    for (const el of document.querySelectorAll('#srvMe .pings-only')) el.classList.toggle('hidden', !hasCap('pings'));
+    for (const el of document.querySelectorAll('#people .disp-only')) el.classList.toggle('hidden', !disp);
+    for (const el of document.querySelectorAll('#people .combo-only')) el.classList.toggle('hidden', !dispMulti);
+    for (const el of document.querySelectorAll('#people .sizes-only')) el.classList.toggle('hidden', !(disp && hasCap('sizes')));
+    for (const el of document.querySelectorAll('#people .styles-only')) el.classList.toggle('hidden', !(disp && hasCap('styles')));
+    for (const el of document.querySelectorAll('#people .pings-only')) el.classList.toggle('hidden', !hasCap('pings'));
     if (hasCap('pings')) { ping.accept = me.accept_pings !== false; $('srvPings').checked = ping.accept; }
     $('srvDispOld').classList.toggle('hidden', dispMulti);
     $('srvDispOld').dataset.i18n = disp ? 'srv.old04Combo' : 'srv.old04'; $('srvDispOld').textContent = tr($('srvDispOld').dataset.i18n);
@@ -1732,7 +1781,7 @@ $('pingClose').onclick = closePing;
 $('srvPings').onchange = async () => {
   const on = $('srvPings').checked;
   try { await api.patchMe(cfg.personId, { accept_pings: on }); ping.accept = on; toast(tr(on ? 'ping.acceptOn' : 'ping.acceptOff')); }
-  catch (e) { $('srvPings').checked = !on; $('srvInfo').textContent = '⚠️ ' + errMsg(e); }
+  catch (e) { $('srvPings').checked = !on; $('srvInfo').textContent = '⚠️ ' + errMsg(e); toast('⚠️ ' + errMsg(e)); }
 };
 
 // received: one card at a time (~5 s), a floating emoji (a heart floats up for ❤️), soft sound + vibration

@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
 <meta charset="utf-8">
-<script>/* v27: language before first paint — no saved language = first-run picker */try{var L=localStorage.getItem("ar-names-lang");if(L==="el"||L==="en"||L==="fr"){document.documentElement.lang=L}else{document.documentElement.className+=" need-lang"}}catch(e){}</script>
+<script>/* v27: language before first paint — no saved language = first-run picker */try{var L=localStorage.getItem("ar-names-lang");if(L==="el"||L==="en"||L==="fr"||L==="de"){document.documentElement.lang=L}else{document.documentElement.className+=" need-lang"}}catch(e){}</script>
 <script src="coi-serviceworker.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0d1b2a">
@@ -105,7 +105,7 @@
   <p id="pEmpty" class="small" data-i18n="p.empty">Δεν υπάρχουν καταχωρισμένα άτομα.</p>
   <h2 id="setTitle" data-i18n="set.title">Ρυθμίσεις</h2>
   <label class="setting lang-row"><span data-i18n="set.lang">🌐 Γλώσσα</span>
-    <select id="optLang"><option value="el">🇬🇷 Ελληνικά</option><option value="en">🇬🇧 English</option><option value="fr">🇫🇷 Français</option></select></label>
+    <select id="optLang"><option value="el">🇬🇷 Ελληνικά</option><option value="en">🇬🇧 English</option><option value="fr">🇫🇷 Français</option><option value="de">🇩🇪 Deutsch</option></select></label>
   <p id="advNote" class="small hidden"></p>
   <label class="setting"><span data-i18n="set.thr">Αυστηρότητα αναγνώρισης:</span> <b id="thrVal"></b>
     <input id="thr" type="range" min="0.25" max="0.65" step="0.01">
@@ -208,11 +208,12 @@
   <div class="card lang-card">
     <div class="lang-globe" aria-hidden="true">🌐</div>
     <h1>Noera</h1>
-    <p id="langPickTitle" class="lang-q">Γλώσσα · Language · Langue</p>
+    <p id="langPickTitle" class="lang-q">Γλώσσα · Language · Langue · Sprache</p>
     <div class="lang-list">
       <button type="button" class="lang-opt" data-lang="el"><span class="lang-flag">🇬🇷</span><span>Ελληνικά</span></button>
       <button type="button" class="lang-opt" data-lang="en"><span class="lang-flag">🇬🇧</span><span>English</span></button>
       <button type="button" class="lang-opt" data-lang="fr"><span class="lang-flag">🇫🇷</span><span>Français</span></button>
+      <button type="button" class="lang-opt" data-lang="de"><span class="lang-flag">🇩🇪</span><span>Deutsch</span></button>
     </div>
     <button id="langGo" type="button" class="primary big">Συνέχεια</button>
   </div>

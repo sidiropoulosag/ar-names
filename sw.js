@@ -5,7 +5,7 @@
 // 3) v25: the app's OWN code (page, js/, css, manifest, icons) is NETWORK-FIRST (revalidated, ~3.5 s timeout, then cache),
 //    so an update is visible on the very first open. Heavy files (vendor/, models/, fonts/, models3d/, wasm) stay cache-first.
 // All paths are relative to this file, so it works under any subpath (e.g. /ar-names/).
-const CACHE = 'ar-names-v27';   // keep in sync with APP_VERSION in js/main.js
+const CACHE = 'ar-names-v28';   // keep in sync with APP_VERSION in js/main.js
 // 3D models (models3d/) are NEVER precached: each is cached on first use, in its own cache that survives app updates.
 const MODELS_CACHE = 'ar-names-models-1';
 const ASSETS = [

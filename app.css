@@ -203,4 +203,9 @@ html.need-lang #start .card{visibility:hidden}
 .lang-opt .lang-flag{font-size:26px;line-height:1}
 .lang-opt[aria-checked="true"]{border-color:#1e88e5;background:rgba(30,136,229,.22)}
 .lang-opt[aria-checked="true"]::after{content:"✓";margin-left:auto;color:#7cc4ff}
+/* v28: 4 languages must fit small / short screens (e.g. 320x568, landscape) */
+#langPick{overflow-y:auto}
+#langPick .lang-card{margin:auto}
+@media (max-height:640px){.lang-globe{font-size:34px;margin-bottom:2px}.lang-q{margin-bottom:10px}.lang-list{gap:7px;margin-bottom:12px}.lang-opt{padding:10px 14px;font-size:17px}.lang-opt .lang-flag{font-size:22px}}
+@media (max-height:480px){.lang-card h1{display:none}.lang-globe{display:none}.lang-list{display:grid;grid-template-columns:1fr 1fr;gap:6px}.lang-opt{padding:8px 12px}}
 .lang-row select{margin-top:6px}

@@ -1,3 +1,4 @@
+import { t, has as hasKey, getLang } from './i18n.js';
 // "Family server" mode: API client, settings (localStorage) and Greek messages.
 // The family server below is used by default; change it here (one place). Users can change it or clear it
 // (= on-device only) in Settings.
@@ -33,51 +34,20 @@ export function normUrl(u) {
   return u;
 }
 
-export const POSE_EL = {
-  front: 'ευθεία', left: 'στραμμένο αριστερά', right: 'στραμμένο δεξιά', up: 'πηγούνι πάνω', down: 'πηγούνι κάτω',
-  profile_left: 'προφίλ (αριστερά)', profile_right: 'προφίλ (δεξιά)',
-};
-export const posesEl = (list) => (list || []).map((p) => POSE_EL[p] || p).join(', ');
-
-const CODE_EL = {
-  no_face: 'δεν βρέθηκε καθαρό πρόσωπο',
-  multiple_faces: 'φαίνονται πολλά πρόσωπα — μόνο εσύ στο κάδρο',
-  face_too_small: 'το πρόσωπο είναι πολύ μικρό — έλα πιο κοντά',
-  blurry: 'θολή λήψη — κράτα σταθερά το κινητό',
-  bad_lighting: 'πολύ σκοτεινό ή πολύ φωτεινό',
-  pose_mismatch: 'η γωνία δεν ταιριάζει',
-  duplicate: 'σχεδόν ίδια με προηγούμενη λήψη (δεν χρειάζεται)',
-  different_person: 'δεν μοιάζει με τις προηγούμενες λήψεις σου',
-  bad_pose: 'άγνωστη γωνία',
-  too_many_frames: 'έφτασες το μέγιστο αριθμό λήψεων',
-  too_large: 'η εικόνα είναι πολύ μεγάλη',
-  bad_image: 'μη έγκυρη εικόνα',
-  family_key_required: 'λάθος κλειδί πρόσβασης',
-  server_full: 'ο server έφτασε το μέγιστο αριθμό ατόμων — μίλα με τον διαχειριστή',
-  too_many_enrollments: 'πάρα πολλές νέες εγγραφές από αυτό το δίκτυο — δοκίμασε σε λίγο',
-  too_many_attempts: 'πολλές λάθος προσπάθειες κλειδιού — δοκίμασε αργότερα',
-  auth_required: 'λείπει το token σου',
-  bad_token: 'το token δεν ισχύει (ίσως άλλαξε ή διαγράφηκε το προφίλ)',
-  not_found: 'δεν βρέθηκε',
-  not_owner: 'δεν επιτρέπεται',
-  self_grant: 'βλέπεις πάντα το δικό σου μήνυμα',
-  viewer_not_found: 'το άτομο δεν βρέθηκε',
-  offline: 'δεν υπάρχει σύνδεση τώρα',
-  timeout: 'ο server άργησε να απαντήσει',
-  validation: 'μη έγκυρα στοιχεία',
-  group_exists: 'υπάρχει ήδη ομάδα με αυτό το όνομα — αναζήτησέ την και μπες',
-  group_not_found: 'η ομάδα δεν υπάρχει πια',
-  short_query: 'γράψε τουλάχιστον 2 γράμματα',
-  not_member: 'μπορείς να διαλέξεις μόνο ομάδες όπου είσαι μέλος',
-  too_many_groups: 'έφτασες το μέγιστο αριθμό ομάδων',
-  too_many_requests: 'πολλές αιτήσεις — δοκίμασε σε λίγο',
-  pings_off: 'δεν δέχεται μηνύματα αυτή τη στιγμή',
-  bad_emoji: 'άγνωστη αντίδραση',
-  bad_text: 'γράψε ένα σύντομο μήνυμα',
-  text_too_long: 'το μήνυμα είναι πολύ μεγάλο (έως 80 χαρακτήρες)',
-};
+// v27: texts come from i18n.js (pose.* / err.*). The names stay for compatibility (posesEl / errEl = "in the app's language").
+export const POSES = ['front', 'left', 'right', 'up', 'down', 'profile_left', 'profile_right'];
+export const posesEl = (list) => (list || []).map((p) => (POSES.includes(p) ? t('pose.' + p) : p)).join(', ');
+const GREEK = /[\u0370-\u03ff\u1f00-\u1fff]/;
+// Server error -> words in the current language. Known codes are translated here (the server is never changed);
+// unknown ones: HTTP status or the server's own text (unless it is Greek and the app is not).
 export function errEl(e) {
-  return CODE_EL[e && e.code] || (e && e.message) || 'άγνωστο σφάλμα';
+  const code = e && e.code;
+  if (code && hasKey('err.' + code)) return t('err.' + code);
+  const m = /^http_(\d{3})$/.exec(code || '');
+  const msg = e && e.message && e.message !== code ? String(e.message) : '';
+  if (m) return t('err.http', { status: m[1] });
+  if (msg && !(GREEK.test(msg) && getLang() !== 'el')) return msg;
+  return t('err.unknown');
 }
 
 export class ApiError extends Error {

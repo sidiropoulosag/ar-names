@@ -5,12 +5,12 @@
 // 3) v25: the app's OWN code (page, js/, css, manifest, icons) is NETWORK-FIRST (revalidated, ~3.5 s timeout, then cache),
 //    so an update is visible on the very first open. Heavy files (vendor/, models/, fonts/, models3d/, wasm) stay cache-first.
 // All paths are relative to this file, so it works under any subpath (e.g. /ar-names/).
-const CACHE = 'ar-names-v26';   // keep in sync with APP_VERSION in js/main.js
+const CACHE = 'ar-names-v27';   // keep in sync with APP_VERSION in js/main.js
 // 3D models (models3d/) are NEVER precached: each is cached on first use, in its own cache that survives app updates.
 const MODELS_CACHE = 'ar-names-models-1';
 const ASSETS = [
   './', 'index.html', 'coi-serviceworker.js', 'app.css', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png', 'favicon.ico',
-  'js/main.js', 'js/ort.js', 'js/detector.js', 'js/embedder.js', 'js/labels3d.js', 'js/tracker.js', 'js/geometry.js', 'js/db.js', 'js/server.js', 'js/objects3d.js', 'js/chime.js', 'js/pings.js',
+  'js/main.js', 'js/ort.js', 'js/detector.js', 'js/embedder.js', 'js/labels3d.js', 'js/tracker.js', 'js/geometry.js', 'js/db.js', 'js/server.js', 'js/objects3d.js', 'js/chime.js', 'js/pings.js', 'js/i18n.js',
   'vendor/ort/ort.wasm.min.mjs', 'vendor/ort/ort-wasm-simd-threaded.mjs', 'vendor/ort/ort-wasm-simd-threaded.wasm',
   'vendor/three/three.module.js', 'vendor/three/three.core.js',
   'vendor/three/addons/loaders/FontLoader.js', 'vendor/three/addons/geometries/TextGeometry.js',

@@ -1,20 +1,12 @@
+import { t } from './i18n.js';
 // v24 (server 0.6.0 'pings'): tap a recognised person -> send a reaction or a short text; received ones show
 // as a floating card at the top. Pure helpers + the card queue (no server calls here).
 export const PING_EMOJI = ['❤️', '👋', '👍', '😂', '🎉', '😮', '🙏', '🔥'];
 export const PING_TEXT_MAX = 80;
 export const CARD_MS = 5000;
 
-// «Στείλε στον Γιάννη» / «Στείλε στην Μαρία» / «Στείλε στον/στην Alex» (simple Greek accusative heuristic)
-export function sendTitle(name) {
-  const n = String(name || '').trim();
-  const parts = n.split(/\s+/), first = parts[0] || '';
-  const low = first.toLocaleLowerCase('el');
-  if (/[\u0370-\u03ff\u1f00-\u1fff]/.test(first)) {
-    if (/[οηα][ςσ]$|[όήά][ςσ]$/.test(low) && first.length > 2) return 'Στείλε στον ' + [first.slice(0, -1), ...parts.slice(1)].join(' ');
-    if (/[αηωάήώ]$/.test(low)) return 'Στείλε στην ' + n;
-  }
-  return 'Στείλε στον/στην ' + n;
-}
+// «Στείλε στον Γιάννη» / «Send to Alex» / «Envoyer à Léa» (the Greek accusative heuristic lives in i18n.js)
+export function sendTitle(name) { return t('ping.sendTo', { name: String(name || '').trim() }); }
 
 // one-at-a-time card queue; render(item, done) shows a card and calls done() when it is gone
 export class CardQueue {

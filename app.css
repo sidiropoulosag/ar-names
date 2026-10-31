@@ -191,3 +191,16 @@ select,input[type=search]{font-size:16px}  /* <16px makes iOS zoom in on focus *
 #iosHint button{flex:none;background:transparent;padding:6px 8px;font-size:15px;border-radius:10px}
 #shotSave{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 160px);z-index:34;border:0;border-radius:999px;
   padding:12px 18px;font:600 16px system-ui,-apple-system,sans-serif;background:#1e88e5;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+/* v27: first-run language picker (shown only while no language is saved) + Settings selector */
+#langPick{display:none;z-index:40;background:radial-gradient(circle at 50% 30%,#16324f 0,#0d1b2a 60%,#060d16 100%)}
+html.need-lang #langPick{display:flex}
+html.need-lang #start .card{visibility:hidden}
+.lang-card{width:min(92vw,380px)}
+.lang-globe{font-size:46px;line-height:1;margin-bottom:6px}
+.lang-q{opacity:.85;margin:0 0 18px;font-size:16px}
+.lang-list{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
+.lang-opt{display:flex;align-items:center;gap:14px;width:100%;padding:14px 18px;border-radius:14px;border:2px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;font-size:18px;font-weight:600;text-align:left;cursor:pointer}
+.lang-opt .lang-flag{font-size:26px;line-height:1}
+.lang-opt[aria-checked="true"]{border-color:#1e88e5;background:rgba(30,136,229,.22)}
+.lang-opt[aria-checked="true"]::after{content:"✓";margin-left:auto;color:#7cc4ff}
+.lang-row select{margin-top:6px}

@@ -2,7 +2,6 @@
   "id": "./",
   "name": "Noera",
   "short_name": "Noera",
-  "lang": "el",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

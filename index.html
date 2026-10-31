@@ -2,6 +2,7 @@
 <html lang="el">
 <head>
 <meta charset="utf-8">
+<script>/* v27: language before first paint — no saved language = first-run picker */try{var L=localStorage.getItem("ar-names-lang");if(L==="el"||L==="en"||L==="fr"){document.documentElement.lang=L}else{document.documentElement.className+=" need-lang"}}catch(e){}</script>
 <script src="coi-serviceworker.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0d1b2a">
@@ -28,30 +29,30 @@
 </div>
 
 <header id="topbar">
-  <button id="btnPeople" class="pill" aria-label="Άτομα">👥 <span id="peopleCount">0</span></button>
-  <div id="status" class="pill status">Φόρτωση…</div>
-  <button id="btnFlip" class="pill" aria-label="Αλλαγή κάμερας">🔄</button>
+  <button id="btnPeople" class="pill" aria-label="Άτομα" data-i18n-aria="top.people">👥 <span id="peopleCount">0</span></button>
+  <div id="status" class="pill status" data-i18n="status.loading">Φόρτωση…</div>
+  <button id="btnFlip" class="pill" aria-label="Αλλαγή κάμερας" data-i18n-aria="top.flip">🔄</button>
 </header>
 <div id="hint" class="hint hidden"></div>
 
-<button id="btnEnroll" class="fab" aria-label="Νέο άτομο">＋ Νέο άτομο</button>
+<button id="btnEnroll" class="fab" aria-label="Νέο άτομο" data-i18n-aria="fab.newAria" data-i18n="fab.new">＋ Νέο άτομο</button>
 <!-- v21: screenshot (camera shutter) -->
-<button id="btnShot" class="shutter hidden" type="button" aria-label="Στιγμιότυπο" title="Στιγμιότυπο"><span></span></button>
+<button id="btnShot" class="shutter hidden" type="button" aria-label="Στιγμιότυπο" title="Στιγμιότυπο" data-i18n-aria="shot.title" data-i18n-title="shot.title"><span></span></button>
 <div id="flash" aria-hidden="true"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <!-- v26 iOS Safari (not installed): one small, closable hint; never shown again once closed -->
-<div id="iosHint" class="hidden" role="note"><span>Για πλήρη οθόνη: Κοινοποίηση <span class="ios-share" aria-hidden="true">⬆︎</span> → «Προσθήκη στην αρχική οθόνη»</span><button id="iosHintClose" type="button" aria-label="Κλείσιμο">✕</button></div>
+<div id="iosHint" class="hidden" role="note"><span data-i18n-html="ios.hint">Για πλήρη οθόνη: Κοινοποίηση <span class="ios-share" aria-hidden="true">⬆︎</span> → «Προσθήκη στην αρχική οθόνη»</span><button id="iosHintClose" type="button" aria-label="Κλείσιμο" data-i18n-aria="common.close">✕</button></div>
 <!-- v26 iOS: when the share sheet could not open straight after the shutter (no user gesture left), one more tap saves it -->
-<button id="shotSave" class="hidden" type="button">📥 Αποθήκευση στιγμιότυπου</button>
-<button id="updBar" class="hidden" type="button">Νέα έκδοση ✓ — πάτα για ανανέωση</button>
+<button id="shotSave" class="hidden" type="button" data-i18n="shot.save">📥 Αποθήκευση στιγμιότυπου</button>
+<button id="updBar" class="hidden" type="button" data-i18n="upd.bar">Νέα έκδοση ✓ — πάτα για ανανέωση</button>
 <!-- v24 (server 0.6.0): received hearts / messages (top card) + floating emoji; not part of screenshots -->
 <div id="pingCards" aria-live="polite"></div>
 <div id="pingFx" aria-hidden="true"></div>
 <!-- v24: tap a recognised person -> send a reaction or a short message -->
 <div id="pingSheet" class="panel bottom hidden" role="dialog" aria-labelledby="pingTitle">
-  <div class="phead"><h3 id="pingTitle">Στείλε</h3><button id="pingClose" type="button" class="pill" aria-label="Κλείσιμο">✕</button></div>
+  <div class="phead"><h3 id="pingTitle" data-i18n="ping.title">Στείλε</h3><button id="pingClose" type="button" class="pill" aria-label="Κλείσιμο" data-i18n-aria="common.close">✕</button></div>
   <div id="pingEmojis" class="ping-emojis"></div>
-  <div class="row ping-row"><input id="pingText" type="text" maxlength="80" placeholder="Γράψε κάτι σύντομο…" enterkeyhint="send" autocomplete="off"><button id="pingSend" type="button" class="primary">Αποστολή</button></div>
+  <div class="row ping-row"><input id="pingText" type="text" maxlength="80" placeholder="Γράψε κάτι σύντομο…" data-i18n-ph="ping.ph" enterkeyhint="send" autocomplete="off"><button id="pingSend" type="button" class="primary" data-i18n="ping.send">Αποστολή</button></div>
   <p id="pingInfo" class="small"></p>
 </div>
 
@@ -59,11 +60,11 @@
 <div id="start" class="sheet center">
   <div class="card">
     <h1>Noera</h1>
-    <p>Η κάμερα αναγνωρίζει τα άτομα που έχεις καταχωρίσει και δείχνει το όνομά τους σε 3D πάνω από το κεφάλι.</p>
-    <p id="privacyNote" class="small">Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.</p>
+    <p data-i18n="start.intro">Η κάμερα αναγνωρίζει τα άτομα που έχεις καταχωρίσει και δείχνει το όνομά τους σε 3D πάνω από το κεφάλι.</p>
+    <p id="privacyNote" class="small" data-i18n="privacy.local">Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.</p>
     <button id="btnStart" class="primary big" disabled>Φόρτωση μοντέλων…</button>
     <p id="loadErr" class="err"></p>
-    <button id="btnInstall" class="hidden">📲 Εγκατάσταση του Noera στην αρχική οθόνη</button>
+    <button id="btnInstall" class="hidden" data-i18n="start.install">📲 Εγκατάσταση του Noera στην αρχική οθόνη</button>
   </div>
 </div>
 
@@ -71,142 +72,159 @@
 <div id="enOval" class="hidden" aria-hidden="true"></div>
 <div id="enroll" class="panel bottom hidden">
   <div class="row">
-    <input id="enName" type="text" placeholder="Όνομα (π.χ. Μαρία)" maxlength="40" autocomplete="off">
+    <input id="enName" type="text" placeholder="Όνομα (π.χ. Μαρία)" data-i18n-ph="en.namePh" maxlength="40" autocomplete="off">
   </div>
   <div id="enSrv" class="hidden">
-    <label class="setting check"><input id="enToSrv" type="checkbox"> ☁️ Καταχώριση του εαυτού μου στο δίκτυο</label>
+    <label class="setting check"><input id="enToSrv" type="checkbox"> <span data-i18n="en.toSrv">☁️ Καταχώριση του εαυτού μου στο δίκτυο</span></label>
     <div id="enSrvFields">
-      <textarea id="enSrvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που θα φαίνεται πάνω από το όνομά σου (προαιρετικό)"></textarea>
-      <label class="setting check"><input id="enSrvFamily" type="checkbox"> Να βλέπουν το μήνυμά μου όλοι</label>
-      <input id="enFamKey" type="password" placeholder="Κλειδί πρόσβασης" autocomplete="off">
+      <textarea id="enSrvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που θα φαίνεται πάνω από το όνομά σου (προαιρετικό)" data-i18n-ph="en.srvMsgPh"></textarea>
+      <label class="setting check"><input id="enSrvFamily" type="checkbox"> <span data-i18n="en.srvFamily">Να βλέπουν το μήνυμά μου όλοι</span></label>
+      <input id="enFamKey" type="password" placeholder="Κλειδί πρόσβασης" data-i18n-ph="en.keyPh" autocomplete="off">
     </div>
   </div>
   <div id="enMsg" class="msg" aria-live="polite">Βάλε όνομα και κοίτα την κάμερα.</div>
   <div id="enSteps" class="steps"></div>
   <div id="enThumbs" class="thumbs"></div>
-  <div class="row cap-only"><span id="enCapInfo" class="small"></span><button id="enStop" type="button">⏹ Διακοπή</button></div>
+  <div class="row cap-only"><span id="enCapInfo" class="small"></span><button id="enStop" type="button" data-i18n="en.stop">⏹ Διακοπή</button></div>
   <div class="row wrap">
-    <button id="enAuto" class="primary">▶ Αυτόματη λήψη (γωνίες)</button>
-    <button id="enOne">📸 Μία λήψη</button>
-    <label class="btn">🖼️ Από φωτογραφία<input id="enFile" type="file" accept="image/*" multiple hidden></label>
+    <button id="enAuto" class="primary" data-i18n="en.auto">▶ Αυτόματη λήψη (γωνίες)</button>
+    <button id="enOne" data-i18n="en.one">📸 Μία λήψη</button>
+    <label class="btn"><span data-i18n="en.file">🖼️ Από φωτογραφία</span><input id="enFile" type="file" accept="image/*" multiple hidden></label>
   </div>
   <div class="row">
-    <button id="enCancel">Άκυρο</button>
-    <button id="enSave" class="primary" disabled>💾 Αποθήκευση</button>
+    <button id="enCancel" data-i18n="en.cancel">Άκυρο</button>
+    <button id="enSave" class="primary" disabled data-i18n="en.save">💾 Αποθήκευση</button>
   </div>
 </div>
 
 <!-- People & settings -->
 <div id="people" class="panel full hidden">
-  <div class="phead"><h2>Άτομα</h2><button id="pClose" class="pill">✕</button></div>
+  <div class="phead"><h2 data-i18n="p.title">Άτομα</h2><button id="pClose" class="pill" aria-label="Κλείσιμο" data-i18n-aria="common.close">✕</button></div>
   <p id="famCount" class="small hidden"></p>
   <ul id="pList"></ul>
-  <p id="pEmpty" class="small">Δεν υπάρχουν καταχωρισμένα άτομα.</p>
-  <h2 id="setTitle">Ρυθμίσεις</h2>
+  <p id="pEmpty" class="small" data-i18n="p.empty">Δεν υπάρχουν καταχωρισμένα άτομα.</p>
+  <h2 id="setTitle" data-i18n="set.title">Ρυθμίσεις</h2>
+  <label class="setting lang-row"><span data-i18n="set.lang">🌐 Γλώσσα</span>
+    <select id="optLang"><option value="el">🇬🇷 Ελληνικά</option><option value="en">🇬🇧 English</option><option value="fr">🇫🇷 Français</option></select></label>
   <p id="advNote" class="small hidden"></p>
-  <label class="setting">Αυστηρότητα αναγνώρισης: <b id="thrVal"></b>
+  <label class="setting"><span data-i18n="set.thr">Αυστηρότητα αναγνώρισης:</span> <b id="thrVal"></b>
     <input id="thr" type="range" min="0.25" max="0.65" step="0.01">
-    <span class="small">Χαμηλότερη = αναγνωρίζει πιο εύκολα (και από πλάι), αλλά με περισσότερα λάθη. Υψηλότερη = λιγότερα λάθη.</span>
+    <span class="small" data-i18n="set.thrHelp">Χαμηλότερη = αναγνωρίζει πιο εύκολα (και από πλάι), αλλά με περισσότερα λάθη. Υψηλότερη = λιγότερα λάθη.</span>
   </label>
-  <label class="setting">Εμβέλεια ανίχνευσης:
-    <select id="optRange"><option value="384">Κοντά (ταχύτερο)</option><option value="512">Κανονική</option><option value="704">Μακριά / ομάδες (πιο αργό)</option></select></label>
-  <label class="setting check"><input id="optUnknown" type="checkbox"> Δείξε «?» σε άγνωστα πρόσωπα</label>
-  <label class="setting check"><input id="optSound" type="checkbox"> 🔔 Ήχος αναγνώρισης</label>
+  <label class="setting"><span data-i18n="set.range">Εμβέλεια ανίχνευσης:</span>
+    <select id="optRange"><option value="384" data-i18n="set.rangeNear">Κοντά (ταχύτερο)</option><option value="512" data-i18n="set.rangeNormal">Κανονική</option><option value="704" data-i18n="set.rangeFar">Μακριά / ομάδες (πιο αργό)</option></select></label>
+  <label class="setting check"><input id="optUnknown" type="checkbox"> <span data-i18n="set.unknown">Δείξε «?» σε άγνωστα πρόσωπα</span></label>
+  <label class="setting check"><input id="optSound" type="checkbox"> <span data-i18n="set.sound">🔔 Ήχος αναγνώρισης</span></label>
   <div class="row wrap">
-    <button id="pExport">⬇ Αντίγραφο ασφαλείας</button>
-    <label class="btn">⬆ Επαναφορά<input id="pImport" type="file" accept="application/json,.json" hidden></label>
-    <button id="pClear" class="danger">🗑 Διαγραφή όλων</button>
+    <button id="pExport" data-i18n="set.export">⬇ Αντίγραφο ασφαλείας</button>
+    <label class="btn"><span data-i18n="set.import">⬆ Επαναφορά</span><input id="pImport" type="file" accept="application/json,.json" hidden></label>
+    <button id="pClear" class="danger" data-i18n="set.clear">🗑 Διαγραφή όλων</button>
   </div>
-  <button id="pAddNew" class="hidden" style="margin-top:8px">＋ Προσθήκη νέου προφίλ</button>
-  <button id="pResetDevice" class="hidden" style="margin-top:8px">↩️ Αποσύνδεση / επαναφορά αυτής της συσκευής</button>
+  <button id="pAddNew" class="hidden" style="margin-top:8px" data-i18n="set.addNew">＋ Προσθήκη νέου προφίλ</button>
+  <button id="pResetDevice" class="hidden" style="margin-top:8px" data-i18n="set.reset">↩️ Αποσύνδεση / επαναφορά αυτής της συσκευής</button>
   <p id="appVer" class="small ver"></p>
-  <p class="small">Καταχώριζε μόνο άτομα που συμφωνούν. Όσα άτομα δεν έχουν ☁️ μένουν μόνο σε αυτή τη συσκευή.</p>
+  <p class="small" data-i18n="set.consent">Καταχώριζε μόνο άτομα που συμφωνούν. Όσα άτομα δεν έχουν ☁️ μένουν μόνο σε αυτή τη συσκευή.</p>
 
-  <h2>☁️ Online προφίλ</h2>
-  <p class="small">Με το online προφίλ, η αναγνώριση γίνεται από κοινό server: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
+  <h2 data-i18n="srv.h">☁️ Online προφίλ</h2>
+  <p class="small" data-i18n="srv.about">Με το online προφίλ, η αναγνώριση γίνεται από κοινό server: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
   <div id="srvAdv" class="adv-only">
-  <p class="small">🔧 Προχωρημένες ρυθμίσεις (για τον διαχειριστή)</p>
-  <label class="setting">Διεύθυνση server
-    <input id="srvUrl" type="text" inputmode="url" placeholder="κενό = μόνο σε αυτή τη συσκευή" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+  <p class="small" data-i18n="srv.advTitle">🔧 Προχωρημένες ρυθμίσεις (για τον διαχειριστή)</p>
+  <label class="setting"><span data-i18n="srv.url">Διεύθυνση server</span>
+    <input id="srvUrl" type="text" inputmode="url" placeholder="κενό = μόνο σε αυτή τη συσκευή" data-i18n-ph="srv.urlPh" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
   <p id="srvUrlNote" class="small"></p>
-  <label class="setting">Το προσωπικό μου token
-    <input id="srvToken" type="password" placeholder="Δίνεται μία φορά, όταν καταχωρίζεσαι" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+  <label class="setting"><span data-i18n="srv.token">Το προσωπικό μου token</span>
+    <input id="srvToken" type="password" placeholder="Δίνεται μία φορά, όταν καταχωρίζεσαι" data-i18n-ph="srv.tokenPh" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
   <div class="row wrap">
-    <button id="srvTest">🔌 Έλεγχος σύνδεσης</button>
-    <button id="srvDefault" class="hidden">↺ Προεπιλεγμένος server</button>
-    <button id="srvLogout">Αποσύνδεση</button>
+    <button id="srvTest" data-i18n="srv.test">🔌 Έλεγχος σύνδεσης</button>
+    <button id="srvDefault" class="hidden" data-i18n="srv.default">↺ Προεπιλεγμένος server</button>
+    <button id="srvLogout" data-i18n="srv.logout">Αποσύνδεση</button>
   </div>
-  <label class="setting check"><input id="srvOn" type="checkbox"> Αναγνώριση μέσω server</label>
+  <label class="setting check"><input id="srvOn" type="checkbox"> <span data-i18n="srv.on">Αναγνώριση μέσω server</span></label>
   <p id="srvAdvInfo" class="small"></p>
   </div>
   <p id="srvInfo" class="small"></p>
   <div id="srvMe" class="hidden">
     <h3 id="dispTitle">Τι βλέπουν οι άλλοι πάνω από το κεφάλι μου</h3>
-    <p id="dispHint" class="small disp-only">Διάλεξε ένα από τα τρία.</p>
-    <label class="setting check combo-only"><input type="checkbox" class="dispItem" value="name"> 🏷️ Όνομα</label>
-    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="message1"> 💬 Σχόλιο / Μήνυμα 1</label>
-    <textarea id="srvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που φαίνεται πάνω από το κεφάλι σου"></textarea>
+    <p id="dispHint" class="small disp-only" data-i18n="disp.hint1">Διάλεξε ένα από τα τρία.</p>
+    <label class="setting check combo-only"><input type="checkbox" class="dispItem" value="name"> <span data-i18n="disp.name">🏷️ Όνομα</span></label>
+    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="message1"> <span data-i18n="disp.m1">💬 Σχόλιο / Μήνυμα 1</span></label>
+    <textarea id="srvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που φαίνεται πάνω από το κεφάλι σου" data-i18n-ph="disp.msgPh"></textarea>
     <div class="msg-hist hidden" data-for="srvMsg"></div>
-    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="message2"> 💬 Μήνυμα 2</label>
-    <textarea id="srvMsg2" class="disp-only" rows="2" maxlength="300" placeholder="Ένα δεύτερο μήνυμα (π.χ. για άλλη περίσταση)"></textarea>
+    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="message2"> <span data-i18n="disp.m2">💬 Μήνυμα 2</span></label>
+    <textarea id="srvMsg2" class="disp-only" rows="2" maxlength="300" placeholder="Ένα δεύτερο μήνυμα (π.χ. για άλλη περίσταση)" data-i18n-ph="disp.msg2Ph"></textarea>
     <div class="msg-hist hidden" data-for="srvMsg2"></div>
-    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="object3d"> 🧸 3D αντικείμενο</label>
+    <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="object3d"> <span data-i18n="disp.obj">🧸 3D αντικείμενο</span></label>
     <div id="objBox" class="disp-only"><div id="objPick"></div><canvas id="objPrev" width="120" height="120"></canvas></div>
     <div id="styleBox" class="styles-only hidden">
-      <p class="small">✨ Στυλ γραμμάτων του ονόματος</p>
-      <div id="stylePick" role="radiogroup" aria-label="Στυλ γραμμάτων">
-        <button type="button" role="radio" data-style="bold"><span class="sty-demo sty-bold">Αα</span><span>Τολμηρό</span></button>
-        <button type="button" role="radio" data-style="curved"><span class="sty-demo sty-curved">Αα</span><span>Καμπυλωτό</span></button>
-        <button type="button" role="radio" data-style="soft"><span class="sty-demo sty-soft">Αα</span><span>Ήπιο</span></button>
+      <p class="small" data-i18n="sty.title">✨ Στυλ γραμμάτων του ονόματος</p>
+      <div id="stylePick" role="radiogroup" aria-label="Στυλ γραμμάτων" data-i18n-aria="sty.aria">
+        <button type="button" role="radio" data-style="bold"><span class="sty-demo sty-bold" data-i18n="sty.demo">Αα</span><span data-i18n="sty.bold">Τολμηρό</span></button>
+        <button type="button" role="radio" data-style="curved"><span class="sty-demo sty-curved" data-i18n="sty.demo">Αα</span><span data-i18n="sty.curved">Καμπυλωτό</span></button>
+        <button type="button" role="radio" data-style="soft"><span class="sty-demo sty-soft" data-i18n="sty.demo">Αα</span><span data-i18n="sty.soft">Ήπιο</span></button>
       </div>
     </div>
     <div id="sizeBox" class="sizes-only">
-      <label class="size"><span>Μέγεθος ονόματος</span><input id="szName" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
-      <label class="size"><span>Μέγεθος σχολίου</span><input id="szText" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
-      <label class="size"><span>Μέγεθος αντικειμένου</span><input id="szObj" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
-      <div id="dispPrev" aria-label="Προεπισκόπηση"><div class="pv-bub"></div><span class="pv-obj"></span><div class="pv-name"></div><div class="pv-face">🙂</div></div>
+      <label class="size"><span data-i18n="sz.name">Μέγεθος ονόματος</span><input id="szName" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
+      <label class="size"><span data-i18n="sz.text">Μέγεθος σχολίου</span><input id="szText" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
+      <label class="size"><span data-i18n="sz.obj">Μέγεθος αντικειμένου</span><input id="szObj" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
+      <div id="dispPrev" aria-label="Προεπισκόπηση" data-i18n-aria="disp.preview"><div class="pv-bub"></div><span class="pv-obj"></span><div class="pv-name"></div><div class="pv-face">🙂</div></div>
     </div>
-    <p id="srvDispOld" class="small adv-only hidden">⚠️ Χρειάζεται ενημέρωση server (0.3.0) για «Μήνυμα 2» και 3D αντικείμενα — τώρα φαίνεται μόνο το μήνυμα.</p>
-    <div class="row"><button id="srvMsgSave" class="primary">💾 Αποθήκευση</button></div>
+    <p id="srvDispOld" class="small adv-only hidden" data-i18n="srv.old03">⚠️ Χρειάζεται ενημέρωση server (0.3.0) για «Μήνυμα 2» και 3D αντικείμενα — τώρα φαίνεται μόνο το μήνυμα.</p>
+    <div class="row"><button id="srvMsgSave" class="primary" data-i18n="common.save">💾 Αποθήκευση</button></div>
     <!-- v14: «Ποιος με βλέπει» hidden for now (logic kept; visibility unchanged) -->
     <div id="srvVisBox" class="hidden">
-      <h3>Ποιος με βλέπει</h3>
-      <label class="setting check"><input id="srvFamily" type="checkbox"> Όλοι</label>
+      <h3 data-i18n="vis.title">Ποιος με βλέπει</h3>
+      <label class="setting check"><input id="srvFamily" type="checkbox"> <span data-i18n="vis.all">Όλοι</span></label>
       <ul id="srvMembers"></ul>
-      <p id="srvMembersNote" class="small">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
+      <p id="srvMembersNote" class="small" data-i18n="srv.membersNoteAdv">Όποιος δεν έχει άδεια σε βλέπει σαν άγνωστο πρόσωπο.</p>
     </div>
     <!-- v15 (server 0.5.0): «Ποιος με βλέπει» = Όλοι / ομάδες -->
     <div id="srvPrivBox" class="groups-only hidden">
-      <h3>Ποιος με βλέπει</h3>
-      <label class="setting check"><input type="radio" name="privMode" id="privAll" value="everyone"> 🌍 Όλοι</label>
-      <label class="setting check"><input type="radio" name="privMode" id="privGroups" value="groups"> 👥 Μόνο οι ομάδες που διαλέγω</label>
+      <h3 data-i18n="vis.title">Ποιος με βλέπει</h3>
+      <label class="setting check"><input type="radio" name="privMode" id="privAll" value="everyone"> <span data-i18n="vis.allE">🌍 Όλοι</span></label>
+      <label class="setting check"><input type="radio" name="privMode" id="privGroups" value="groups"> <span data-i18n="vis.groups">👥 Μόνο οι ομάδες που διαλέγω</span></label>
       <p id="privNote" class="small"></p>
-      <h4>Οι ομάδες μου</h4>
+      <h4 data-i18n="grp.mine">Οι ομάδες μου</h4>
       <ul id="grpMine" class="grp-list"></ul>
-      <h4>Βρες ομάδα</h4>
-      <input id="grpSearch" type="search" maxlength="40" placeholder="Γράψε όνομα ομάδας…" autocomplete="off">
+      <h4 data-i18n="grp.find">Βρες ομάδα</h4>
+      <input id="grpSearch" type="search" maxlength="40" placeholder="Γράψε όνομα ομάδας…" data-i18n-ph="grp.searchPh" autocomplete="off">
       <ul id="grpResults" class="grp-list"></ul>
-      <h4>Νέα ομάδα</h4>
-      <div class="row"><input id="grpNewName" type="text" maxlength="40" placeholder="Όνομα νέας ομάδας" autocomplete="off"><button id="grpCreate" type="button">＋ Δημιουργία</button></div>
+      <h4 data-i18n="grp.new">Νέα ομάδα</h4>
+      <div class="row"><input id="grpNewName" type="text" maxlength="40" placeholder="Όνομα νέας ομάδας" data-i18n-ph="grp.newPh" autocomplete="off"><button id="grpCreate" type="button" data-i18n="grp.create">＋ Δημιουργία</button></div>
       <p id="grpInfo" class="small"></p>
     </div>
     <!-- v24 (server 0.6.0) -->
     <div id="pingBox" class="pings-only hidden">
-      <h3>💌 Μηνύματα</h3>
-      <label class="setting check"><input id="srvPings" type="checkbox"> Δέχομαι μηνύματα</label>
-      <p class="small">Όσοι σε βλέπουν στην κάμερα μπορούν να σε πατήσουν και να σου στείλουν μια καρδιά ❤️, ένα 👋 ή ένα σύντομο μήνυμα. Εμφανίζεται για λίγα δευτερόλεπτα στην οθόνη σου.</p>
+      <h3 data-i18n="pings.title">💌 Μηνύματα</h3>
+      <label class="setting check"><input id="srvPings" type="checkbox"> <span data-i18n="pings.accept">Δέχομαι μηνύματα</span></label>
+      <p class="small" data-i18n="pings.about">Όσοι σε βλέπουν στην κάμερα μπορούν να σε πατήσουν και να σου στείλουν μια καρδιά ❤️, ένα 👋 ή ένα σύντομο μήνυμα. Εμφανίζεται για λίγα δευτερόλεπτα στην οθόνη σου.</p>
     </div>
-    <div class="row"><button id="srvDelMe" class="danger">🗑 Διαγραφή του προφίλ μου από τον server</button></div>
+    <div class="row"><button id="srvDelMe" class="danger" data-i18n="srv.delMe">🗑 Διαγραφή του προφίλ μου από τον server</button></div>
+  </div>
+</div>
+
+<!-- v27: first-run language choice (shown when no language is saved yet; nothing else starts before it) -->
+<div id="langPick" class="sheet center" role="dialog" aria-labelledby="langPickTitle">
+  <div class="card lang-card">
+    <div class="lang-globe" aria-hidden="true">🌐</div>
+    <h1>Noera</h1>
+    <p id="langPickTitle" class="lang-q">Γλώσσα · Language · Langue</p>
+    <div class="lang-list">
+      <button type="button" class="lang-opt" data-lang="el"><span class="lang-flag">🇬🇷</span><span>Ελληνικά</span></button>
+      <button type="button" class="lang-opt" data-lang="en"><span class="lang-flag">🇬🇧</span><span>English</span></button>
+      <button type="button" class="lang-opt" data-lang="fr"><span class="lang-flag">🇫🇷</span><span>Français</span></button>
+    </div>
+    <button id="langGo" type="button" class="primary big">Συνέχεια</button>
   </div>
 </div>
 
 <!-- One-time token -->
 <div id="tokSheet" class="sheet center hidden">
   <div class="card">
-    <h2>Το προσωπικό σου token</h2>
-    <p>Φαίνεται <b>μόνο αυτή τη φορά</b>. Αποθηκεύτηκε ήδη σε αυτό το κινητό. Κράτα κι ένα αντίγραφο (π.χ. στις σημειώσεις) για να συνδεθείς από άλλη συσκευή.</p>
+    <h2 data-i18n="tok.title">Το προσωπικό σου token</h2>
+    <p data-i18n-html="tok.body">Φαίνεται <b>μόνο αυτή τη φορά</b>. Αποθηκεύτηκε ήδη σε αυτό το κινητό. Κράτα κι ένα αντίγραφο (π.χ. στις σημειώσεις) για να συνδεθείς από άλλη συσκευή.</p>
     <input id="tokVal" type="text" readonly>
-    <div class="row"><button id="tokCopy">📋 Αντιγραφή</button><button id="tokOk" class="primary">Εντάξει</button></div>
+    <div class="row"><button id="tokCopy" data-i18n="tok.copy">📋 Αντιγραφή</button><button id="tokOk" class="primary" data-i18n="tok.ok">Εντάξει</button></div>
     <p id="tokCopied" class="small"></p>
   </div>
 </div>

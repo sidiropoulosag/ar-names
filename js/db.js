@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 // IndexedDB storage for enrolled people. Everything stays on this device.
 const DB_NAME = 'ar-names', STORE = 'people';
 let dbp = null;
@@ -43,7 +44,7 @@ export async function exportJSON() {
 }
 export async function importJSON(text) {
   const data = JSON.parse(text);
-  if (!data || !Array.isArray(data.people)) throw new Error('Μη έγκυρο αρχείο');
+  if (!data || !Array.isArray(data.people)) throw new Error(t('err.badFile'));
   let n = 0;
   for (const p of data.people) {
     if (!p.name || !Array.isArray(p.embeddings)) continue;

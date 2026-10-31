@@ -7,6 +7,7 @@
 // Models are loaded only when someone actually needs one (a recognised person chose it, or it is picked in
 // Settings); the service worker caches each file on first use — nothing is precached.
 import * as THREE from 'three';
+import { t } from './i18n.js';
 
 const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.05, ...o });
 const mesh = (geo, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); return m; };
@@ -57,25 +58,18 @@ function smiley() {
 }
 
 // m01–m17: flying creatures; m18–m41: Kenney «Cube Pets» animals (CC0, see licenses/), texture in models3d/Textures/.
-const MODEL_NAMES = [
-  'Ριγέ Ζουζούνι', 'Γελαστό Ζουζούνι', 'Πορτοκαλί Δρακάκι', 'Μωβ Νυχτερίδα', 'Μωβ Σπουργίτης', 'Κυκλωπάκι',
-  'Τριματάκι', 'Κρανιάκι', 'Μασκοφόρος', 'Ιπτάμενο Αστεράκι', 'Πράσινος Βασιλιάς', 'Μωβ Χταποδάκι',
-  'Κίτρινος Μάγος', 'Πορτοκαλί Νυχτερίδα', 'Κόκκινο Αγγελάκι', 'Ροζ Διαβολάκι', 'Πράσινη Νυχτερίδα', 'Ελεφαντάκι',
-  'Γουρουνάκι', 'Γατούλα', 'Καστοράκι', 'Καμπιούλα', 'Μαϊμουδίτσα', 'Αγελαδίτσα',
-  'Λιονταράκι', 'Καβουράκι', 'Κοτοπουλάκι', 'Πολικό Αρκουδάκι', 'Κουνελάκι', 'Αγριογουρουνάκι',
-  'Μελισσούλα', 'Παπαγαλάκι', 'Καμηλοπάρδαλη', 'Αλεπουδίτσα', 'Ελαφάκι', 'Ψαράκι',
-  'Κοάλα', 'Σκυλάκι', 'Τιγράκι', 'Παντάκι', 'Πιγκουινάκι',
-];
-const MODELS = MODEL_NAMES.map((name, i) => {
+// v27: names in the app's language (i18n.js obj.m01 … obj.smiley); `name` is a getter, so a language change applies at once
+const named = (o) => Object.defineProperty(o, 'name', { get: () => t('obj.' + o.id), enumerable: true });
+const MODELS = Array.from({ length: 41 }, (_, i) => {
   const n = String(i + 1).padStart(2, '0');
-  return { id: 'm' + n, name, emoji: '👾', url: `models3d/m${n}.glb`, thumb: `models3d/thumbs/m${n}.png` };
+  return named({ id: 'm' + n, emoji: '👾', url: `models3d/m${n}.glb`, thumb: `models3d/thumbs/m${n}.png` });
 });
 export const OBJECTS = [
   ...MODELS,
   // cheap placeholders made of primitives (no download)
-  { id: 'bird', name: 'Πουλάκι', emoji: '🐦', build: bird },
-  { id: 'teddy', name: 'Αρκουδάκι', emoji: '🧸', build: teddy },
-  { id: 'smiley', name: 'Φατσούλα', emoji: '😊', build: smiley },
+  named({ id: 'bird', emoji: '🐦', build: bird }),
+  named({ id: 'teddy', emoji: '🧸', build: teddy }),
+  named({ id: 'smiley', emoji: '😊', build: smiley }),
 ];
 export const DEFAULT_OBJECT = 'smiley';
 // Unknown ids (e.g. an object added in a newer app version) fall back to the default object.

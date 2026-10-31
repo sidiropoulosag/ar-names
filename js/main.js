@@ -475,7 +475,7 @@ function openEnroll(existing = null) {
   $('enThumbs').innerHTML = '';
   $('enSave').disabled = true;
   en.steps = STEPS; en.srvMode = false;
-  $('enroll').classList.remove('hidden'); syncShot();
+  $('enroll').classList.remove('hidden'); $('enOval').classList.remove('hidden'); setCapturing(false); syncShot();
   $('btnEnroll').classList.add('hidden');
   $('hint').classList.add('hidden');
   renderSteps();
@@ -487,12 +487,35 @@ function openEnroll(existing = null) {
 async function closeEnroll() {
   mode = 'scan';
   gctx.clearRect(0, 0, guide.width, guide.height);
-  $('enroll').classList.add('hidden');
+  $('enroll').classList.add('hidden'); $('enOval').classList.add('hidden'); setCapturing(false);
   syncEnrollBtn();
   if (en.prevFacing !== facing && !window.__ar.keepCamera) await openCamera(en.prevFacing);
   await reloadPeople();
 }
-function setMsg(t) { $('enMsg').textContent = t; }
+function setMsg(t) { $('enMsg').textContent = t; capInfo(); }
+// v25: while the poses are being captured the panel shrinks to a compact translucent bar at the bottom,
+// so the user sees their face (and the face-oval target) on the full camera preview.
+function setCapturing(on) {
+  $('enroll').classList.toggle('capturing', !!on);
+  document.body.classList.toggle('en-cap', !!on);
+  capInfo();
+}
+function capInfo() {
+  if (!en.steps) return;
+  const n = Math.min(en.step + 1, en.steps.length);
+  $('enCapInfo').textContent = `Βήμα ${n}/${en.steps.length} · ${en.samples.length} ${en.samples.length === 1 ? 'λήψη' : 'λήψεις'}`;
+}
+// face-oval target: turns green when the detected face sits inside it
+function ovalFit(box) {
+  const o = $('enOval'); if (o.classList.contains('hidden')) return false;
+  let ok = false;
+  if (box) {
+    const r = o.getBoundingClientRect(), cx = (box.x0 + box.x1) / 2, cy = (box.y0 + box.y1) / 2, h = box.y1 - box.y0;
+    ok = cx > r.left && cx < r.right && cy > r.top && cy < r.bottom && h > r.height * 0.3 && h < r.height * 1.25;
+  }
+  o.classList.toggle('ok', ok); o.classList.toggle('none', !box);
+  return ok;
+}
 function renderSteps() {
   $('enSteps').innerHTML = en.steps.map((_, i) => `<span class="${!en.auto ? '' : i < en.step ? 'done' : i === en.step ? 'now' : ''}"></span>`).join('');
 }
@@ -505,12 +528,13 @@ function largest(res) {
 function drawGuide(face, vw, vh, color) {
   const W = window.innerWidth, H = window.innerHeight;
   gctx.clearRect(0, 0, W, H);
-  if (!face) return;
+  if (!face) return null;
   const s = Math.max(W / vw, H / vh), ox = (W - vw * s) / 2, oy = (H - vh * s) / 2;
   let x0 = face.x0 * s + ox, x1 = face.x1 * s + ox; const y0 = face.y0 * s + oy, y1 = face.y1 * s + oy;
   if (labels.mirror) [x0, x1] = [W - x1, W - x0];
   gctx.strokeStyle = color; gctx.lineWidth = 4;
   gctx.beginPath(); gctx.ellipse((x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) * 0.62, (y1 - y0) * 0.62, 0, 0, Math.PI * 2); gctx.stroke();
+  return { x0, x1, y0, y1 };
 }
 async function capture(face, vw, vh, pose) {
   en.busy = true;
@@ -521,6 +545,7 @@ async function capture(face, vw, vh, pose) {
     const e = await embedder.run(input);
     const img = new Image(); img.src = thumb; $('enThumbs').appendChild(img);
     en.samples.push({ e, thumb, pose, blob, el: img, label: server.classifyPose(pose) });
+    capInfo(); img.scrollIntoView && $('enroll').classList.contains('capturing') && ($('enThumbs').scrollLeft = 1e6);
     $('enSave').disabled = !$('enName').value.trim();
   } finally { en.busy = false; }
 }
@@ -528,7 +553,9 @@ async function enrollFrame(res, vw, vh) {
   const i = largest(res);
   const face = i >= 0 ? res.faces[i] : null;
   const pose = face ? face.pose : null;
-  drawGuide(face, vw, vh, en.auto ? '#fdd835' : '#43a047');
+  const box = drawGuide(face, vw, vh, en.auto ? '#fdd835' : '#43a047');
+  window.__ar.lastEnFace = box;
+  if (ovalFit(box)) gctx.clearRect(0, 0, window.innerWidth, window.innerHeight);   // face in the oval: one clean green guide
   if (i < 0) { if (en.auto) setMsg('Δεν βλέπω πρόσωπο…'); return; }
   const lms = face;
   const now = performance.now();
@@ -552,7 +579,7 @@ async function enrollFrame(res, vw, vh) {
 function nextStep() {
   en.step++; en.stepStart = performance.now();
   if (en.step >= en.steps.length) {
-    en.auto = false; renderSteps();
+    en.auto = false; renderSteps(); setCapturing(false);
     setMsg(`Έτοιμο! ${en.samples.length} λήψεις. Πάτα «Αποθήκευση».`);
     $('enAuto').disabled = false;
     return;
@@ -635,7 +662,12 @@ $('enToSrv').onchange = () => setupEnrollServer(en.person, true);
 $('enAuto').onclick = () => {
   en.srvMode = enrollToServer(); en.steps = en.srvMode ? SRV_STEPS : STEPS;
   en.auto = true; en.step = 0; en.stepStart = performance.now(); en.st = {};
-  $('enAuto').disabled = true; renderSteps(); setMsg(en.steps[0].msg);
+  $('enAuto').disabled = true; renderSteps(); setMsg(en.steps[0].msg); setCapturing(true);
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // close the keyboard
+};
+$('enStop').onclick = () => {
+  en.auto = false; renderSteps(); setCapturing(false); $('enAuto').disabled = false;
+  setMsg(en.samples.length ? `Λήψεις: ${en.samples.length}. Πάτα «Αποθήκευση» ή ξεκίνα ξανά.` : 'Η λήψη σταμάτησε. Πάτα «Αυτόματη λήψη» για να ξεκινήσεις.');
 };
 $('enOne').onclick = () => { en.oneShot = true; };
 $('enFile').onchange = (ev) => { enrollFromFiles([...ev.target.files]); ev.target.value = ''; };
@@ -671,6 +703,71 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
     if (!stream && !sessionStorage.getItem('arCoiReload')) { sessionStorage.setItem('arCoiReload', '1'); location.reload(); }
   });
 } else if (self.crossOriginIsolated) sessionStorage.removeItem('arCoiReload');
+// ---------------------------------------------------------------------------------------------
+// v25 automatic updates. sw.js serves our own code network-first, so a normal open already shows the
+// newest version. This block covers a page that stays open while a new version is published: the new
+// service worker announces itself; the page reloads by itself only when that cannot disturb anyone
+// (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
+// the next time the app comes back to the foreground. Never during enrollment or while typing.
+const APP_VERSION = 'v25';   // keep in sync with CACHE in sw.js
+const UPD_KEY = 'ar-names-upd-reload';
+const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
+window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
+$('appVer').textContent = `Έκδοση εφαρμογής: ${APP_VERSION}`;
+const verNum = (v) => { const m = /v(\d+)$/.exec(v || ''); return m ? +m[1] : 0; };
+function updBusy() {
+  if (mode === 'enroll' || !$('enroll').classList.contains('hidden') || !$('tokSheet').classList.contains('hidden')) return true;
+  const a = document.activeElement;
+  if (a && (a.tagName === 'TEXTAREA' || a.isContentEditable || (a.tagName === 'INPUT' && !['checkbox', 'radio', 'range', 'button', 'file'].includes(a.type)))) return true;
+  if (dispDirty || ($('pingText') && $('pingText').value.trim() && !$('pingSheet').classList.contains('hidden'))) return true;
+  return false;
+}
+function updReload(why) {
+  if (sessionStorage.getItem(UPD_KEY) === upd.pending) return false;   // already reloaded once for this version -> no loops
+  sessionStorage.setItem(UPD_KEY, upd.pending);
+  upd.reloads++; upd.reason = why;
+  location.reload();
+  return true;
+}
+function updMaybeReload(trigger) {
+  if (!upd.pending || updBusy()) return;
+  const early = !stream && !camStarting && !ready && performance.now() - upd.t0 < 5000;
+  if (document.hidden || early || trigger === 'visible' || trigger === 'tap') updReload(trigger);
+  else $('updBar').classList.remove('hidden');
+}
+function onSwVersion(v) {
+  upd.swVersion = v;
+  if (verNum(v) <= verNum(APP_VERSION)) return;   // the page is already this (or a newer) version
+  upd.pending = v;
+  updMaybeReload('sw');
+  if (upd.pending && !document.hidden) $('updBar').classList.remove('hidden');
+}
+async function updCheck() {
+  try { const r = await navigator.serviceWorker.getRegistration(); if (r) await r.update(); } catch (_) {}
+}
+if ('serviceWorker' in navigator) {
+  // reached the version we reloaded for -> clear the loop guard (it stays set if the reload did not help, e.g. offline)
+  if (sessionStorage.getItem(UPD_KEY) && verNum(sessionStorage.getItem(UPD_KEY)) <= verNum(APP_VERSION)) sessionStorage.removeItem(UPD_KEY);
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    const d = e.data || {};
+    if ((d.type === 'updated' || d.type === 'version') && d.version) onSwVersion(d.version);
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (upd.hadController && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'version' });
+    upd.hadController = true;
+  });
+  if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'version' });
+  updCheck();
+  setInterval(updCheck, 10 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { updMaybeReload('hidden'); return; }
+    if (upd.pending) updMaybeReload('visible');
+    updCheck();
+  });
+  $('updBar').onclick = () => { if (!updBusy()) updReload('tap'); else toast('Ολοκλήρωσε πρώτα την καταχώριση / το κείμενο'); };
+}
+window.__ar.updCheck = updCheck;
+
 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
   $('loadErr').textContent = 'Η κάμερα χρειάζεται σύνδεση HTTPS και σύγχρονο browser (Safari / Chrome).';
 }

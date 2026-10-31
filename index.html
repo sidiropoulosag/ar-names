@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
 <meta charset="utf-8">
-<script>/* v27: language before first paint — no saved language = first-run picker */try{var L=localStorage.getItem("ar-names-lang");if(L==="el"||L==="en"||L==="fr"||L==="de"){document.documentElement.lang=L}else{document.documentElement.className+=" need-lang"}}catch(e){}</script>
+<script>/* v27: language before first paint — no saved language = first-run picker */try{var L=localStorage.getItem("ar-names-lang");if(L==="el"||L==="en"||L==="fr"||L==="de"){document.documentElement.lang=L}else{document.documentElement.className+=" need-lang"}/* v30: maybe the welcome -> keep the start card hidden until decided */if(!localStorage.getItem("ar-names-welcomed")&&localStorage.getItem("ar-names-cam-ok")!=="1"){document.documentElement.className+=" wel-check"}}catch(e){}</script>
 <script src="coi-serviceworker.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0d1b2a">
@@ -120,6 +120,7 @@
       <button type="button" class="srow" data-go="pings"><span class="sico" aria-hidden="true">💌</span><span class="stxt"><b data-i18n="m.pings">Μηνύματα</b><small data-i18n="m.pingsSub">Καρδιές και σύντομα μηνύματα από άλλους</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="lang"><span class="sico" aria-hidden="true">🌐</span><span class="stxt"><b data-i18n="m.lang">Γλώσσα</b><small id="mLangSub">Ελληνικά</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="adv"><span class="sico" aria-hidden="true">🔧</span><span class="stxt"><b data-i18n="m.adv">Για προχωρημένους</b><small data-i18n="m.advSub">Αναγνώριση, αντίγραφο ασφαλείας, επαναφορά</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="help"><span class="sico" aria-hidden="true">❓</span><span class="stxt"><b data-i18n="m.help">Οδηγός και βοήθεια</b><small data-i18n="m.helpSub">Πώς δουλεύει και πώς φωτογραφίζεσαι</small></span><span class="schev" aria-hidden="true">›</span></button>
     </nav>
   </section>
 
@@ -291,6 +292,49 @@
       <button type="button" class="lang-opt" data-lang="de"><span class="lang-flag">🇩🇪</span><span>Deutsch</span></button>
     </div>
     <button id="langGo" type="button" class="primary big">Συνέχεια</button>
+  </div>
+</div>
+
+<!-- v30: welcome / onboarding — first run only (after the language), or again from Settings → «Οδηγός και βοήθεια».
+     3 short steps; the last one offers «📸 Φωτογράφισέ με τώρα» (opens the camera + the usual enrolment) or «Μόνο να δω πρώτα». -->
+<div id="welcome" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="welTitle">
+  <div class="wel-card">
+    <div class="wel-top">
+      <button id="welBack" type="button" class="wel-tbtn" data-i18n="set.back">‹ Πίσω</button>
+      <span class="wel-brand"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>Noera</span></span>
+      <button id="welSkip" type="button" class="wel-tbtn wel-skip" data-i18n="wel.skip">Παράλειψη</button>
+    </div>
+    <div class="wel-body">
+      <section class="wstep on" data-step="0">
+        <div class="wel-ico" aria-hidden="true">👀</div>
+        <h2 id="welTitle" data-i18n="wel.t1">Καλώς ήρθες!</h2>
+        <p class="wel-lead" data-i18n="wel.b1">Στρέψε την κάμερα σε κάποιον γνωστό σου: το όνομά του εμφανίζεται πάνω από το κεφάλι του.</p>
+        <p class="wel-note"><span aria-hidden="true">🤝</span> <span data-i18n="wel.n1">Ο καθένας φωτογραφίζεται μόνος του, με τη δική του συναίνεση.</span></p>
+      </section>
+      <section class="wstep" data-step="1">
+        <div class="wel-ico" aria-hidden="true">📸</div>
+        <h2 data-i18n="wel.t2">Πώς φωτογραφίζεσαι</h2>
+        <ul class="wel-list">
+          <li><span class="wli" aria-hidden="true">🙂</span><span data-i18n="wel.b2a">Θα σου ζητήσω να κοιτάξεις την κάμερα και να γυρίσεις λίγο το κεφάλι.</span></li>
+          <li><span class="wli" aria-hidden="true">💡</span><span data-i18n="wel.b2b">Κράτα καλό φως στο πρόσωπό σου.</span></li>
+          <li><span class="wli" aria-hidden="true">🕶️</span><span data-i18n="wel.b2c">Χωρίς γυαλιά ηλίου και χωρίς μάσκα.</span></li>
+          <li><span class="wli" aria-hidden="true">⏱️</span><span data-i18n="wel.b2d">Παίρνει περίπου 1 λεπτό.</span></li>
+        </ul>
+      </section>
+      <section class="wstep" data-step="2">
+        <div class="wel-ico" aria-hidden="true">🔒</div>
+        <h2 data-i18n="wel.t3">Το απόρρητό σου</h2>
+        <p id="welPriv" class="wel-lead"></p>
+        <p id="welPrivNote" class="wel-note small"></p>
+        <p id="welHas" class="wel-note hidden" data-i18n="wel.hasProfile">✅ Έχεις ήδη προφίλ σε αυτό το κινητό.</p>
+      </section>
+    </div>
+    <div class="wel-foot">
+      <div class="wel-dots" role="img"><span></span><span></span><span></span></div>
+      <button id="welNext" type="button" class="primary big" data-i18n="wel.next">Συνέχεια</button>
+      <button id="welGo" type="button" class="primary big hidden" data-i18n="wel.go">📸 Φωτογράφισέ με τώρα</button>
+      <button id="welLater" type="button" class="wel-later hidden" data-i18n="wel.later">Μόνο να δω πρώτα</button>
+    </div>
   </div>
 </div>
 

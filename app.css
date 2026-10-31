@@ -257,3 +257,41 @@ html.need-lang #start .card{visibility:hidden}
 @media (max-width:360px){#people #subTitle{font-size:18px}}
 @media (max-width:360px){#people #subTitle{font-size:17px;overflow-wrap:anywhere;hyphens:auto}#people .set-head{gap:6px}.set-back{padding:8px 10px}}
 #people .grp-list li button{min-height:40px;padding:6px 12px;font-size:14px}
+/* ---------- v30: welcome / onboarding (first run, or Settings → «Οδηγός και βοήθεια») ---------- */
+html.wel-check #start .card{visibility:hidden}
+#welcome{z-index:30;background:radial-gradient(circle at 50% 30%,#16324f 0,#0d1b2a 60%,#060d16 100%);justify-content:center;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+body.wel-on #iosHint,body.wel-on #updBar{display:none!important}
+.wel-card{display:flex;flex-direction:column;width:100%;max-width:440px;height:100%;padding:10px 18px 16px}
+.wel-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px}
+.wel-tbtn{min-height:48px;min-width:48px;background:rgba(255,255,255,.08);border-radius:999px;padding:10px 16px;font-size:16px}
+.wel-tbtn.off{visibility:hidden}
+.wel-skip{background:transparent;text-decoration:underline;text-underline-offset:3px;opacity:.85}
+.wel-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:19px;letter-spacing:.3px}
+.wel-brand img{width:36px;height:36px;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.wel-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column}
+.wstep{display:none;margin:auto 0;padding:12px 2px;text-align:center}
+.wstep.on{display:block;animation:welIn .25s ease-out}
+@keyframes welIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.wel-ico{font-size:72px;line-height:1;margin-bottom:14px}
+.wstep h2{font-size:27px;margin:0 0 14px;line-height:1.2}
+.wel-lead{font-size:19px;line-height:1.45;margin:0 0 16px}
+.wel-note{font-size:16px;line-height:1.4;margin:0 0 10px;opacity:.9;background:rgba(255,255,255,.07);border-radius:14px;padding:12px 14px}
+.wel-note.small{font-size:14px;opacity:.75;background:none;padding:0 6px}
+.wel-list{list-style:none;padding:0;margin:0;text-align:left;display:flex;flex-direction:column;gap:10px}
+.wel-list li{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.07);border-radius:14px;padding:12px 14px;font-size:18px;line-height:1.35}
+.wli{flex:none;font-size:30px;width:38px;text-align:center}
+.wel-foot{flex:none;display:flex;flex-direction:column;gap:10px;padding-top:10px}
+.wel-dots{display:flex;justify-content:center;gap:8px;margin-bottom:4px}
+.wel-dots span{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.28);transition:all .2s}
+.wel-dots span.on{background:#7cc4ff;width:26px;border-radius:6px}
+.wel-foot .big{min-height:58px;border-radius:16px}
+.wel-later{width:100%;justify-content:center;min-height:52px;font-size:17px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:16px}
+@media (max-width:360px),(max-height:640px){
+  .wel-card{padding:6px 12px 10px}.wel-top{min-height:52px}.wel-tbtn{padding:8px 12px;font-size:15px}.wel-brand{font-size:17px}.wel-brand img{width:30px;height:30px}
+  .wel-ico{font-size:52px;margin-bottom:8px}.wstep h2{font-size:23px;margin-bottom:10px}.wel-lead{font-size:17px;margin-bottom:12px}
+  .wel-list{gap:7px}.wel-list li{font-size:16px;padding:9px 12px;gap:10px}.wli{font-size:24px;width:30px}
+  .wel-foot{gap:8px;padding-top:6px}.wel-foot .big{min-height:52px;font-size:18px;padding:12px 16px}.wel-later{min-height:48px;font-size:16px}
+  .wstep{padding:6px 2px}.wel-ico{font-size:46px;margin-bottom:6px}.wel-list li{padding:8px 11px}
+}
+@media (max-height:480px){.wel-ico{display:none}}

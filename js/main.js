@@ -194,6 +194,9 @@ async function boot() {
     await reloadPeople();
     refreshFamily();
     setStatus(lt('status.ready'));
+    // v30: first run -> the welcome decides: «📸 Φωτογράφισέ με τώρα» = camera + enrolment, «Μόνο να δω πρώτα» = camera
+    const w = await welcomeP;
+    if (w) { await welcomeAfter(w); return; }
     const auto = new URLSearchParams(location.search).has('autostart') || await camAllowedP;
     if (auto && !camStarting && !ready) {
       window.__ar.autoStarted = true;
@@ -507,6 +510,7 @@ function pageAvailable(pg) {
   if (pg === 'profile') return !!cfg.url;
   if (pg === 'who') return me && (!$('srvPrivBox').classList.contains('hidden') || !$('srvVisBox').classList.contains('hidden'));
   if (pg === 'pings') return me && !$('pingBox').classList.contains('hidden');
+  if (pg === 'help') return true;   // v30: not a page — opens the welcome guide
   return SET_PAGES.includes(pg);
 }
 function syncMenu() {
@@ -530,7 +534,7 @@ function setGo(pg) {
   if (pg === 'look' && !$('srvMe').classList.contains('hidden')) { try { pickObject(dispObj); } catch (_) {} }
   syncMenu();
 }
-for (const r of document.querySelectorAll('#people .srow')) r.onclick = () => setGo(r.dataset.go);
+for (const r of document.querySelectorAll('#people .srow')) r.onclick = () => (r.dataset.go === 'help' ? openHelp() : setGo(r.dataset.go));
 $('pBack').onclick = () => setGo('main');
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !$('people').classList.contains('hidden') && setPage !== 'main') { e.preventDefault(); setGo('main'); }
@@ -540,6 +544,85 @@ for (const b of document.querySelectorAll('#people .set-lang')) b.onclick = () =
   if (b.dataset.lang === getLang()) return;
   $('optLang').value = b.dataset.lang; $('optLang').dispatchEvent(new Event('change'));
 };
+// ---------- v30: welcome / onboarding ----------
+// First run only: no «welcomed» flag, no people on this device, no server profile (token) and the camera never used
+// here before (an existing user who updates never sees it; the flag is then set silently). Shown right after the
+// language; the models load behind it, the camera waits for the answer. Again any time from Settings →
+// «Οδηγός και βοήθεια». The enrolment itself is the usual openEnroll() (server profile when a server is set,
+// otherwise on-device) — its logic is not changed here.
+const WELCOME_KEY = 'ar-names-welcomed';
+const WEL_N = 3;
+let welcomeP = Promise.resolve(null);
+const wel = { step: 0, help: false, done: null };
+function welcomeSeen() { try { localStorage.setItem(WELCOME_KEY, '1'); } catch (_) {} }
+async function welcomeFirstRun() {
+  let show = false;
+  try {
+    if (!localStorage.getItem(WELCOME_KEY)) {
+      const people = await db.allPeople().catch(() => []);
+      show = !people.length && !cfg.token && localStorage.getItem(CAM_OK_KEY) !== '1';
+      if (!show) welcomeSeen();
+    }
+  } catch (_) {}
+  document.documentElement.classList.remove('wel-check');
+  return show ? openWelcome(false) : null;
+}
+function welPrivText() {
+  $('welPriv').textContent = tr(cfg.url ? 'wel.privServer' : 'wel.privLocal');
+  $('welPrivNote').textContent = tr(cfg.url ? 'privacy.server' : 'privacy.local');
+}
+function welShow(i) {
+  wel.step = Math.max(0, Math.min(WEL_N - 1, i));
+  for (const sec of document.querySelectorAll('#welcome .wstep')) sec.classList.toggle('on', +sec.dataset.step === wel.step);
+  [...document.querySelectorAll('#welcome .wel-dots span')].forEach((d, k) => d.classList.toggle('on', k === wel.step));
+  $('welcome').querySelector('.wel-dots').setAttribute('aria-label', tr('wel.step', { i: wel.step + 1, n: WEL_N }));
+  const last = wel.step === WEL_N - 1, own = hasOwnProfile();
+  $('welBack').classList.toggle('off', wel.step === 0);
+  $('welSkip').classList.toggle('off', last);
+  $('welNext').classList.toggle('hidden', last);
+  $('welGo').classList.toggle('hidden', !last || own);
+  $('welHas').classList.toggle('hidden', !last || !own);
+  $('welLater').classList.toggle('hidden', !last);
+  $('welLater').textContent = tr(wel.help || own ? 'wel.close' : 'wel.later');
+  welPrivText();
+  const f = last ? (own ? $('welLater') : $('welGo')) : $('welNext');
+  setTimeout(() => { try { f.focus({ preventScroll: true }); } catch (_) {} }, 30);
+}
+function openWelcome(help) {
+  wel.help = !!help;
+  $('welcome').classList.remove('hidden'); document.body.classList.add('wel-on');
+  welShow(0);
+  return new Promise((resolve) => { wel.done = resolve; });
+}
+function closeWelcome(answer) {
+  welcomeSeen();
+  $('welcome').classList.add('hidden'); document.body.classList.remove('wel-on');
+  const d = wel.done; wel.done = null; if (d) d(answer);
+}
+// after the welcome: the camera (a tap = user gesture, so start() may ask for the permission), then the enrolment
+async function welcomeAfter(w) {
+  if (!ready) {
+    if (!camStarting) { unlockAudioOnFirstTouch(); await start(); }
+    for (let i = 0; i < 300 && camStarting && !ready; i++) await new Promise((r) => setTimeout(r, 100));
+  }
+  if (w === 'enroll' && ready && mode === 'scan' && !hasOwnProfile()) openEnroll();
+}
+async function openHelp() {
+  closePeople();
+  const w = await openWelcome(true);
+  if (w === 'enroll') welcomeAfter(w);
+}
+$('welNext').onclick = () => welShow(wel.step + 1);
+$('welBack').onclick = () => welShow(wel.step - 1);
+$('welSkip').onclick = () => welShow(WEL_N - 1);   // straight to the last step (the two choices)
+$('welGo').onclick = () => { unlockAudio(); goFullscreen(); closeWelcome('enroll'); };
+$('welLater').onclick = () => { unlockAudio(); if (!wel.help) goFullscreen(); closeWelcome(wel.help ? 'close' : 'skip'); };
+document.addEventListener('keydown', (e) => {
+  if ($('welcome').classList.contains('hidden')) return;
+  if (e.key === 'Escape' && wel.help) { e.preventDefault(); closeWelcome('close'); }
+});
+window.addEventListener('langchange', () => { if (!$('welcome').classList.contains('hidden')) welShow(wel.step); });
+window.__ar.welcome = { open: (help) => openWelcome(help), get step() { return wel.step; }, get shown() { return !$('welcome').classList.contains('hidden'); }, KEY: WELCOME_KEY };
 window.__ar.setNav = { go: (pg) => setGo(pg), get page() { return setPage; }, available: (pg) => pageAvailable(pg) };
 function famOnFocus() { if (!document.hidden && Date.now() - fam.at > 3000) refreshFamily(); }
 document.addEventListener('visibilitychange', famOnFocus);
@@ -810,7 +893,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v29';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v30';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -919,7 +1002,7 @@ window.__ar.lang = { get: getLang, set: setLang };
 
 // v27: first run (no language saved yet, also for existing users) -> the language picker comes first; nothing
 // else starts (no models, no camera) until a language is chosen. Saved data is never touched.
-langReady().then(() => { initServerUi(); boot(); });
+langReady().then(() => { initServerUi(); welcomeP = welcomeFirstRun(); boot(); });
 
 // ======================================================================
 // Family-server mode (optional; everything below is inactive until a server URL is set)

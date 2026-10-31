@@ -4,9 +4,10 @@ import { Labels3D } from './labels3d.js';
 import { Gallery, Tracker } from './tracker.js';
 import * as db from './db.js';
 import * as server from './server.js';
-import { ChimeRounds, unlockAudio, resumeAudio, audioState, chimeStats, playShutter, playPing } from './chime.js';
+import { ChimeRounds, unlockAudio, resumeAudio, audioState, chimeStats, playShutter, playPing, playChime } from './chime.js';
+import { LookPreview, lookStats } from './lookpreview.js';
 import { PING_EMOJI, PING_TEXT_MAX, CardQueue, sendTitle } from './pings.js';
-import { OBJECTS, objectInfo, previewObject, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
+import { OBJECTS, objectInfo, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
 import { ortInfo, ORT_1T_KEY, IOS } from './ort.js';
 import { t as tr, setLang, getLang, savedLang, guessLang, applyI18n, locale, dict as I18N, LANGS } from './i18n.js';
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
@@ -17,6 +18,7 @@ const gctx = guide.getContext('2d');
 const settings = db.loadSettings();
 const detector = new Detector(), embedder = new Embedder();
 const labels = new Labels3D(overlay);
+const FONT_URL = new URL('../fonts/dejavu_sans_bold_greek.typeface.json', import.meta.url).href;
 const frameCanvas = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(2, 2) : document.createElement('canvas');
 const frameCtx = frameCanvas.getContext('2d', { willReadFrequently: true });
 const gallery = new Gallery();
@@ -174,7 +176,7 @@ async function boot() {
     setStatus(lt('status.loadingModels'));
     camAllowedP.then((ok) => { if (ok && !ready) setText($('btnStart'), lt('start.loadingAuto')); });
     const t0 = performance.now();
-    const inits = Promise.all([detector.init(settings.maxFaces), embedder.init(), labels.init(new URL('../fonts/dejavu_sans_bold_greek.typeface.json', import.meta.url).href)]);
+    const inits = Promise.all([detector.init(settings.maxFaces), embedder.init(), labels.init(FONT_URL)]);
     // v26: a multi-threaded WASM start that fails (or hangs, see ort.js) -> reload once and retry; if it fails again,
     // remember «1 thread» on this device (7 days) and reload once more
     const FB = 'ar-names-ort-fallback';
@@ -499,7 +501,38 @@ function infoWithEnroll(text) {
   b.onclick = () => { closePeople(); openEnroll(); };
   info.appendChild(document.createElement('br')); info.appendChild(b);
 }
-function closePeople() { $('people').classList.add('hidden'); syncShot(); clearInterval(fam.timer); fam.timer = 0; }
+function closePeople() { $('people').classList.add('hidden'); syncShot(); clearInterval(fam.timer); fam.timer = 0; syncLookPv(); }
+// ---------- v31: live preview on «Εμφάνιση και ήχος» ----------
+// What the preview shows = exactly what the camera screen would draw for me with the CURRENT (unsaved) choices:
+// my name (or a sample), the text style, the sizes, the 3D object and my comment; «?» on a sample stranger when
+// that option is on. Read fresh on every frame, so any change (also of language) shows at once.
+function lookState() {
+  const unknown = !!settings.showUnknown;
+  const me = !$('srvMe').classList.contains('hidden') && hasCap('display');
+  if (!me) {   // no server profile: only my own screen's options (no style / object / comment for local people)
+    const mine = (localPeople || []).find((p) => p.me);
+    return { name: (mine && mine.name) || cfg.name || tr('disp.namePh'), showName: true, style: 'bold', sizes: null, objectId: '', message: '', unknown };
+  }
+  const items = selItems();
+  const texts = [['message1', 'srvMsg'], ['message2', 'srvMsg2']].filter(([k]) => items.includes(k)).map(([, id]) => $(id).value.trim()).filter(Boolean);
+  return {
+    name: cfg.name || tr('disp.namePh'),
+    showName: dispMulti ? items.includes('name') : true,
+    style: hasCap('styles') ? dispStyle : 'bold',
+    sizes: hasCap('sizes') ? { name: +$('szName').value, text: +$('szText').value, object: +$('szObj').value } : null,
+    objectId: items.includes('object3d') ? dispObj : '',
+    message: texts.join('\n'), unknown,
+  };
+}
+var lookPv = new LookPreview($('lookPrev'), { getState: lookState, getFont: () => labels.font, fontUrl: FONT_URL });
+// runs only while «Εμφάνιση και ήχος» is the open page of an open settings panel; otherwise stopped + disposed
+function syncLookPv() {
+  if (!lookPv) return;
+  if (setPage === 'look' && !$('people').classList.contains('hidden')) lookPv.start();
+  else lookPv.stop();
+}
+function updatePreview() { if (lookPv && lookPv.on) lookPv.start(); }   // redraw now (start() on a running preview = draw)
+window.__ar.lookPv = { get on() { return lookPv.on; }, stats: lookStats, snapshot: () => lookPv.snapshot(), state: () => lookState() };
 // ---------- v29: Settings = main menu + sub-pages ----------
 // Rows show only when their page has something to show (profile: a server is set; who / messages: my server
 // profile and a server that supports them). «‹ Πίσω» (or Esc) returns to the menu; ✕ closes as before.
@@ -533,6 +566,7 @@ function setGo(pg) {
   $('setBody').scrollTop = 0;
   if (pg === 'look' && !$('srvMe').classList.contains('hidden')) { try { pickObject(dispObj); } catch (_) {} }
   syncMenu();
+  syncLookPv();
 }
 for (const r of document.querySelectorAll('#people .srow')) r.onclick = () => (r.dataset.go === 'help' ? openHelp() : setGo(r.dataset.go));
 $('pBack').onclick = () => setGo('main');
@@ -875,9 +909,16 @@ thr.oninput = () => { settings.threshold = +thr.value; $('thrVal').textContent =
 $('optRange').value = String(settings.range);
 $('optRange').onchange = (e) => { settings.range = +e.target.value; db.saveSettings(settings); };
 $('optUnknown').checked = settings.showUnknown;
-$('optUnknown').onchange = (e) => { settings.showUnknown = e.target.checked; db.saveSettings(settings); };
+$('optUnknown').onchange = (e) => { settings.showUnknown = e.target.checked; db.saveSettings(settings); updatePreview(); };
 $('optSound').checked = settings.sound !== false;
-$('optSound').onchange = (e) => { settings.sound = e.target.checked; db.saveSettings(settings); if (e.target.checked) unlockAudio(); };
+$('optSound').onchange = (e) => {
+  settings.sound = e.target.checked; db.saveSettings(settings);
+  if (e.target.checked) soundSample();   // v31: hear it at once (the preview «recognises» the sample person too)
+};
+// v31: «▶ Δοκιμή ήχου» — the recognition chime as it sounds on the camera screen (also when the sound is off,
+// so you can decide); the preview replays the «just recognised» pop at the same moment.
+function soundSample() { unlockAudio(); resumeAudio(); playChime(); if (lookPv) lookPv.pop(); }
+$('lookTest').onclick = () => soundSample();
 
 // Service worker (sw.js: offline cache + COOP/COEP headers) is registered by coi-serviceworker.js,
 // which also reloads once so the page becomes crossOriginIsolated (multi-threaded WASM) on GitHub Pages.
@@ -893,7 +934,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v30';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v31';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -1504,7 +1545,6 @@ function pickObject(id) {
     const r = sel.getBoundingClientRect(), br = box.getBoundingClientRect();
     if (r.top < br.top) box.scrollTop += r.top - br.top - 4; else if (r.bottom > br.bottom) box.scrollTop += r.bottom - br.bottom + 4;
   }
-  try { previewObject($('objPrev'), dispObj); } catch (e) { console.warn('preview', e); }
   updatePreview();
 }
 
@@ -1541,34 +1581,6 @@ function showSize(id) { const el = $(id); el.nextElementSibling.textContent = '�
 function setSizes(sz = {}) {
   for (const [id, k] of [['szName', 'name'], ['szText', 'text'], ['szObj', 'object']]) { $(id).value = Math.min(2, Math.max(0.5, +sz[k] || 1)); showSize(id); }
 }
-function updatePreview() {   // tiny HTML mock of the label (no WebGL), only on 0.4.0 servers
-  if (!hasCap('sizes')) return;
-  const items = selItems(), pv = $('dispPrev');
-  const name = pv.querySelector('.pv-name'), bub = pv.querySelector('.pv-bub'), obj = pv.querySelector('.pv-obj');
-  name.hidden = !items.includes('name');
-  const nm = cfg.name || tr('disp.namePh'), fpx = 20 * +$('szName').value, st = hasCap('styles') ? dispStyle : 'bold';
-  name.className = 'pv-name sty-' + st;
-  name.style.fontSize = fpx.toFixed(0) + 'px';
-  if (st === 'curved') {   // the name on a gentle arc, like the 3D label
-    const w = Math.max(60, nm.length * fpx * 0.72), h = fpx * 1.6;
-    name.innerHTML = `<svg width="${w.toFixed(0)}" height="${h.toFixed(0)}" viewBox="0 0 ${w.toFixed(0)} ${h.toFixed(0)}" aria-hidden="true"><path id="pvArc" d="M 4 ${(h - 2).toFixed(1)} Q ${(w / 2).toFixed(1)} ${(-h * 0.35).toFixed(1)} ${(w - 4).toFixed(1)} ${(h - 2).toFixed(1)}" fill="none"/><text text-anchor="middle" font-weight="800" font-size="${fpx.toFixed(0)}" fill="#fff4e6" stroke="#ef6c00" stroke-width="${(fpx / 14).toFixed(2)}" paint-order="stroke"><textPath href="#pvArc" startOffset="50%"></textPath></text></svg>`;
-    name.querySelector('textPath').textContent = nm;
-  } else name.textContent = nm;
-  const texts = [['message1', 'srvMsg'], ['message2', 'srvMsg2']].filter(([k]) => items.includes(k)).map(([, id]) => $(id).value.trim()).filter(Boolean);
-  bub.hidden = !texts.length; bub.textContent = texts.join('\n');
-  bub.style.fontSize = (13 * +$('szText').value).toFixed(1) + 'px';
-  const o = objectInfo(dispObj), px = Math.round(38 * +$('szObj').value);
-  obj.hidden = !items.includes('object3d');
-  if (!obj.hidden) {
-    const key = o.id + ':' + px;
-    if (obj.dataset.key !== key) {
-      obj.dataset.key = key; obj.textContent = '';
-      if (o.thumb) { const im = new Image(); im.alt = ''; im.width = im.height = px; im.src = assetUrl(o.thumb); obj.appendChild(im); }
-      else { obj.textContent = o.emoji; obj.style.fontSize = Math.round(px * 0.8) + 'px'; }
-    }
-  }
-}
-
 async function refreshServer(verbose = false) {
   const info = $('srvInfo'), advInfo = $('srvAdvInfo');
   advInfo.textContent = '';

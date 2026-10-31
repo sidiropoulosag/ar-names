@@ -156,9 +156,16 @@
 
   <!-- 🎨 look & sound: my screen (sound, «?») + how my name looks to the others (style, 3D object, sizes) -->
   <section class="spage" data-page="look">
+    <!-- v31: live preview (same 3D labels as the camera screen), sticky while scrolling the options -->
+    <div id="lookPrev" role="img" aria-label="Προεπισκόπηση: έτσι θα φαίνεται στην κάμερα" data-i18n-aria="look.prevAria">
+      <canvas class="lp-bg" aria-hidden="true"></canvas>
+      <div class="lp-layer" aria-hidden="true"></div>
+      <span class="lp-tag" data-i18n="look.prevTag">👁️ Προεπισκόπηση</span>
+    </div>
     <h3 data-i18n="look.mine">📱 Στην οθόνη μου</h3>
     <div class="scard">
       <label class="setting check"><input id="optSound" type="checkbox"> <span data-i18n="set.sound">🔔 Ήχος αναγνώρισης</span></label>
+      <button id="lookTest" type="button" class="look-test" data-i18n="look.test">▶ Δοκιμή ήχου</button>
       <label class="setting check"><input id="optUnknown" type="checkbox"> <span data-i18n="set.unknown">Δείξε «?» σε άγνωστα πρόσωπα</span></label>
     </div>
     <div class="me-only disp-only">
@@ -174,13 +181,12 @@
       <div class="scard">
         <p id="dispHint2" class="small disp-only"></p>
         <label class="setting check disp-only"><input type="checkbox" class="dispItem" value="object3d"> <span data-i18n="disp.obj">🧸 3D αντικείμενο</span></label>
-        <div id="objBox" class="disp-only"><div id="objPick"></div><canvas id="objPrev" width="120" height="120"></canvas></div>
+        <div id="objBox" class="disp-only"><div id="objPick"></div></div>
       </div>
       <div id="sizeBox" class="sizes-only scard">
         <label class="size"><span data-i18n="sz.name">Μέγεθος ονόματος</span><input id="szName" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
         <label class="size"><span data-i18n="sz.text">Μέγεθος σχολίου</span><input id="szText" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
         <label class="size"><span data-i18n="sz.obj">Μέγεθος αντικειμένου</span><input id="szObj" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
-        <div id="dispPrev" aria-label="Προεπισκόπηση" data-i18n-aria="disp.preview"><div class="pv-bub"></div><span class="pv-obj"></span><div class="pv-name"></div><div class="pv-face">🙂</div></div>
       </div>
       <div class="row"><button id="srvMsgSave2" type="button" class="primary big" data-i18n="common.save">💾 Αποθήκευση</button></div>
     </div>

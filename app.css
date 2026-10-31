@@ -62,25 +62,17 @@ textarea,input[type=password]{width:100%;font:inherit;font-size:16px;padding:10p
 .adv-only{display:none}
 body.adv .adv-only{display:block}
 #objBox{display:flex;gap:12px;align-items:flex-start;margin:6px 0 10px}
-#objPick{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;flex:1;max-height:236px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+#objPick{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;flex:1;max-height:min(236px,38dvh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 #objPick button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 2px;font-size:11px;line-height:1.15;min-width:0;text-align:center;overflow-wrap:anywhere;hyphens:auto}
 #objPick button img{width:48px;height:48px;object-fit:contain}
 #objPick button .emo{font-size:30px;line-height:48px;height:48px}
 #objPick button.sel{outline:3px solid #4fc3f7}
-#objPrev{width:120px;height:120px;flex:none;border-radius:12px;background:rgba(255,255,255,.06)}
 #srvMsg,#srvMsg2{width:100%;box-sizing:border-box}
 #pList small .disp{opacity:1}
 #sizeBox{margin:4px 0 10px}
 .size{display:grid;grid-template-columns:9.5em 1fr 3em;align-items:center;gap:8px;margin:4px 0;font-size:14px}
 .size input{width:100%;accent-color:#4fc3f7}
 .size output{text-align:right;font-variant-numeric:tabular-nums;opacity:.85}
-#dispPrev{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;height:190px;margin-top:6px;border-radius:12px;background:rgba(255,255,255,.06);overflow:hidden;padding:6px}
-#dispPrev .pv-bub{background:rgba(255,255,255,.92);color:#0d1b2a;border-radius:10px;padding:3px 8px;max-width:90%;line-height:1.25;text-align:center;white-space:pre-wrap}
-#dispPrev .pv-obj{line-height:1}
-#dispPrev .pv-obj img{object-fit:contain;display:block}
-#dispPrev .pv-name{font-weight:800;color:#fff;text-shadow:0 2px 0 #1565c0,0 3px 6px rgba(0,0,0,.5);line-height:1}
-#dispPrev .pv-face{font-size:34px;line-height:1}
-#dispPrev [hidden]{display:none}
 .dispItem:disabled+*,.setting.check:has(.dispItem:disabled){opacity:.5}
 
 /* v15: text styles + groups */
@@ -91,9 +83,6 @@ body.adv .adv-only{display:block}
 .sty-bold{font-weight:800;text-shadow:0 2px 0 #1565c0,0 3px 6px rgba(0,0,0,.5)}
 .sty-curved{font-weight:800;color:#fff4e6;text-shadow:0 1px 0 #ef6c00,0 2px 0 #ef6c00,0 3px 5px rgba(0,0,0,.45);display:inline-block;transform:perspective(60px) rotateX(18deg);border-radius:40%}
 .sty-soft{font-weight:400;color:rgba(255,255,255,.78);text-shadow:0 1px 0 rgba(179,212,255,.6),0 2px 6px rgba(0,0,0,.25)}
-#dispPrev .pv-name.sty-curved,#dispPrev .pv-name.sty-soft{text-shadow:none}
-#dispPrev .pv-name svg{display:block;overflow:visible}
-#dispPrev .pv-name.sty-soft{font-weight:400;color:rgba(255,255,255,.78);text-shadow:0 1px 0 rgba(179,212,255,.6),0 2px 6px rgba(0,0,0,.25)}
 #srvPrivBox h4{margin:10px 0 4px;font-size:14px;opacity:.85}
 .grp-list{list-style:none;padding:0;margin:0}
 .grp-list li{display:flex;align-items:center;gap:8px;padding:4px 0;flex-wrap:wrap}
@@ -295,3 +284,12 @@ body.wel-on #iosHint,body.wel-on #updBar{display:none!important}
   .wstep{padding:6px 2px}.wel-ico{font-size:46px;margin-bottom:6px}.wel-list li{padding:8px 11px}
 }
 @media (max-height:480px){.wel-ico{display:none}}
+
+/* v31: live preview on «Εμφάνιση και ήχος» — sticky on top while the options scroll under it */
+#lookPrev{position:sticky;top:0;z-index:3;height:clamp(160px,26dvh,200px);margin:0 0 10px;border-radius:14px;overflow:hidden;background:#1b2633;box-shadow:0 6px 14px -6px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);contain:strict}
+#lookPrev .lp-bg,#lookPrev .lp-3d{position:absolute;inset:0;width:100%;height:100%;display:block}
+#lookPrev .lp-layer{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;overflow:hidden}
+#lookPrev .lp-layer .bubble{max-width:300px}
+#lookPrev .lp-tag{position:absolute;left:8px;top:7px;font-size:12px;line-height:1.2;padding:3px 8px;border-radius:999px;background:rgba(13,27,42,.7);color:#cfe6ff;pointer-events:none;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.look-test{display:block;margin:4px 0 8px;padding:8px 14px;border-radius:999px;font-size:15px}
+@media (max-height:600px){#lookPrev{height:160px}}

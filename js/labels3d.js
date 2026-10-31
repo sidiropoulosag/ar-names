@@ -40,6 +40,8 @@ export class Labels3D {
     this.geoCache = new Map();
     this.meshes = new Map(); // track id -> {group, mesh, text}
     this.mirror = false; this.W = 1; this.H = 1;
+    this.topPad = 64;          // room kept free under the screen's top bar (v31: the settings preview uses less)
+    this.beforeDraw = null;    // v31: optional hook run right before each draw (settings preview)
   }
   async init(fontUrl) {
     this.font = await new FontLoader().loadAsync(fontUrl);
@@ -99,7 +101,7 @@ export class Labels3D {
       const key = (showName ? text : '\u0000' + text) + '\u0001' + style;
       let rec = this.meshes.get(t.id);
       if (!rec || rec.key !== key) {
-        if (rec) { if (rec.mesh) this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); }
+        if (rec) { if (rec.mesh) this.scene.remove(rec.mesh); if (rec.obj) this.dropObj(rec.obj); }
         const mesh = showName ? new THREE.Mesh(this.geometry(text, style), unk ? [this.matUnkFront, this.matUnkSide] : this.mats[style]) : null;
         if (mesh) { if (style === 'soft') mesh.renderOrder = 2; this.scene.add(mesh); }
         rec = { mesh, key, text, style, born: now, sm: rec ? rec.sm : null };
@@ -129,7 +131,7 @@ export class Labels3D {
       // (+ room for the comment bubble above it, so it does not have to drop over the face)
       const msg = (!unk && t.message) || '';
       const bubH = msg ? (16 * sT * 1.3) * Math.min(4, msg.split('\n').length) + 18 : 0;
-      py = Math.max(py, stackH(size) + 64 + size * 0.25 + Math.min(bubH, H * 0.25));
+      py = Math.max(py, stackH(size) + this.topPad + size * 0.25 + Math.min(bubH, H * 0.25));
       const half = Math.max(nameS(size) * gw / 2, objId ? size * 1.1 * sO : 0) + 4;
       px = Math.min(Math.max(px, Math.min(W / 2, half)), Math.max(W / 2, W - half));
       // head orientation from the 5-point pose estimate (damped)
@@ -153,7 +155,7 @@ export class Labels3D {
         rec.mesh.scale.setScalar(ns * ease);
       }
       if (rec.objWant !== objId) {
-        if (rec.obj) { this.scene.remove(rec.obj); rec.obj = null; }
+        if (rec.obj) { this.dropObj(rec.obj); rec.obj = null; }
         rec.objWant = objId;
         if (objId) { rec.obj = makeObject(objId); this.scene.add(rec.obj); rec.objBorn = now; }
       }
@@ -170,8 +172,31 @@ export class Labels3D {
       rec.top = top - k.s * 0.08; rec.low = k.y + 6; rec.textScale = sT;
       rec.hasObj = !!rec.obj;
     }
-    for (const [id, rec] of this.meshes) if (!alive.has(id)) { if (rec.mesh) this.scene.remove(rec.mesh); if (rec.obj) this.scene.remove(rec.obj); this.meshes.delete(id); }
+    for (const [id, rec] of this.meshes) if (!alive.has(id)) { if (rec.mesh) this.scene.remove(rec.mesh); if (rec.obj) this.dropObj(rec.obj); this.meshes.delete(id); }
+    if (this.beforeDraw) this.beforeDraw(now);
     this.renderer.render(this.scene, this.camera);
+  }
+  // v31: free everything this instance owns (text geometries, its materials, the WebGL context).
+  // v31: a removed 3D object copy — stop its animation and free its per-copy bone texture (skinned glTF models);
+  // its geometry/materials are shared between copies, so they stay.
+  dropObj(o) {
+    this.scene.remove(o);
+    const u = o.userData || {};
+    if (u.mixer) { u.mixer.stopAllAction(); u.mixer.uncacheRoot(u.mixer.getRoot()); u.mixer = null; }
+    o.traverse((x) => { if (x.isSkinnedMesh && x.skeleton) x.skeleton.dispose(); });
+  }
+  // 3D objects are NOT disposed here (their geometry/materials are shared copies — see lookpreview.js).
+  dispose() {
+    for (const [, r] of this.meshes) { if (r.mesh) this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); }
+    this.meshes.clear();
+    for (const g of this.geoCache.values()) g.dispose();
+    this.geoCache.clear();
+    const mats = new Set([this.matFront, this.matSide, this.matUnkFront, this.matUnkSide, ...Object.values(this.mats).flat()]);
+    for (const m of mats) m.dispose();
+    this.renderer.renderLists.dispose();
+    this.renderer.dispose();
+    try { this.renderer.forceContextLoss(); } catch (_) {}
+    this.beforeDraw = null; this.font = null;
   }
   clear() { for (const [, r] of this.meshes) { if (r.mesh) this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); } this.meshes.clear(); this.renderer.render(this.scene, this.camera); }
 }

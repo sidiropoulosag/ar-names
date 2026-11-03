@@ -86,8 +86,12 @@ export class Api {
   me() { return this.req('GET', '/people/me'); }
   people() { return this.req('GET', '/people'); }
   peoplePublic() { return this.req('GET', '/people/public', { auth: false, timeout: 6000 }); }   // ARN_PUBLIC_LIST=1 servers
-  createPerson(familyKey, name, message, visibility) {
+  // v32 (server 0.7.0): + consent, invite code, device id. Older servers ignore the extra form fields.
+  createPerson(familyKey, name, message, visibility, extra = {}) {
     const f = new FormData(); f.append('name', name); f.append('message', message || ''); f.append('visibility', visibility);
+    if (extra.consent) { f.append('consent', '1'); f.append('consent_version', extra.consentVersion || '1'); }
+    if (extra.invite) f.append('invite', extra.invite);
+    if (extra.deviceId) f.append('device_id', extra.deviceId);
     return this.req('POST', '/people', { form: f, familyKey, auth: false });
   }
   addFrame(pid, pose, blob) {
@@ -108,6 +112,13 @@ export class Api {
   // 0.6.0 pings: a reaction / short text to someone you can see; received ones (marked delivered)
   sendPing(pid, kind, content) { return this.req('POST', `/people/${pid}/pings`, { json: { kind, content }, timeout: 8000 }); }
   pings() { return this.req('GET', '/me/pings', { timeout: 5000 }); }
+  // 0.7.0 privacy / safety
+  deleteMe() { return this.req('DELETE', '/me', { timeout: 15000 }); }
+  consent(version) { return this.req('POST', '/me/consent', { json: { version } }); }
+  blocks() { return this.req('GET', '/me/blocks', { timeout: 6000 }); }
+  block(pid) { return this.req('POST', `/people/${pid}/block`); }
+  unblock(pid) { return this.req('DELETE', `/people/${pid}/block`); }
+  report(pid, reason, note, block) { return this.req('POST', `/people/${pid}/report`, { json: { reason, note: note || '', block: !!block } }); }
   recognize(faces) { return this.req('POST', '/recognize/embeddings', { json: { faces }, timeout: 5000 }); }
 }
 

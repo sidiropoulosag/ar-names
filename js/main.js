@@ -95,6 +95,9 @@ window.__ar.msgHist = { load: msgHistLoad, add: msgHistAdd, del: msgHistDel, ren
 // ---------- advanced mode (hidden): tap «Ρυθμίσεις» 7 times ----------
 // Normal users never see the server address, the token or the names of people who are not online.
 let adv = localStorage.getItem('ar-names-adv') === '1';
+// v32: privacy / consent / report-block / delete sheets (camera + pings + update reload pause while one is open)
+const V32_SHEETS = ['modSheet', 'privSheet', 'consentSheet', 'delSheet'];
+const CONSENT_KEY = 'ar-names-consent', CONSENT_ASKED_KEY = 'ar-names-consent-asked', INVITE_KEY = 'ar-names-invite', DEVICE_KEY = 'ar-names-device';
 function applyAdv() { document.body.classList.toggle('adv', adv); }
 applyAdv();
 {
@@ -120,7 +123,8 @@ function errMsg(e) {
 // ---------- server capabilities (from /health) ----------
 // 0.3.0+: features ['display','presence']; older servers have no 'features' -> message only, no online list.
 let caps = null; // null = unknown, else { version, features:Set }
-function noteHealth(h) { caps = { version: h.version || '', features: new Set(h.features || []) }; return h; }
+let srvHealth = null;   // v32: last /health answer (enroll_mode, consent_version)
+function noteHealth(h) { caps = { version: h.version || '', features: new Set(h.features || []) }; srvHealth = h; return h; }
 const hasCap = (f) => !!(caps && caps.features.has(f));
 // presence heartbeat: tells the server "I'm here" so others see me as online (recognition calls count too)
 setInterval(() => {
@@ -199,6 +203,7 @@ async function boot() {
     // v30: first run -> the welcome decides: «📸 Φωτογράφισέ με τώρα» = camera + enrolment, «Μόνο να δω πρώτα» = camera
     const w = await welcomeP;
     if (w) { await welcomeAfter(w); return; }
+    await consentUpdateMaybe();   // v32: once, for people who enrolled before the consent question (never over the camera)
     const auto = new URLSearchParams(location.search).has('autostart') || await camAllowedP;
     if (auto && !camStarting && !ready) {
       window.__ar.autoStarted = true;
@@ -419,6 +424,11 @@ function renderPeople() {
     const li = document.createElement('li'); li.className = 'srv' + (me ? ' me' : '');
     li.innerHTML = '<div class="av">☁️</div><div class="nm"></div>';
     li.querySelector('.nm').innerHTML = `${escapeHtml(sp.name)}<small>${escapeHtml(srvTag(sp))}</small>`;
+    if (!me && canMod()) {   // v32: report / block
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'pmod'; b.textContent = '⋯';
+      b.setAttribute('aria-label', tr('mod.aria', { name: sp.name })); b.title = tr('mod.open');
+      b.onclick = () => openMod(sp.id, sp.name); li.appendChild(b);
+    }
     ul.appendChild(li);
   }
   $('pEmpty').classList.toggle('hidden', ul.children.length > 0);
@@ -536,7 +546,7 @@ window.__ar.lookPv = { get on() { return lookPv.on; }, stats: lookStats, snapsho
 // ---------- v29: Settings = main menu + sub-pages ----------
 // Rows show only when their page has something to show (profile: a server is set; who / messages: my server
 // profile and a server that supports them). «‹ Πίσω» (or Esc) returns to the menu; ✕ closes as before.
-const SET_PAGES = ['main', 'people', 'profile', 'look', 'who', 'pings', 'lang', 'adv'];
+const SET_PAGES = ['main', 'people', 'profile', 'look', 'who', 'pings', 'lang', 'privacy', 'adv'];
 let setPage = 'main';
 function pageAvailable(pg) {
   const me = !$('srvMe').classList.contains('hidden');
@@ -567,6 +577,7 @@ function setGo(pg) {
   if (pg === 'look' && !$('srvMe').classList.contains('hidden')) { try { pickObject(dispObj); } catch (_) {} }
   syncMenu();
   syncLookPv();
+  if (pg === 'privacy') renderPrivacy();
 }
 for (const r of document.querySelectorAll('#people .srow')) r.onclick = () => (r.dataset.go === 'help' ? openHelp() : setGo(r.dataset.go));
 $('pBack').onclick = () => setGo('main');
@@ -673,7 +684,15 @@ const STEPS = [
 const PER_STEP = 2, STEP_TIMEOUT = 4500;
 const en = { person: null, samples: [], auto: false, step: 0, stepStart: 0, lastCap: 0, prevFacing: 'environment', busy: false, oneShot: false, st: {} };
 
+// v32: a new profile only after the privacy consent (checkbox + «Συμφωνώ»); adding photos to an existing one needs nothing
 function openEnroll(existing = null) {
+  if (!existing && !consentOk()) {
+    askConsent(false).then((ok) => { if (ok && mode === 'scan') openEnrollNow(existing); });
+    return;
+  }
+  openEnrollNow(existing);
+}
+function openEnrollNow(existing = null) {
   mode = 'enroll';
   en.person = existing; en.samples = []; en.auto = false; en.step = 0; en.oneShot = false; en.st = {};
   $('enName').value = existing ? existing.name : '';
@@ -934,7 +953,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v31';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v32';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -942,6 +961,7 @@ setText($('appVer'), lt('app.version', { v: APP_VERSION }));
 const verNum = (v) => { const m = /v(\d+)$/.exec(v || ''); return m ? +m[1] : 0; };
 function updBusy() {
   if (mode === 'enroll' || !$('enroll').classList.contains('hidden') || !$('tokSheet').classList.contains('hidden')) return true;
+  if (V32_SHEETS.some((id) => !$(id).classList.contains('hidden'))) return true;
   const a = document.activeElement;
   if (a && (a.tagName === 'TEXTAREA' || a.isContentEditable || (a.tagName === 'INPUT' && !['checkbox', 'radio', 'range', 'button', 'file'].includes(a.type)))) return true;
   if (dispDirty || ($('pingText') && $('pingText').value.trim() && !$('pingSheet').classList.contains('hidden'))) return true;
@@ -1196,7 +1216,11 @@ const SRV_WAIT = 10000, SRV_WAIT_OPTIONAL = 6000, SRV_GAP = 600;
 let srvOpen = null; // null = unknown, true/false = as reported by /health
 let srvReach = null; // null = unknown, true/false = did the last /health answer
 function applyOpenEnrollment() {
-  $('enFamKey').classList.toggle('hidden', srvOpen === true);
+  // v32: «invite» mode -> an invite code field (the family key stays for the administrator, advanced mode only)
+  const inv = enrollMode() === 'invite';
+  $('enFamKey').classList.toggle('hidden', srvOpen === true || (inv && !adv));
+  $('enInvite').classList.toggle('hidden', !inv);   // the hint itself is the enrolment message (en.inviteHint)
+  if (inv && !$('enInvite').value) $('enInvite').value = inviteGet();
 }
 async function checkOpenEnrollment() {
   if (!cfg.url) return srvOpen;
@@ -1220,7 +1244,7 @@ function setupEnrollServer(existing, keepCheck = false) {
   } else {
     $('enName').disabled = false;
     if (on) {
-      const hint = () => setMsg(lt(srvOpen === true ? 'en.srvHintOpen' : 'en.srvHintKey'));
+      const hint = () => setMsg(lt(srvOpen === true ? 'en.srvHintOpen' : enrollMode() === 'invite' ? 'en.inviteHint' : enrollMode() === 'closed' && !adv && srvHealth && srvHealth.enroll_mode ? 'en.closedHint' : 'en.srvHintKey'));
       applyOpenEnrollment(); hint();
       const shown = $('enMsg').textContent;
       checkOpenEnrollment().then(() => {
@@ -1275,16 +1299,26 @@ async function saveEnrollServer() {
     if (!cfg.token) {
       const name = $('enName').value.trim(), key = $('enFamKey').value.trim();
       if (!name) { setMsg(lt('en.needName')); return; }
+      if (!consentOk() && !(await askConsent(false))) { setMsg(lt('cs.not')); return; }
       if (!key && srvOpen !== true) await checkOpenEnrollment();
-      if (!key && srvOpen !== true) { applyOpenEnrollment(); setMsg(lt('en.needKey')); return; }
+      const invite = enrollMode() === 'invite' ? cleanInvite($('enInvite').value) : '';
+      if (!key && srvOpen !== true) {
+        applyOpenEnrollment();
+        if (enrollMode() === 'invite') { if (!invite) { setMsg(() => '⚠️ ' + tr('common.error', { e: tr('err.invite_required') })); $('enInvite').focus(); return; } }
+        else { setMsg(lt(enrollMode() === 'closed' && !adv ? 'en.closedHint' : 'en.needKey')); return; }
+      }
       setMsg(lt('en.creating'));
       let r;
       try {
-        r = await api.createPerson(key || null, name, $('enSrvMsg').value.trim(), $('enSrvFamily').checked ? 'family' : 'selected');
+        const c = consentGet();
+        r = await api.createPerson(key || null, name, $('enSrvMsg').value.trim(), $('enSrvFamily').checked ? 'family' : 'selected',
+          { consent: !!c, consentVersion: c ? c.v : '', invite, deviceId: deviceId() });
       } catch (e) {
         if (e.status === 401 && e.code === 'family_key_required') { srvOpen = false; applyOpenEnrollment(); }
+        if (/^invite_/.test(e.code || '')) { srvOpen = false; if (srvHealth) srvHealth.enroll_mode = 'invite'; applyOpenEnrollment(); }
         throw e;
       }
+      inviteClear(); $('enInvite').value = '';
       cfg.token = r.token; cfg.personId = r.person.id; cfg.name = r.person.name; server.saveCfg(cfg);
       $('enFamKey').value = '';
       if (adv) showToken(r.token);   // normal users: the token stays on this phone, no technical screen
@@ -1428,14 +1462,7 @@ function initServerUi() {
     try { await api.patchMe(cfg.personId, { visibility: $('srvFamily').checked ? 'family' : 'selected' }); await refreshServer(); }
     catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); $('srvFamily').checked = !$('srvFamily').checked; }
   };
-  $('srvDelMe').onclick = async () => {
-    if (!confirm(tr('srv.delConfirm'))) return;
-    try {
-      await api.deletePerson(cfg.personId);
-      Object.assign(cfg, { token: '', personId: null, name: '', enabled: false }); server.saveCfg(cfg);
-      syncServerUi(); $('srvMe').classList.add('hidden'); setText($('srvInfo'), lt('srv.deleted')); refreshFamily();
-    } catch (e) { $('srvInfo').textContent = '⚠️ ' + errMsg(e); }
-  };
+  $('srvDelMe').onclick = () => openDelete();   // v32: same full delete as Settings → Απόρρητο
   $('srvMsgSave2').onclick = () => $('srvMsgSave').click();   // v29: same save from «Εμφάνιση και ήχος»
   const btnPeople = $('btnPeople').onclick;
   $('btnPeople').onclick = () => { btnPeople(); refreshServer(); };
@@ -1602,6 +1629,7 @@ async function refreshServer(verbose = false) {
     let me;
     try { me = await api.me(); } catch (e) { e.fromMe = true; throw e; }
     cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg);
+    consentSync(me);
     const { people } = await api.people();
     const e = me.enrollment;
     setText(info, tr('srv.connAs', { name: me.name }) + (e.active ? tr('srv.profileReady')
@@ -1656,6 +1684,7 @@ async function refreshServer(verbose = false) {
   } catch (e) {
     $('srvMe').classList.add('hidden');
     if (isDeadToken(e, e.fromMe)) { forgetServerProfile(); infoWithEnroll(tr('srv.profileGone')); }
+    else if (e.code === 'account_disabled') setText(info, lt('srv.disabledAcc'));
     else if (e.status === 401) info.textContent = adv ? '⚠️ ' + server.errEl(e) : tr('srv.profileGone');
     else setText(info, tr('srv.offlineRetry'));
     if (adv) advInfo.textContent = '⚠️ ' + server.errEl(e) + (e.code === 'offline' ? tr('srv.checkAddr') : '');
@@ -1669,7 +1698,7 @@ async function refreshServer(verbose = false) {
 // synchronously in the same task, so its drawing buffer is still valid.
 let shotBusy = false;
 function cameraVisible() {
-  return ready && mode === 'scan' && !!video.videoWidth && ['people', 'enroll', 'start', 'tokSheet', 'pingSheet'].every((id) => $(id).classList.contains('hidden'));
+  return ready && mode === 'scan' && !!video.videoWidth && ['people', 'enroll', 'start', 'tokSheet', 'pingSheet', ...V32_SHEETS].every((id) => $(id).classList.contains('hidden'));
 }
 function syncShot() { $('btnShot').classList.toggle('hidden', !cameraVisible()); }
 function roundRect(g, x, y, w, h, r) {
@@ -1825,13 +1854,14 @@ function openPing(personId, name) {
   $('pingTitle').textContent = sendTitle(name);
   $('pingInfo').textContent = ''; $('pingInfo').classList.remove('bad');
   $('pingText').value = '';
+  $('pingMod').classList.toggle('hidden', !canMod());
   $('pingSheet').classList.remove('hidden'); syncShot();
   return true;
 }
 function closePing() { ping.target = null; $('pingSheet').classList.add('hidden'); $('pingText').blur(); syncShot(); }
 $('stage').addEventListener('click', (ev) => {
   if (!pingsOn() || mode !== 'scan' || !ready) return;
-  if (!['people', 'enroll', 'start', 'tokSheet'].every((id) => $(id).classList.contains('hidden'))) return;
+  if (!['people', 'enroll', 'start', 'tokSheet', ...V32_SHEETS].every((id) => $(id).classList.contains('hidden'))) return;
   const t = pingHit(ev.clientX, ev.clientY);
   if (!t) { if (ping.target && !$('pingText').value.trim()) closePing(); return; }
   if (t.isSelf) { toast(tr('ping.self')); return; }
@@ -1913,7 +1943,7 @@ async function pollPings() {
 }
 setInterval(() => {
   // the sheet only makes sense over the live camera
-  if (ping.target && (!pingsOn() || mode !== 'scan' || !['people', 'enroll', 'start', 'tokSheet'].every((id) => $(id).classList.contains('hidden')))) closePing();
+  if (ping.target && (!pingsOn() || mode !== 'scan' || !['people', 'enroll', 'start', 'tokSheet', ...V32_SHEETS].every((id) => $(id).classList.contains('hidden')))) closePing();
   // one-time hint the first time someone you can message is on screen
   if (!ping.hinted && pingsOn() && mode === 'scan' && cameraVisible() && tracker.tracks.some((t) => pingable(t) && !t.isSelf && t.acceptsPings !== false)) {
     ping.hinted = true; try { localStorage.setItem(PING_HINT_KEY, '1'); } catch (e) { /* ignore */ }
@@ -1928,3 +1958,210 @@ Object.assign(window.__ar, {
   pingSpot: (trackId) => { const t = tracker.tracks.find((x) => x.id === trackId); return t ? pingRect(t) : null; },
   pingsOn,
 });
+
+// ======================= v32: privacy, consent, delete, report / block, invites =======================
+function lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+function lsDel(k) { try { localStorage.removeItem(k); } catch (_) {} }
+const canMod = () => !!(cfg.url && cfg.token && hasCap('reports'));
+function enrollMode() { const h = srvHealth; return h ? (h.enroll_mode || (h.open_enrollment ? 'open' : 'closed')) : (srvOpen === true ? 'open' : 'closed'); }
+// --- device id (per-device enrolment limit on the server) and invite code (?invite=CODE link / QR) ---
+function deviceId() {
+  let d = lsGet(DEVICE_KEY);
+  if (!d || !/^[A-Za-z0-9_-]{8,64}$/.test(d)) {
+    const a = new Uint8Array(12); crypto.getRandomValues(a);
+    d = 'd' + Array.from(a, (x) => x.toString(16).padStart(2, '0')).join(''); lsSet(DEVICE_KEY, d);
+  }
+  return d;
+}
+const cleanInvite = (v) => String(v || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 40);
+const inviteGet = () => cleanInvite(lsGet(INVITE_KEY));
+function inviteClear() { lsDel(INVITE_KEY); }
+(function takeInviteFromUrl() {
+  try {
+    const u = new URL(location.href), c = cleanInvite(u.searchParams.get('invite'));
+    if (!u.searchParams.has('invite')) return;
+    if (c) { lsSet(INVITE_KEY, c); setTimeout(() => toast(tr('en.inviteGot')), 1500); }
+    u.searchParams.delete('invite'); history.replaceState(null, '', u.pathname + u.search + u.hash);
+  } catch (_) {}
+})();
+// --- consent ---
+const consentVersion = () => String((srvHealth && srvHealth.consent_version) || '1');
+function consentGet() { try { const c = JSON.parse(lsGet(CONSENT_KEY) || 'null'); return c && c.v ? c : null; } catch (_) { return null; } }
+const consentOk = () => { const c = consentGet(); return !!c && String(c.v) === consentVersion(); };
+function consentStore(v, at) { lsSet(CONSENT_KEY, JSON.stringify({ v: String(v), at: at || Date.now() })); }
+const fmtDate = (ms) => { try { return new Date(ms).toLocaleDateString(locale(), { day: 'numeric', month: 'long', year: 'numeric' }); } catch (_) { return new Date(ms).toISOString().slice(0, 10); } };
+let consentP = null;
+function askConsent(update) {
+  if (consentP) return consentP;
+  const sh = $('consentSheet');
+  setText($('csTitle'), lt(update ? 'cs.titleUpd' : 'cs.title'));
+  setText($('csBody'), lt(update ? 'cs.bodyUpd' : 'cs.body'));
+  setText($('csNo'), lt(update ? 'cs.later' : 'cs.cancel'));
+  $('csCheck').checked = false; $('csInfo').textContent = '';
+  sh.classList.remove('hidden'); syncShot();
+  setTimeout(() => { try { $('csCheck').focus(); } catch (_) {} }, 50);
+  consentP = new Promise((resolve) => {
+    const done = (ok) => { sh.classList.add('hidden'); consentP = null; $('csYes').onclick = $('csNo').onclick = null; syncShot(); resolve(ok); };
+    $('csNo').onclick = () => done(false);
+    $('csYes').onclick = async () => {
+      if (!$('csCheck').checked) { setText($('csInfo'), lt('cs.needCheck')); $('csCheck').focus(); return; }
+      const v = consentVersion(); consentStore(v);
+      if (cfg.url && cfg.token && hasCap('consent')) { try { await api.consent(v); } catch (e) { console.warn('consent', e); } }
+      toast(tr('cs.saved')); done(true);
+      if (setPage === 'privacy' && !$('people').classList.contains('hidden')) renderPrivacy();
+    };
+  });
+  return consentP;
+}
+$('csRead').onclick = () => openPriv();
+// once, on the next open, for people enrolled before v32 (before the camera starts; «Αργότερα» = not again)
+async function consentUpdateMaybe() {
+  try {
+    if (lsGet(CONSENT_ASKED_KEY)) return;
+    if (cfg.url && !srvHealth) { try { noteHealth(await api.health(3000)); } catch (_) {} }
+    if (consentOk()) return;
+    let hasLocal = false; try { hasLocal = (await db.allPeople()).length > 0; } catch (_) {}
+    if (!(cfg.url && cfg.token) && !hasLocal) return;
+    if (cfg.url && cfg.token) {
+      try {
+        const me = await Promise.race([api.me(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))]);
+        if (me && me.consent && me.consent.given && String(me.consent.version) === consentVersion()) { consentStore(me.consent.version, (me.consent.at || 0) * 1000 || Date.now()); return; }
+      } catch (_) { /* offline: ask anyway, it is only local */ }
+    }
+    lsSet(CONSENT_ASKED_KEY, '1');
+    await askConsent(true);
+  } catch (e) { console.warn('consentUpdate', e); }
+}
+// both ways: the server knows it -> remember it here; we agreed here (e.g. offline) -> tell the server
+function consentSync(me) {
+  if (!me || !me.consent) return;
+  const c = me.consent;
+  if (c.given && String(c.version) === consentVersion()) { if (!consentOk()) consentStore(c.version, (c.at || 0) * 1000 || Date.now()); }
+  else if (consentOk() && hasCap('consent')) api.consent(consentGet().v).catch(() => {});
+}
+// --- privacy policy (sheet) ---
+function renderPolicy(box) {
+  box.textContent = '';
+  for (let i = 1; i <= 6; i++) {
+    const h = document.createElement('h3'); h.textContent = tr(`pv.s${i}t`);
+    const p = document.createElement('p'); p.textContent = tr(`pv.s${i}`);
+    box.append(h, p);
+  }
+  const v = document.createElement('p'); v.className = 'pv-ver'; v.textContent = tr('pv.ver', { v: consentVersion() }); box.appendChild(v);
+}
+function openPriv() {
+  setText($('pvTitle'), lt('pv.title')); renderPolicy($('pvBody'));
+  $('privSheet').classList.remove('hidden'); $('pvBody').scrollTop = 0; syncShot();
+  setTimeout(() => { try { $('pvClose').focus(); } catch (_) {} }, 50);
+}
+function closePriv() { $('privSheet').classList.add('hidden'); syncShot(); }
+$('pvClose').onclick = closePriv; $('pvOk').onclick = closePriv;
+$('prPolicy').onclick = openPriv; $('welPolicy').onclick = openPriv;
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!$('privSheet').classList.contains('hidden')) { e.preventDefault(); e.stopPropagation(); closePriv(); }
+  else if (!$('delSheet').classList.contains('hidden')) { e.preventDefault(); e.stopPropagation(); closeDelete(); }
+  else if (!$('modSheet').classList.contains('hidden')) { e.preventDefault(); e.stopPropagation(); closeMod(); }
+}, true);
+// --- Settings → Απόρρητο ---
+async function renderPrivacy() {
+  const c = consentGet();
+  if (c && consentOk()) { setText($('prConsent'), lt('cs.given', { d: fmtDate(c.at) })); $('prAgree').classList.add('hidden'); }
+  else { setText($('prConsent'), lt('cs.not')); $('prAgree').classList.remove('hidden'); }
+  const ul = $('prBlocks');
+  if (!(cfg.url && cfg.token)) { ul.textContent = ''; return; }
+  if (!hasCap('blocks')) { ul.innerHTML = `<li class="small">${escapeHtml(tr('pr.blocksOff'))}</li>`; return; }
+  try {
+    const { blocks } = await api.blocks();
+    ul.textContent = '';
+    if (!blocks || !blocks.length) { ul.innerHTML = `<li class="small">${escapeHtml(tr('pr.blocksNone'))}</li>`; return; }
+    for (const b of blocks) {
+      const li = document.createElement('li'), sp = document.createElement('span'), bt = document.createElement('button');
+      sp.textContent = b.name; bt.type = 'button'; bt.className = 'ghost'; bt.textContent = tr('pr.unblock');
+      bt.onclick = async () => {
+        bt.disabled = true;
+        try { await api.unblock(b.id); toast(tr('pr.unblocked', { name: b.name })); refreshFamily(); renderPrivacy(); }
+        catch (e) { bt.disabled = false; toast('⚠️ ' + errMsg(e)); }
+      };
+      li.append(sp, bt); ul.appendChild(li);
+    }
+  } catch (e) { ul.innerHTML = `<li class="small">⚠️ ${escapeHtml(errMsg(e))}</li>`; }
+}
+$('prAgree').onclick = () => askConsent(false);
+$('prDel').onclick = () => openDelete();
+// --- one-tap delete of everything (server profile + this device), with a confirmation ---
+function openDelete() {
+  const srvOn = !!(cfg.url && cfg.token);
+  setText($('delTitle'), lt('del.title')); setText($('delBody'), lt(srvOn ? 'del.body' : 'del.bodyLocal'));
+  $('delInfo').textContent = ''; $('delYes').disabled = false; $('delNo').disabled = false;
+  $('delSheet').classList.remove('hidden'); syncShot();
+  setTimeout(() => { try { $('delNo').focus(); } catch (_) {} }, 50);
+}
+function closeDelete() { $('delSheet').classList.add('hidden'); syncShot(); }
+$('delNo').onclick = closeDelete;
+$('delYes').onclick = () => deleteEverything();
+async function deleteEverything() {
+  $('delYes').disabled = true; $('delNo').disabled = true; setText($('delInfo'), lt('del.busy'));
+  if (cfg.url && cfg.token) {
+    try {
+      if (!caps && cfg.url) { try { noteHealth(await api.health(4000)); } catch (_) {} }
+      if (hasCap('delete_me')) await api.deleteMe(); else if (cfg.personId) await api.deletePerson(cfg.personId);
+    } catch (e) {
+      if (!(isDeadToken(e, true) || e.status === 404)) {   // keep everything if the server could not delete it
+        setText($('delInfo'), () => tr('del.fail', { e: errMsg(e) })); $('delYes').disabled = false; $('delNo').disabled = false; return false;
+      }
+    }
+  }
+  try { await db.clearAll(); } catch (e) { console.warn('clearAll', e); }
+  const keepUrl = cfg.customUrl;   // the user's own server choice ('' = off) survives; the default needs nothing
+  try {
+    const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('ar-names-')) ks.push(k); }
+    for (const k of ks) if (!['ar-names-lang', DEVICE_KEY, 'ar-names-welcomed'].includes(k)) localStorage.removeItem(k);
+  } catch (_) {}
+  Object.assign(cfg, { token: '', personId: null, name: '', enabled: false });
+  if (keepUrl !== null && keepUrl !== undefined) server.saveCfg(cfg);
+  toast(tr('del.done')); setText($('delInfo'), lt('del.done'));
+  window.__ar.deleted = true;
+  if (!window.__ar.noReload) setTimeout(() => location.reload(), 1600);
+  return true;
+}
+// --- report / block (people list ⋯, or the ping card) ---
+const mod = { pid: null, name: '' };
+function openMod(pid, name) {
+  if (!pid) return;
+  mod.pid = pid; mod.name = name || '';
+  if (!$('pingSheet').classList.contains('hidden')) closePing();
+  setText($('modTitle'), lt('mod.title', { name: mod.name }));
+  for (const r of document.querySelectorAll('input[name=modReason]')) r.checked = r.value === 'other';
+  $('modNote').value = ''; $('modAlsoBlock').checked = false; $('modInfo').textContent = '';
+  $('modSheet').classList.remove('hidden'); syncShot();
+}
+function closeMod() { mod.pid = null; $('modSheet').classList.add('hidden'); $('modNote').blur(); syncShot(); }
+$('modClose').onclick = closeMod;
+$('pingMod').onclick = () => { const t = ping.target; if (t) openMod(t.personId, t.name); };
+function forgetTracksOf(pid) {
+  for (const t of tracker.tracks) if (t.personId === pid) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.showName = true; t.sizes = null; t.style = null; }
+  tracker.relabel();
+}
+function modBusy(b) { for (const id of ['modBlock', 'modSend', 'modClose']) $(id).disabled = b; }
+$('modBlock').onclick = async () => {
+  const pid = mod.pid, name = mod.name; if (!pid) return;
+  modBusy(true);
+  try { await api.block(pid); forgetTracksOf(pid); toast(tr('mod.blocked', { name })); closeMod(); refreshFamily(); if (!$('people').classList.contains('hidden')) renderPeople(); }
+  catch (e) { $('modInfo').textContent = '⚠️ ' + errMsg(e); }
+  finally { modBusy(false); }
+};
+$('modSend').onclick = async () => {
+  const pid = mod.pid, name = mod.name; if (!pid) return;
+  const r = document.querySelector('input[name=modReason]:checked'), also = $('modAlsoBlock').checked;
+  modBusy(true);
+  try {
+    await api.report(pid, r ? r.value : 'other', $('modNote').value.trim().slice(0, 300), also);
+    if (also) forgetTracksOf(pid);
+    toast(tr(also ? 'mod.reportedBlocked' : 'mod.reported', { name })); closeMod();
+    if (also) { refreshFamily(); if (!$('people').classList.contains('hidden')) renderPeople(); }
+  } catch (e) { $('modInfo').textContent = '⚠️ ' + errMsg(e); }
+  finally { modBusy(false); }
+};
+window.__ar.v32 = { askConsent, consentOk, consentGet, openMod, openPriv, openDelete, deleteEverything, enrollMode, deviceId, inviteGet, renderPrivacy, get health() { return srvHealth; } };

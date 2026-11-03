@@ -293,3 +293,30 @@ body.wel-on #iosHint,body.wel-on #updBar{display:none!important}
 #lookPrev .lp-tag{position:absolute;left:8px;top:7px;font-size:12px;line-height:1.2;padding:3px 8px;border-radius:999px;background:rgba(13,27,42,.7);color:#cfe6ff;pointer-events:none;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .look-test{display:block;margin:4px 0 8px;padding:8px 14px;border-radius:999px;font-size:15px}
 @media (max-height:600px){#lookPrev{height:160px}}
+/* v32: privacy policy, consent, delete, report / block */
+.linkbtn{background:none;border:0;color:#8cc8ff;text-decoration:underline;padding:8px 0;font-size:15px;min-height:44px;cursor:pointer}
+#privSheet{z-index:46;justify-content:center;align-items:stretch;overflow:hidden}
+.pv-card{display:flex;flex-direction:column;width:100%;max-width:560px;padding:calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 12px) calc(env(safe-area-inset-left) + 16px)}
+.pv-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pv-head h2{margin:6px 0;font-size:21px}
+.pv-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;line-height:1.5;font-size:16px;padding-right:4px}
+.pv-body h3{margin:16px 0 4px;font-size:17px;color:#9fe8b0}
+.pv-body p{margin:0 0 6px}
+.pv-body .pv-ver{opacity:.65;font-size:13px;margin-top:14px}
+#consentSheet,#delSheet{z-index:44;justify-content:center;align-items:center;overflow-y:auto}
+#consentSheet .card,#delSheet .card{text-align:left;background:#12233a;border-radius:18px;margin:12px;max-width:440px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#consentSheet h2,#delSheet h2{margin:0 0 10px;font-size:21px}
+.cs-check{margin:8px 0;font-weight:600}
+.cs-row{justify-content:flex-end;gap:10px;margin-top:10px;flex-wrap:wrap}
+.cs-row button{min-height:46px;padding:10px 18px;font-size:16px}
+#modSheet{z-index:13}
+#modSheet h3{margin:4px 0;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#modSheet h4{margin:10px 0 2px;font-size:16px}
+#modSheet .pill{padding:6px 12px}
+#modSheet input[type=text]{width:100%;box-sizing:border-box;margin:6px 0}
+.mod-reasons .setting{margin:2px 0}
+.plain-list{list-style:none;padding:0;margin:8px 0}
+.plain-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0}
+.plain-list li span{overflow:hidden;text-overflow:ellipsis}
+.pmod{background:none;border:0;color:inherit;font-size:20px;padding:4px 10px;min-width:40px;min-height:40px;opacity:.8}
+#enInvite{width:100%;box-sizing:border-box;margin:6px 0;letter-spacing:.08em;text-transform:uppercase}

@@ -54,6 +54,25 @@
   <div id="pingEmojis" class="ping-emojis"></div>
   <div class="row ping-row"><input id="pingText" type="text" maxlength="80" placeholder="Γράψε κάτι σύντομο…" data-i18n-ph="ping.ph" enterkeyhint="send" autocomplete="off"><button id="pingSend" type="button" class="primary" data-i18n="ping.send">Αποστολή</button></div>
   <p id="pingInfo" class="small"></p>
+  <button id="pingMod" type="button" class="linkbtn hidden" data-i18n="mod.open">⋯ Αναφορά / αποκλεισμός</button>
+</div>
+
+<!-- v32: report / block one person (from the message sheet or the people list) -->
+<div id="modSheet" class="panel bottom hidden" role="dialog" aria-labelledby="modTitle">
+  <div class="phead"><h3 id="modTitle">—</h3><button id="modClose" type="button" class="pill" aria-label="Κλείσιμο" data-i18n-aria="common.close">✕</button></div>
+  <button id="modBlock" type="button" class="danger wide" data-i18n="mod.block">🚫 Αποκλεισμός</button>
+  <p class="small" data-i18n="mod.blockHelp">Δεν θα βλέπει ο ένας τον άλλον, δεν θα αναγνωρίζεστε και δεν θα στέλνετε μηνύματα.</p>
+  <h4 data-i18n="mod.reportH">🚩 Αναφορά στον διαχειριστή</h4>
+  <div id="modReasons" class="mod-reasons" role="radiogroup">
+    <label class="setting check"><input type="radio" name="modReason" value="fake"> <span data-i18n="mod.r.fake">Ψεύτικο προφίλ</span></label>
+    <label class="setting check"><input type="radio" name="modReason" value="offensive"> <span data-i18n="mod.r.offensive">Προσβλητικό</span></label>
+    <label class="setting check"><input type="radio" name="modReason" value="harass"> <span data-i18n="mod.r.harass">Ενοχλεί</span></label>
+    <label class="setting check"><input type="radio" name="modReason" value="other" checked> <span data-i18n="mod.r.other">Κάτι άλλο</span></label>
+  </div>
+  <input id="modNote" type="text" maxlength="300" placeholder="Λίγα λόγια (προαιρετικά)" data-i18n-ph="mod.notePh" autocomplete="off">
+  <label class="setting check"><input id="modAlsoBlock" type="checkbox"> <span data-i18n="mod.alsoBlock">Και αποκλεισμός</span></label>
+  <button id="modSend" type="button" class="primary wide" data-i18n="mod.send">🚩 Αποστολή αναφοράς</button>
+  <p id="modInfo" class="small" aria-live="polite"></p>
 </div>
 
 <!-- Start (needed for camera permission on iOS) -->
@@ -80,6 +99,8 @@
       <textarea id="enSrvMsg" rows="2" maxlength="300" placeholder="Μήνυμα που θα φαίνεται πάνω από το όνομά σου (προαιρετικό)" data-i18n-ph="en.srvMsgPh"></textarea>
       <label class="setting check"><input id="enSrvFamily" type="checkbox"> <span data-i18n="en.srvFamily">Να βλέπουν το μήνυμά μου όλοι</span></label>
       <input id="enFamKey" type="password" placeholder="Κλειδί πρόσβασης" data-i18n-ph="en.keyPh" autocomplete="off">
+      <p id="enInviteHint" class="small hidden" data-i18n="en.inviteHint">🎟 Εδώ γράφονται νέοι μόνο με πρόσκληση.</p>
+      <input id="enInvite" class="hidden" type="text" maxlength="40" placeholder="Κωδικός πρόσκλησης" data-i18n-ph="en.invitePh" autocomplete="off" autocapitalize="characters" spellcheck="false">
     </div>
   </div>
   <div id="enMsg" class="msg" aria-live="polite">Βάλε όνομα και κοίτα την κάμερα.</div>
@@ -119,6 +140,7 @@
       <button type="button" class="srow" data-go="who"><span class="sico" aria-hidden="true">👁️</span><span class="stxt"><b data-i18n="m.who">Ποιος με βλέπει</b><small data-i18n="m.whoSub">Όλοι ή μόνο οι ομάδες μου</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="pings"><span class="sico" aria-hidden="true">💌</span><span class="stxt"><b data-i18n="m.pings">Μηνύματα</b><small data-i18n="m.pingsSub">Καρδιές και σύντομα μηνύματα από άλλους</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="lang"><span class="sico" aria-hidden="true">🌐</span><span class="stxt"><b data-i18n="m.lang">Γλώσσα</b><small id="mLangSub">Ελληνικά</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="privacy"><span class="sico" aria-hidden="true">🛡️</span><span class="stxt"><b data-i18n="m.priv">Απόρρητο και ασφάλεια</b><small data-i18n="m.privSub">πολιτική, συγκατάθεση, αποκλεισμοί, διαγραφή</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="adv"><span class="sico" aria-hidden="true">🔧</span><span class="stxt"><b data-i18n="m.adv">Για προχωρημένους</b><small data-i18n="m.advSub">Αναγνώριση, αντίγραφο ασφαλείας, επαναφορά</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="help"><span class="sico" aria-hidden="true">❓</span><span class="stxt"><b data-i18n="m.help">Οδηγός και βοήθεια</b><small data-i18n="m.helpSub">Πώς δουλεύει και πώς φωτογραφίζεσαι</small></span><span class="schev" aria-hidden="true">›</span></button>
     </nav>
@@ -237,6 +259,20 @@
       <select id="optLang"><option value="el">🇬🇷 Ελληνικά</option><option value="en">🇬🇧 English</option><option value="fr">🇫🇷 Français</option><option value="de">🇩🇪 Deutsch</option></select></label>
   </section>
 
+  <!-- 🛡️ v32: privacy and safety -->
+  <section class="spage" data-page="privacy">
+    <div class="scard"><button id="prPolicy" type="button" class="wide" data-i18n="pv.open">📄 Πολιτική απορρήτου</button></div>
+    <h3 data-i18n="pr.consentH">Συγκατάθεση</h3>
+    <div class="scard"><p id="prConsent" class="small"></p><button id="prAgree" type="button" class="primary wide hidden" data-i18n="pr.agreeNow">Συμφωνώ τώρα</button></div>
+    <div class="me-only">
+      <h3 data-i18n="pr.blocksH">🚫 Αποκλεισμένα άτομα</h3>
+      <div class="scard"><ul id="prBlocks" class="plain-list"></ul></div>
+    </div>
+    <h3 data-i18n="pr.delH">🗑️ Διαγραφή</h3>
+    <div class="scard"><p class="small" data-i18n="pr.delNote">Σβήνει το προφίλ σου από τον server και όλα τα δεδομένα από αυτή τη συσκευή.</p>
+      <button id="prDel" type="button" class="danger wide" data-i18n="pr.delBtn">🗑️ Διαγραφή του προφίλ μου</button></div>
+  </section>
+
   <!-- 🔧 advanced -->
   <section class="spage" data-page="adv">
     <h3 data-i18n="adv.hRecog">🎯 Αναγνώριση</h3>
@@ -332,6 +368,7 @@
         <h2 data-i18n="wel.t3">Το απόρρητό σου</h2>
         <p id="welPriv" class="wel-lead"></p>
         <p id="welPrivNote" class="wel-note small"></p>
+        <button id="welPolicy" type="button" class="linkbtn" data-i18n="pv.open">📄 Πολιτική απορρήτου</button>
         <p id="welHas" class="wel-note hidden" data-i18n="wel.hasProfile">✅ Έχεις ήδη προφίλ σε αυτό το κινητό.</p>
       </section>
     </div>
@@ -352,6 +389,37 @@
     <input id="tokVal" type="text" readonly>
     <div class="row"><button id="tokCopy" data-i18n="tok.copy">📋 Αντιγραφή</button><button id="tokOk" class="primary" data-i18n="tok.ok">Εντάξει</button></div>
     <p id="tokCopied" class="small"></p>
+  </div>
+</div>
+
+<!-- v32: privacy policy (from Settings, the welcome and the consent question) -->
+<div id="privSheet" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="pvTitle">
+  <div class="pv-card">
+    <div class="pv-head"><h2 id="pvTitle" data-i18n="pv.title">📄 Πολιτική απορρήτου</h2><button id="pvClose" type="button" class="pill" aria-label="Κλείσιμο" data-i18n-aria="common.close">✕</button></div>
+    <div id="pvBody" class="pv-body"></div>
+    <button id="pvOk" type="button" class="primary wide" data-i18n="pv.close">Κλείσιμο</button>
+  </div>
+</div>
+
+<!-- v32: consent before the first enrolment (and once for people who enrolled before v32) -->
+<div id="consentSheet" class="sheet center hidden" role="dialog" aria-modal="true" aria-labelledby="csTitle">
+  <div class="card cs-card">
+    <h2 id="csTitle" data-i18n="cs.title">🛡️ Πριν ξεκινήσουμε</h2>
+    <p id="csBody" data-i18n="cs.body"></p>
+    <button id="csRead" type="button" class="linkbtn" data-i18n="cs.read">📄 Διάβασε την πολιτική απορρήτου</button>
+    <label class="setting check cs-check"><input id="csCheck" type="checkbox"> <span data-i18n="cs.check">Διάβασα και συμφωνώ με την πολιτική απορρήτου</span></label>
+    <p id="csInfo" class="small" aria-live="polite"></p>
+    <div class="row cs-row"><button id="csNo" type="button" data-i18n="cs.cancel">Άκυρο</button><button id="csYes" type="button" class="primary" data-i18n="cs.agree">Συμφωνώ</button></div>
+  </div>
+</div>
+
+<!-- v32: delete my profile + all data (confirmation) -->
+<div id="delSheet" class="sheet center hidden" role="dialog" aria-modal="true" aria-labelledby="delTitle">
+  <div class="card">
+    <h2 id="delTitle" data-i18n="del.title">🗑️ Διαγραφή όλων;</h2>
+    <p id="delBody"></p>
+    <p id="delInfo" class="small err" aria-live="polite"></p>
+    <div class="row cs-row"><button id="delNo" type="button" data-i18n="cs.cancel">Άκυρο</button><button id="delYes" type="button" class="danger" data-i18n="del.yes">Ναι, διαγραφή</button></div>
   </div>
 </div>
 

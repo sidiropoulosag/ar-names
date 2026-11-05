@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { makeObject, animateObject } from './objects3d.js';
+import { makeFilterObject, animateFilter } from './filters.js';
 
 const tmpE = new THREE.Euler();
 // 0.5.0 text styles (per person, chosen in «Τι βλέπουν οι άλλοι»). All use the one bundled Greek font;
@@ -42,7 +43,18 @@ export class Labels3D {
     this.mirror = false; this.W = 1; this.H = 1;
     this.topPad = 64;          // room kept free under the screen's top bar (v31: the settings preview uses less)
     this.beforeDraw = null;    // v31: optional hook run right before each draw (settings preview)
+    this.headFx = new Map(); // personId|trackId -> [{em, until, born}]
   }
+  /** v33: animated emoji above a recognised person (greeting). key = personId or 't'+trackId */
+  addHeadFx(key, em, ms = 2800) {
+    if (!key || !em) return;
+    const k = String(key);
+    const arr = this.headFx.get(k) || [];
+    arr.push({ em: String(em), until: performance.now() + ms, born: performance.now() });
+    if (arr.length > 6) arr.shift();
+    this.headFx.set(k, arr);
+  }
+
   async init(fontUrl) {
     this.font = await new FontLoader().loadAsync(fontUrl);
   }
@@ -171,8 +183,68 @@ export class Labels3D {
       rec.msg = (!unk && t.message) || ''; rec.sx = k.x; rec.sy = k.y; rec.ss = ns * ease;
       rec.top = top - k.s * 0.08; rec.low = k.y + 6; rec.textScale = sT;
       rec.hasObj = !!rec.obj;
+      // v33: funny/seasonal filter above the stack
+      const filt = (!unk && t.filterId) || '';
+      if (rec.filtWant !== filt) {
+        if (rec.filt) { this.scene.remove(rec.filt); rec.filt = null; }
+        rec.filtWant = filt;
+        if (filt) { rec.filt = makeFilterObject(THREE, filt); if (rec.filt) { this.scene.add(rec.filt); rec.filtBorn = now; } }
+      }
+      if (rec.filt) {
+        const fs = k.s * 1.15 * Math.min(1, (now - (rec.filtBorn || now)) / 220);
+        rec.filt.position.set(k.x, H - top + fs * 0.55, 0);
+        rec.filt.scale.setScalar(fs);
+        animateFilter(rec.filt, now / 1000);
+        top -= fs * 1.15;
+        rec.top = top - k.s * 0.08;
+      }
+      // v33: greeting head FX (float emoji sprites toward the top)
+      const fxKeys = [];
+      if (t.personId) fxKeys.push(String(t.personId));
+      fxKeys.push('t' + t.id);
+      const fxList = [];
+      for (const fk of fxKeys) {
+        const arr = this.headFx.get(fk);
+        if (!arr) continue;
+        const keep = arr.filter((x) => x.until > now);
+        if (keep.length) this.headFx.set(fk, keep); else this.headFx.delete(fk);
+        fxList.push(...keep);
+      }
+      if (!rec.fxSprites) rec.fxSprites = [];
+      while (rec.fxSprites.length < fxList.length) {
+        const c = document.createElement('canvas'); c.width = 96; c.height = 96;
+        const tex = new THREE.CanvasTexture(c);
+        const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+        this.scene.add(spr); rec.fxSprites.push({ spr, tex, canvas: c, em: '' });
+      }
+      while (rec.fxSprites.length > fxList.length) {
+        const x = rec.fxSprites.pop(); this.scene.remove(x.spr); x.tex.dispose(); x.spr.material.dispose();
+      }
+      fxList.forEach((fx, i) => {
+        const slot = rec.fxSprites[i];
+        if (slot.em !== fx.em) {
+          slot.em = fx.em;
+          const g = slot.canvas.getContext('2d'); g.clearRect(0, 0, 96, 96);
+          g.font = '72px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(fx.em, 48, 54);
+          slot.tex.needsUpdate = true;
+        }
+        const life = Math.min(1, (now - fx.born) / 400);
+        const fade = Math.max(0, Math.min(1, (fx.until - now) / 500));
+        const rise = (1 - Math.pow(1 - Math.min(1, (now - fx.born) / 1800), 2)) * k.s * 2.2;
+        const wob = Math.sin((now - fx.born) / 180 + i) * k.s * 0.25;
+        slot.spr.position.set(k.x + wob, H - (top - rise), 2 + i);
+        slot.spr.scale.setScalar(k.s * 0.9 * (0.6 + 0.4 * life) * (0.5 + 0.5 * fade));
+        slot.spr.material.opacity = fade;
+      });
+      rec.personId = t.personId || null;
     }
-    for (const [id, rec] of this.meshes) if (!alive.has(id)) { if (rec.mesh) this.scene.remove(rec.mesh); if (rec.obj) this.dropObj(rec.obj); this.meshes.delete(id); }
+    for (const [id, rec] of this.meshes) if (!alive.has(id)) {
+      if (rec.mesh) this.scene.remove(rec.mesh);
+      if (rec.obj) this.dropObj(rec.obj);
+      if (rec.filt) this.scene.remove(rec.filt);
+      if (rec.fxSprites) for (const x of rec.fxSprites) { this.scene.remove(x.spr); x.tex.dispose(); x.spr.material.dispose(); }
+      this.meshes.delete(id);
+    }
     if (this.beforeDraw) this.beforeDraw(now);
     this.renderer.render(this.scene, this.camera);
   }
@@ -187,8 +259,8 @@ export class Labels3D {
   }
   // 3D objects are NOT disposed here (their geometry/materials are shared copies — see lookpreview.js).
   dispose() {
-    for (const [, r] of this.meshes) { if (r.mesh) this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); }
-    this.meshes.clear();
+    for (const [, r] of this.meshes) { if (r.mesh) this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); if (r.filt) this.scene.remove(r.filt); if (r.fxSprites) for (const x of r.fxSprites) { this.scene.remove(x.spr); x.tex.dispose(); x.spr.material.dispose(); } }
+    this.meshes.clear(); this.headFx.clear();
     for (const g of this.geoCache.values()) g.dispose();
     this.geoCache.clear();
     const mats = new Set([this.matFront, this.matSide, this.matUnkFront, this.matUnkSide, ...Object.values(this.mats).flat()]);
@@ -198,5 +270,5 @@ export class Labels3D {
     try { this.renderer.forceContextLoss(); } catch (_) {}
     this.beforeDraw = null; this.font = null;
   }
-  clear() { for (const [, r] of this.meshes) { if (r.mesh) this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); } this.meshes.clear(); this.renderer.render(this.scene, this.camera); }
+  clear() { for (const [, r] of this.meshes) { if (r.mesh) this.scene.remove(r.mesh); if (r.obj) this.scene.remove(r.obj); if (r.filt) this.scene.remove(r.filt); if (r.fxSprites) for (const x of r.fxSprites) { this.scene.remove(x.spr); x.tex.dispose(); x.spr.material.dispose(); } } this.meshes.clear(); this.headFx.clear(); this.renderer.render(this.scene, this.camera); }
 }

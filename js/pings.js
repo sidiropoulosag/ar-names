@@ -1,7 +1,9 @@
 import { t } from './i18n.js';
 // v24 (server 0.6.0 'pings'): tap a recognised person -> send a reaction or a short text; received ones show
 // as a floating card at the top. Pure helpers + the card queue (no server calls here).
-export const PING_EMOJI = ['❤️', '👋', '👍', '😂', '🎉', '😮', '🙏', '🔥'];
+// v33: greeting reactions (👋 ❤️ 😂 🎉) first — they also trigger the head FX above the person.
+export const PING_EMOJI = ['👋', '❤️', '😂', '🎉', '👍', '😮', '🙏', '🔥'];
+export const GREET_EMOJI = new Set(['👋', '❤️', '😂', '🎉']);
 export const PING_TEXT_MAX = 80;
 export const CARD_MS = 5000;
 

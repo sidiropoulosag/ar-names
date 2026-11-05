@@ -106,8 +106,11 @@ export class Api {
   // 0.5.0 groups
   searchGroups(q) { return this.req('GET', '/groups?q=' + encodeURIComponent(q), { timeout: 6000 }); }
   myGroups() { return this.req('GET', '/groups/mine', { timeout: 6000 }); }
-  createGroup(name) { return this.req('POST', '/groups', { json: { name } }); }
+  createGroup(name, kind = 'group') { return this.req('POST', '/groups', { json: { name, kind } }); }
   joinGroup(gid) { return this.req('POST', `/groups/${gid}/join`); }
+  joinByCode(code) { return this.req('POST', '/groups/join', { json: { code } }); }
+  groupCode(gid) { return this.req('POST', `/groups/${gid}/code`); }
+  leaderboard(gid) { return this.req('GET', `/groups/${gid}/leaderboard`, { timeout: 6000 }); }
   leaveGroup(gid) { return this.req('POST', `/groups/${gid}/leave`); }
   // 0.6.0 pings: a reaction / short text to someone you can see; received ones (marked delivered)
   sendPing(pid, kind, content) { return this.req('POST', `/people/${pid}/pings`, { json: { kind, content }, timeout: 8000 }); }

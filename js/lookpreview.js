@@ -160,7 +160,7 @@ export class LookPreview {
     const tracks = ppl.map((p) => (p.id === 1 ? {
       id: 1, label: st.name, kps: p.kps, box: p.box, missed: 0, embeds: 5,
       pose: { yaw: Math.sin(t * 0.7) * 10, pitch: Math.sin(t * 0.5) * 4, roll: Math.sin(t * 0.9) * 3 },
-      showName: st.showName, sizes: st.sizes, style: st.style, objectId: st.objectId, message: st.message,
+      showName: st.showName, sizes: st.sizes, style: st.style, objectId: st.objectId, filterId: st.filterId || '', message: st.message,
     } : { id: 2, label: null, kps: p.kps, box: p.box, missed: 0, embeds: 5, pose: { yaw: 0, pitch: 0, roll: Math.sin(t * 0.6) * 4 } }));
     if (this.popAt) { const r = lab.meshes.get(1); if (r) { r.born = this.popAt; if (r.obj) r.objBorn = this.popAt; } this.popAt = 0; }
     lab.render(tracks, VW, VH, !!st.unknown, ms);

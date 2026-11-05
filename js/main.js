@@ -6,7 +6,9 @@ import * as db from './db.js';
 import * as server from './server.js';
 import { ChimeRounds, unlockAudio, resumeAudio, audioState, chimeStats, playShutter, playPing, playChime } from './chime.js';
 import { LookPreview, lookStats } from './lookpreview.js';
-import { PING_EMOJI, PING_TEXT_MAX, CardQueue, sendTitle } from './pings.js';
+import { PING_EMOJI, GREET_EMOJI, PING_TEXT_MAX, CardQueue, sendTitle } from './pings.js';
+import { achievements } from './achievements.js';
+import { FILTERS, filterInfo, seasonNow, filterLabel } from './filters.js';
 import { OBJECTS, objectInfo, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
 import { ortInfo, ORT_1T_KEY, IOS } from './ort.js';
 import { t as tr, setLang, getLang, savedLang, guessLang, applyI18n, locale, dict as I18N, LANGS } from './i18n.js';
@@ -96,7 +98,7 @@ window.__ar.msgHist = { load: msgHistLoad, add: msgHistAdd, del: msgHistDel, ren
 // Normal users never see the server address, the token or the names of people who are not online.
 let adv = localStorage.getItem('ar-names-adv') === '1';
 // v32: privacy / consent / report-block / delete sheets (camera + pings + update reload pause while one is open)
-const V32_SHEETS = ['modSheet', 'privSheet', 'consentSheet', 'delSheet'];
+const V32_SHEETS = ['modSheet', 'privSheet', 'consentSheet', 'delSheet', 'meetCard', 'helpSheet'];
 const CONSENT_KEY = 'ar-names-consent', CONSENT_ASKED_KEY = 'ar-names-consent-asked', INVITE_KEY = 'ar-names-invite', DEVICE_KEY = 'ar-names-device';
 function applyAdv() { document.body.classList.toggle('adv', adv); }
 applyAdv();
@@ -462,6 +464,7 @@ function viewOf(d) {
   const sz = d.sizes || {};
   return { items, showName: items.includes('name'), text: texts.join('\n'),
     objectId: items.includes('object3d') ? (d.object_id || DEFAULT_OBJECT) : '',
+    filterId: d.filter || '',
     sizes: d.sizes ? { name: +sz.name || 1, text: +sz.text || 1, object: +sz.object || 1 } : null,
     style: d.style || 'bold' };   // 0.5.0 text style (older servers: the bold look)
 }
@@ -521,7 +524,7 @@ function lookState() {
   const me = !$('srvMe').classList.contains('hidden') && hasCap('display');
   if (!me) {   // no server profile: only my own screen's options (no style / object / comment for local people)
     const mine = (localPeople || []).find((p) => p.me);
-    return { name: (mine && mine.name) || cfg.name || tr('disp.namePh'), showName: true, style: 'bold', sizes: null, objectId: '', message: '', unknown };
+    return { name: (mine && mine.name) || cfg.name || tr('disp.namePh'), showName: true, style: 'bold', sizes: null, objectId: '', filterId: dispFilt || '', message: '', unknown };
   }
   const items = selItems();
   const texts = [['message1', 'srvMsg'], ['message2', 'srvMsg2']].filter(([k]) => items.includes(k)).map(([, id]) => $(id).value.trim()).filter(Boolean);
@@ -531,6 +534,7 @@ function lookState() {
     style: hasCap('styles') ? dispStyle : 'bold',
     sizes: hasCap('sizes') ? { name: +$('szName').value, text: +$('szText').value, object: +$('szObj').value } : null,
     objectId: items.includes('object3d') ? dispObj : '',
+    filterId: dispFilt || '',
     message: texts.join('\n'), unknown,
   };
 }
@@ -546,14 +550,16 @@ window.__ar.lookPv = { get on() { return lookPv.on; }, stats: lookStats, snapsho
 // ---------- v29: Settings = main menu + sub-pages ----------
 // Rows show only when their page has something to show (profile: a server is set; who / messages: my server
 // profile and a server that supports them). «‹ Πίσω» (or Esc) returns to the menu; ✕ closes as before.
-const SET_PAGES = ['main', 'people', 'profile', 'look', 'who', 'pings', 'lang', 'privacy', 'adv'];
+const SET_PAGES = ['main', 'people', 'profile', 'look', 'who', 'pings', 'events', 'ach', 'lang', 'privacy', 'adv'];
 let setPage = 'main';
 function pageAvailable(pg) {
   const me = !$('srvMe').classList.contains('hidden');
   if (pg === 'profile') return !!cfg.url;
   if (pg === 'who') return me && (!$('srvPrivBox').classList.contains('hidden') || !$('srvVisBox').classList.contains('hidden'));
   if (pg === 'pings') return me && !$('pingBox').classList.contains('hidden');
-  if (pg === 'help') return true;   // v30: not a page — opens the welcome guide
+  if (pg === 'help') return true;   // v33: full help sheet
+  if (pg === 'events') return !!(cfg.url && cfg.token && (hasCap('events') || hasCap('groups')));
+  if (pg === 'ach') return true;
   return SET_PAGES.includes(pg);
 }
 function syncMenu() {
@@ -574,10 +580,12 @@ function setGo(pg) {
   $('subTitle').classList.toggle('hidden', pg === 'main'); $('setTitle').classList.toggle('hidden', pg !== 'main');
   $('pBack').classList.toggle('hidden', pg === 'main');
   $('setBody').scrollTop = 0;
-  if (pg === 'look' && !$('srvMe').classList.contains('hidden')) { try { pickObject(dispObj); } catch (_) {} }
+  if (pg === 'look' && !$('srvMe').classList.contains('hidden')) { try { pickObject(dispObj); renderFiltPick(); } catch (_) {} }
   syncMenu();
   syncLookPv();
   if (pg === 'privacy') renderPrivacy();
+  if (pg === 'ach') try { renderAch(); } catch (_) {}
+  if (pg === 'events') try { refreshEvents(); } catch (_) {}
 }
 for (const r of document.querySelectorAll('#people .srow')) r.onclick = () => (r.dataset.go === 'help' ? openHelp() : setGo(r.dataset.go));
 $('pBack').onclick = () => setGo('main');
@@ -654,8 +662,18 @@ async function welcomeAfter(w) {
 }
 async function openHelp() {
   closePeople();
-  const w = await openWelcome(true);
-  if (w === 'enroll') welcomeAfter(w);
+  openHelpSheet();
+}
+function openHelpSheet() {
+  buildHelp();
+  $('helpSheet').classList.remove('hidden');
+  document.body.classList.add('help-on');
+  syncShot();
+}
+function closeHelpSheet() {
+  $('helpSheet').classList.add('hidden');
+  document.body.classList.remove('help-on');
+  syncShot();
 }
 $('welNext').onclick = () => welShow(wel.step + 1);
 $('welBack').onclick = () => welShow(wel.step - 1);
@@ -953,7 +971,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v32';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v33';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -1132,8 +1150,9 @@ async function serverStep(tracks, vw, vh, now) {
         // 0.4.0: 'display.items' (1-2 of name/message1/message2/object3d) + sizes; 0.3.0: one 'display.mode'; older: 'message'
         const v = viewOf(f.display || { mode: 'message', text: f.message || '' });
         t.srvMiss = 0; t.srvUnknownAt = 0; t.srv = true; t.label = f.name; t.personId = f.person_id; t.sim = f.similarity;
-        t.objectId = v.objectId; t.message = v.text; t.showName = v.showName; t.sizes = v.sizes; t.style = v.style;
+        t.objectId = v.objectId; t.filterId = v.filterId || ''; t.message = v.text; t.showName = v.showName; t.sizes = v.sizes; t.style = v.style;
         t.isSelf = !!f.is_self; t.acceptsPings = f.accepts_pings !== false;   // 0.6.0 (older servers: no pings cap anyway)
+        if (t.personId && !t.isSelf) maybeFirstMeet(t.personId, t.label);
         if (!t.recognisedAt) t.recognisedAt = performance.now();
       } else {
         t.srvMiss = (t.srvMiss || 0) + 1; t.srvUnknownAt = performance.now();
@@ -1424,6 +1443,7 @@ function initServerUi() {
       else f.display_mode = ({ message1: 'message', message2: 'message2', object3d: 'object3d' })[items[0]] || 'message';
       if (hasCap('styles')) f.text_style = dispStyle;
       if (hasCap('sizes')) Object.assign(f, { size_name: +$('szName').value, size_text: +$('szText').value, size_object: +$('szObj').value });
+      if (hasCap('events') || hasCap('display')) f.name_filter = dispFilt || '';
       const empty = [['message1', f.message, 'srv.msg1'], ['message2', f.message2, 'srv.msg2']].filter(([k, t]) => items.includes(k) && !t).map((x) => x[2]);
       if (empty.length) note = tr('srv.emptyNote', { what: empty.map((k) => tr(k)).join(tr('srv.and')) });
     }
@@ -1457,6 +1477,7 @@ function initServerUi() {
   renderMsgHist();
   for (const id of ['szName', 'szText', 'szObj']) $(id).oninput = () => { dispDirty = true; showSize(id); updatePreview(); };
   for (const b of $('stylePick').children) b.onclick = () => { pickStyle(b.dataset.style); dispDirty = true; };
+  renderFiltPick();
   setupGroups();
   $('srvFamily').onchange = async () => {
     try { await api.patchMe(cfg.personId, { visibility: $('srvFamily').checked ? 'family' : 'selected' }); await refreshServer(); }
@@ -1468,8 +1489,28 @@ function initServerUi() {
   $('btnPeople').onclick = () => { btnPeople(); refreshServer(); };
 }
 
-let dispObj = DEFAULT_OBJECT, dispStyle = 'bold';
+let dispObj = DEFAULT_OBJECT, dispStyle = 'bold', dispFilt = '';
 const STYLE_NAMES = { bold: 1, curved: 1, soft: 1 };   // known styles (labels: i18n sty.*)
+function pickFilt(id) {
+  const f = filterInfo(id); const had = !!dispFilt; dispFilt = f.id; renderFiltPick(); updatePreview(); dispDirty = true; if (f.id && !had) achievements.noteFilter();
+}
+function renderFiltPick() {
+  const box = $('filtPick'); if (!box) return;
+  box.innerHTML = '';
+  const season = seasonNow();
+  const note = $('filtSeason');
+  if (note) {
+    if (season) { note.textContent = tr('filt.seasonOn', { name: tr('filt.' + season) }); note.classList.remove('hidden'); }
+    else note.classList.add('hidden');
+  }
+  for (const f of FILTERS) {
+    const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'radio');
+    b.dataset.filt = f.id; b.textContent = f.emoji; b.title = tr(f.key); b.setAttribute('aria-label', tr(f.key));
+    const on = (f.id || '') === (dispFilt || ''); b.classList.toggle('sel', on); b.setAttribute('aria-checked', on);
+    b.onclick = () => pickFilt(f.id);
+    box.appendChild(b);
+  }
+}
 function pickStyle(st) {
   dispStyle = STYLE_NAMES[st] ? st : 'bold';
   for (const b of $('stylePick').children) { const on = b.dataset.style === dispStyle; b.classList.toggle('sel', on); b.setAttribute('aria-checked', on); }
@@ -1645,6 +1686,7 @@ async function refreshServer(verbose = false) {
     for (const el of document.querySelectorAll('#people .styles-only')) el.classList.toggle('hidden', !(disp && hasCap('styles')));
     for (const el of document.querySelectorAll('#people .pings-only')) el.classList.toggle('hidden', !hasCap('pings'));
     if (hasCap('pings')) { ping.accept = me.accept_pings !== false; $('srvPings').checked = ping.accept; }
+    try { maybeJoinEventCode(); } catch (_) {}
     $('srvDispOld').classList.toggle('hidden', dispMulti);
     $('srvDispOld').dataset.i18n = disp ? 'srv.old04Combo' : 'srv.old04'; $('srvDispOld').textContent = tr($('srvDispOld').dataset.i18n);
     $('dispTitle').dataset.i18n = disp ? 'disp.title' : 'disp.titleOld'; $('dispTitle').textContent = tr($('dispTitle').dataset.i18n);
@@ -1657,6 +1699,7 @@ async function refreshServer(verbose = false) {
         setSizes(me.sizes);
         pickStyle(me.text_style || 'bold');
         pickObject(me.object_id || DEFAULT_OBJECT);
+        pickFilt(me.name_filter || (me.display && me.display.filter) || '');
       }
     }
     refreshGroups(me);   // 0.5.0 only; hidden on older servers
@@ -1882,6 +1925,10 @@ async function sendPing(kind, content) {
   try {
     await api.sendPing(tg.personId, kind, content);
     rec.ok = true;
+    if (kind === 'emoji') {
+      try { labels && labels.addHeadFx(tg.personId, content); } catch (_) {}
+      if (GREET_EMOJI.has(content)) achievements.noteGreet(content);
+    }
     closePing(); toast(kind === 'emoji' ? tr('ping.sentEmoji', { em: content }) : tr('ping.sent'));
   } catch (e) {
     rec.code = e.code || String(e.status);
@@ -1926,6 +1973,7 @@ const cards = new CardQueue((p, ms, done) => {
   const body = document.createElement('span'); body.className = p.kind === 'emoji' ? 'pc-emo' : 'pc-text'; body.textContent = p.content;
   c.append(from, body); $('pingCards').appendChild(c);
   floatFx(p.kind === 'emoji' ? p.content : '💌', p.kind === 'emoji' ? 7 : 3);
+  if (p.kind === 'emoji' && p.from_id) { try { labels && labels.addHeadFx(p.from_id, p.content); } catch (_) {} }
   if (settings.sound !== false) playPing();
   try { navigator.vibrate && navigator.vibrate([60, 40, 60]); } catch (e) { /* not supported */ }
   let gone = false;
@@ -2165,3 +2213,278 @@ $('modSend').onclick = async () => {
   finally { modBusy(false); }
 };
 window.__ar.v32 = { askConsent, consentOk, consentGet, openMod, openPriv, openDelete, deleteEverything, enrollMode, deviceId, inviteGet, renderPrivacy, get health() { return srvHealth; } };
+
+
+// ======================= v33: greetings FX, achievements, filters, meet, events, help =======================
+const MEET_KEY = 'ar-names-met';
+function metLoad() { try { return new Set(JSON.parse(localStorage.getItem(MEET_KEY) || '[]')); } catch (_) { return new Set(); } }
+function metSave(s) { try { localStorage.setItem(MEET_KEY, JSON.stringify([...s])); } catch (_) {} }
+let metIds = metLoad();
+let meetQ = [];
+function maybeFirstMeet(pid, name) {
+  const id = String(pid);
+  if (!id || metIds.has(id)) { achievements.noteMet(id); return; }
+  metIds.add(id); metSave(metIds);
+  achievements.noteMet(id);
+  const mine = cfg.name || tr('disp.namePh');
+  meetQ.push({ id, name: name || '?', mine, at: Date.now() });
+  if ($('meetCard').classList.contains('hidden')) showMeet(meetQ.shift());
+}
+function showMeet(m) {
+  if (!m) return;
+  $('meetNames').textContent = tr('meet.names', { a: m.mine, b: m.name });
+  try {
+    const d = new Date(m.at);
+    $('meetDate').textContent = tr('meet.date', { d: d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) });
+  } catch (_) { $('meetDate').textContent = ''; }
+  $('meetCard').dataset.pid = m.id; $('meetCard').dataset.name = m.name;
+  $('meetCard').classList.remove('hidden'); syncShot();
+}
+function closeMeet() {
+  $('meetCard').classList.add('hidden'); syncShot();
+  if (meetQ.length) showMeet(meetQ.shift());
+}
+$('meetClose').onclick = closeMeet;
+$('meetShare').onclick = async () => {
+  const title = tr('meet.title');
+  const text = ($('meetNames').textContent || '') + '\n' + ($('meetDate').textContent || '');
+  try {
+    if (navigator.share) { await navigator.share({ title, text }); toast(tr('meet.shared')); }
+    else if (navigator.clipboard) { await navigator.clipboard.writeText(text); toast(tr('meet.shared')); }
+    else await takeShot();
+  } catch (e) { if (e && e.name !== 'AbortError') try { await takeShot(); } catch (_) {} }
+};
+
+// achievements UI + toast
+achievements.onUnlock((b) => showAchToast(b));
+let achToastTimer = 0;
+function showAchToast(b) {
+  const el = $('achToast');
+  $('achToastIco').textContent = b.icon;
+  $('achToastTitle').textContent = tr('ach.unlock') + ' ' + tr(b.key + '.t');
+  $('achToastHint').textContent = tr(b.key + '.h');
+  el.classList.remove('hidden', 'out');
+  clearTimeout(achToastTimer);
+  achToastTimer = setTimeout(() => { el.classList.add('out'); setTimeout(() => el.classList.add('hidden'), 350); }, 4200);
+  if (setPage === 'ach') renderAch();
+}
+function renderAch() {
+  const st = achievements.stats();
+  $('achStats').textContent = tr('ach.stats', { met: st.met, greets: st.greets, n: st.unlocked });
+  const ul = $('achList'); ul.innerHTML = '';
+  for (const b of achievements.list()) {
+    const li = document.createElement('li'); if (!b.unlocked) li.classList.add('lock');
+    li.innerHTML = `<span class="ach-ico" aria-hidden="true">${b.icon}</span><span><b></b><small></small></span>`;
+    li.querySelector('b').textContent = b.title + (b.new ? ' •' : '');
+    li.querySelector('small').textContent = b.hint;
+    ul.appendChild(li);
+  }
+  achievements.markSeen();
+}
+
+// help sheet
+const HELP_CATS = ['photo', 'names', 'greet', 'events', 'invite', 'privacy', 'report', 'ach', 'filt', 'lang', 'install'];
+const HELP_FAQ = ['see', 'cam', 'del', 'greet'];
+function buildHelp(q) {
+  const qq = (q || '').trim().toLowerCase();
+  const cats = $('helpCats'); cats.innerHTML = '';
+  for (const id of HELP_CATS) {
+    const title = tr('help.cat.' + id), body = tr('help.body.' + id);
+    if (qq && !(title + body).toLowerCase().includes(qq)) continue;
+    const d = document.createElement('div'); d.className = 'help-cat';
+    const btn = document.createElement('button'); btn.type = 'button';
+    btn.innerHTML = `<span></span><span class="chev" aria-hidden="true">›</span>`;
+    btn.querySelector('span').textContent = title;
+    const bodyEl = document.createElement('div'); bodyEl.className = 'help-body-cat';
+    bodyEl.innerHTML = body.split('\n').map((line) => `<p>${escapeHtml(line)}</p>`).join('');
+    btn.onclick = () => d.classList.toggle('open');
+    d.append(btn, bodyEl); cats.appendChild(d);
+  }
+  const faq = $('helpFaq'); faq.className = 'help-faq'; faq.innerHTML = '';
+  for (const id of HELP_FAQ) {
+    const qk = tr('help.faq.' + id + '.q'), ak = tr('help.faq.' + id + '.a');
+    if (qq && !(qk + ak).toLowerCase().includes(qq)) continue;
+    const det = document.createElement('details');
+    const sum = document.createElement('summary'); sum.textContent = qk;
+    const p = document.createElement('p'); p.textContent = ak;
+    det.append(sum, p); faq.appendChild(det);
+  }
+}
+$('helpClose').onclick = closeHelpSheet;
+$('helpTour').onclick = async () => { closeHelpSheet(); const w = await openWelcome(true); if (w === 'enroll') welcomeAfter(w); };
+$('helpSearch').oninput = () => buildHelp($('helpSearch').value);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !$('helpSheet').classList.contains('hidden')) { e.preventDefault(); closeHelpSheet(); }
+  if (e.key === 'Escape' && !$('meetCard').classList.contains('hidden')) { e.preventDefault(); closeMeet(); }
+});
+
+// events / leaderboard
+let evtShare = null;
+function eventsOn() { return !!(cfg.url && cfg.token && (hasCap('events') || hasCap('groups'))); }
+async function refreshEvents() {
+  const on = eventsOn();
+  $('evtBox').classList.toggle('hidden', !on);
+  $('evtNeed').classList.toggle('hidden', on);
+  if (!on) return;
+  try {
+    const { groups } = await api.myGroups();
+    const events = (groups || []).filter((g) => (g.kind || 'group') === 'event' || g.join_code);
+    const ul = $('evtMine'); ul.innerHTML = '';
+    const sel = $('evtLbGroup'); const cur = sel.value; sel.innerHTML = '';
+    for (const g of events) {
+      const li = document.createElement('li');
+      const name = document.createElement('span'); name.className = 'gname'; name.textContent = g.name;
+      const meta = document.createElement('span'); meta.className = 'small'; meta.textContent = tr('evt.members', { n: g.members || (g.member_names || []).length || 0 });
+      const share = document.createElement('button'); share.type = 'button'; share.textContent = tr('evt.shareAgain');
+      share.onclick = () => showEvtShare(g);
+      const leave = document.createElement('button'); leave.type = 'button'; leave.textContent = tr('evt.leave');
+      leave.onclick = async () => {
+        try { await api.leaveGroup(g.id); $('evtInfo').textContent = ''; refreshEvents(); }
+        catch (e) { $('evtInfo').textContent = '⚠️ ' + errMsg(e); }
+      };
+      li.append(name, meta, share, leave); ul.appendChild(li);
+      const o = document.createElement('option'); o.value = g.id; o.textContent = g.name; sel.appendChild(o);
+    }
+    if (!events.length) ul.innerHTML = `<li class="small">${escapeHtml(tr('grp.noGroups'))}</li>`;
+    if (cur) sel.value = cur;
+    // leaderboard opt-in mirror
+    try {
+      const me = await api.me();
+      $('evtLbOpt').checked = !!me.leaderboard_opt_in;
+      $('evtLbBox').classList.toggle('hidden', !$('evtLbOpt').checked);
+      if ($('evtLbOpt').checked) loadLeaderboard();
+    } catch (_) {}
+  } catch (e) { $('evtInfo').textContent = '⚠️ ' + errMsg(e); }
+}
+function showEvtShare(g, extra) {
+  evtShare = { ...g, ...(extra || {}) };
+  $('evtShare').classList.remove('hidden');
+  $('evtShareTitle').textContent = g.name;
+  const code = evtShare.code || evtShare.join_code || '';
+  $('evtShareCode').textContent = code ? tr('evt.codeLabel', { code }) : '';
+  const img = $('evtQr');
+  if (evtShare.qr) { img.src = evtShare.qr; img.classList.remove('hidden'); }
+  else img.classList.add('hidden');
+}
+$('evtCreate').onclick = async () => {
+  const name = $('evtName').value.trim().replace(/\s+/g, ' ');
+  if (name.length < 2) return void ($('evtInfo').textContent = tr('evt.short'));
+  try {
+    const r = await api.createGroup(name, 'event');
+    $('evtName').value = '';
+    achievements.noteEvent();
+    showEvtShare(r.group, { code: r.group.join_code, link: r.link, qr: r.qr });
+    $('evtInfo').textContent = tr('evt.created', { name: r.group.name });
+    toast(tr('evt.created', { name: r.group.name }));
+    refreshEvents();
+  } catch (e) { $('evtInfo').textContent = '⚠️ ' + errMsg(e); }
+};
+$('evtJoin').onclick = async () => {
+  const code = $('evtCode').value.trim();
+  if (!code) return void ($('evtInfo').textContent = tr('evt.noCode'));
+  try {
+    const r = await api.joinByCode(code);
+    achievements.noteEvent();
+    $('evtCode').value = '';
+    $('evtInfo').textContent = tr('evt.joined', { name: r.group.name });
+    toast(tr('evt.joined', { name: r.group.name }));
+    refreshEvents();
+  } catch (e) { $('evtInfo').textContent = '⚠️ ' + errMsg(e); }
+};
+$('evtCopy').onclick = async () => {
+  const link = (evtShare && (evtShare.link || (evtShare.code && (location.origin + location.pathname + '?event=' + evtShare.code)))) || '';
+  if (!link) return;
+  try { await navigator.clipboard.writeText(link); toast(tr('evt.copied')); } catch (_) { toast(link); }
+};
+$('evtShareBtn').onclick = async () => {
+  if (!evtShare) return;
+  const code = evtShare.code || evtShare.join_code || '';
+  const link = evtShare.link || (code && (location.origin + location.pathname + '?event=' + code)) || '';
+  const text = (evtShare.name || '') + (code ? '\n' + code : '') + (link ? '\n' + link : '');
+  try {
+    if (navigator.share) await navigator.share({ title: evtShare.name || 'Noera', text, url: link || undefined });
+    else await navigator.clipboard.writeText(text);
+    toast(tr('evt.shared'));
+  } catch (e) { if (!(e && e.name === 'AbortError')) $('evtInfo').textContent = '⚠️ ' + errMsg(e); }
+};
+// QR scan: BarcodeDetector when available; else fall back to typing
+let evtScanOn = false;
+$('evtScan').onclick = async () => {
+  if (evtScanOn) return;
+  if (!('BarcodeDetector' in window)) { toast(tr('evt.scanFail')); $('evtCode').focus(); return; }
+  evtScanOn = true; toast(tr('evt.scanStart'));
+  try {
+    const det = new BarcodeDetector({ formats: ['qr_code'] });
+    const t0 = Date.now();
+    while (Date.now() - t0 < 15000 && evtScanOn) {
+      if (video && video.videoWidth) {
+        const bmp = await createImageBitmap(video);
+        const codes = await det.detect(bmp); bmp.close && bmp.close();
+        for (const c of codes) {
+          let v = (c.rawValue || '').trim();
+          const m = v.match(/[?&](?:event|invite|code)=([A-Za-z0-9_-]+)/) || v.match(/\b([A-Z0-9]{4,12})\b/i);
+          if (m) { $('evtCode').value = (m[1] || m[0]).toUpperCase(); evtScanOn = false; $('evtJoin').click(); return; }
+        }
+      }
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    toast(tr('evt.scanFail'));
+  } catch (_) { toast(tr('evt.scanFail')); }
+  finally { evtScanOn = false; }
+};
+$('evtLbOpt').onchange = async () => {
+  const on = $('evtLbOpt').checked;
+  try {
+    await api.patchMe(cfg.personId, { leaderboard_opt_in: on });
+    toast(tr(on ? 'evt.lbOn' : 'evt.lbOffToast'));
+    $('evtLbBox').classList.toggle('hidden', !on);
+    if (on) loadLeaderboard();
+  } catch (e) { $('evtLbOpt').checked = !on; $('evtInfo').textContent = '⚠️ ' + errMsg(e); }
+};
+$('evtLbGroup').onchange = () => loadLeaderboard();
+async function loadLeaderboard() {
+  const gid = +$('evtLbGroup').value; if (!gid || !$('evtLbOpt').checked) return;
+  const ul = $('evtLbList'); ul.innerHTML = `<li class="small">${escapeHtml(tr('evt.lbTitle'))}</li>`;
+  try {
+    const r = await api.leaderboard(gid);
+    if (!r.opt_in) { ul.innerHTML = `<li class="small">${escapeHtml(tr('evt.lbOff'))}</li>`; return; }
+    if (!(r.entries || []).length) { ul.innerHTML = `<li class="small">${escapeHtml(tr('evt.lbEmpty'))}</li>`; return; }
+    ul.innerHTML = '';
+    r.entries.forEach((e, i) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="gname"></span><span class="small"></span>`;
+      li.querySelector('.gname').textContent = `${i + 1}. ${e.name}`;
+      li.querySelector('.small').textContent = '👋 ' + e.sent;
+      ul.appendChild(li);
+    });
+  } catch (e) { ul.innerHTML = `<li class="small">⚠️ ${escapeHtml(errMsg(e))}</li>`; }
+}
+
+// deep link ?event=CODE
+(function evtDeepLink() {
+  try {
+    const u = new URL(location.href);
+    const code = u.searchParams.get('event') || u.searchParams.get('join');
+    if (code) { sessionStorage.setItem('ar-names-event-code', code); u.searchParams.delete('event'); u.searchParams.delete('join'); history.replaceState({}, '', u.pathname + u.search + u.hash); }
+  } catch (_) {}
+})();
+async function maybeJoinEventCode() {
+  const code = sessionStorage.getItem('ar-names-event-code');
+  if (!code || !eventsOn()) return;
+  sessionStorage.removeItem('ar-names-event-code');
+  try {
+    const r = await api.joinByCode(code);
+    achievements.noteEvent();
+    toast(tr('evt.joined', { name: r.group.name }));
+  } catch (e) { toast('⚠️ ' + errMsg(e)); }
+}
+
+window.addEventListener('langchange', () => { try { renderFiltPick(); } catch (_) {} if (setPage === 'ach') try { renderAch(); } catch (_) {} if (!$('helpSheet').classList.contains('hidden')) buildHelp($('helpSearch').value); });
+
+window.__ar.v33 = {
+  achievements, FILTERS, maybeFirstMeet, showMeet, closeMeet, openHelpSheet, closeHelpSheet,
+  renderAch, refreshEvents, pickFilt: (id) => pickFilt(id), get filter() { return dispFilt; },
+};
+
+// join event after server ready
+const _refreshServer = typeof refreshServer === 'function' ? refreshServer : null;

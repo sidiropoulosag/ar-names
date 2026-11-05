@@ -142,7 +142,9 @@
       <button type="button" class="srow" data-go="lang"><span class="sico" aria-hidden="true">🌐</span><span class="stxt"><b data-i18n="m.lang">Γλώσσα</b><small id="mLangSub">Ελληνικά</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="privacy"><span class="sico" aria-hidden="true">🛡️</span><span class="stxt"><b data-i18n="m.priv">Απόρρητο και ασφάλεια</b><small data-i18n="m.privSub">πολιτική, συγκατάθεση, αποκλεισμοί, διαγραφή</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="adv"><span class="sico" aria-hidden="true">🔧</span><span class="stxt"><b data-i18n="m.adv">Για προχωρημένους</b><small data-i18n="m.advSub">Αναγνώριση, αντίγραφο ασφαλείας, επαναφορά</small></span><span class="schev" aria-hidden="true">›</span></button>
-      <button type="button" class="srow" data-go="help"><span class="sico" aria-hidden="true">❓</span><span class="stxt"><b data-i18n="m.help">Οδηγός και βοήθεια</b><small data-i18n="m.helpSub">Πώς δουλεύει και πώς φωτογραφίζεσαι</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="events"><span class="sico" aria-hidden="true">🎫</span><span class="stxt"><b data-i18n="m.events">Εκδηλώσεις</b><small data-i18n="m.eventsSub">Φτιάξε ή μπες με κωδικό / QR</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="ach"><span class="sico" aria-hidden="true">🏅</span><span class="stxt"><b data-i18n="m.ach">Τα επιτεύγματά μου</b><small data-i18n="m.achSub">Σήματα που κέρδισες</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="help"><span class="sico" aria-hidden="true">❓</span><span class="stxt"><b data-i18n="m.help">Οδηγός και βοήθεια</b><small data-i18n="m.helpSub">Οδηγίες, ερωτήσεις, εγκατάσταση</small></span><span class="schev" aria-hidden="true">›</span></button>
     </nav>
   </section>
 
@@ -210,6 +212,11 @@
         <label class="size"><span data-i18n="sz.text">Μέγεθος σχολίου</span><input id="szText" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
         <label class="size"><span data-i18n="sz.obj">Μέγεθος αντικειμένου</span><input id="szObj" type="range" min="0.5" max="2" step="0.1" value="1"><output>×1.0</output></label>
       </div>
+      <div id="filtBox" class="scard filt-only">
+        <p class="small" data-i18n="filt.title">✨ Αστείο φίλτρο πάνω από το όνομα</p>
+        <p id="filtSeason" class="small filt-season hidden"></p>
+        <div id="filtPick" role="radiogroup" aria-label="Φίλτρο" data-i18n-aria="filt.aria"></div>
+      </div>
       <div class="row"><button id="srvMsgSave2" type="button" class="primary big" data-i18n="common.save">💾 Αποθήκευση</button></div>
     </div>
   </section>
@@ -237,6 +244,55 @@
       <div class="row"><input id="grpNewName" type="text" maxlength="40" placeholder="Όνομα νέας ομάδας" data-i18n-ph="grp.newPh" autocomplete="off"><button id="grpCreate" type="button" data-i18n="grp.create">＋ Δημιουργία</button></div>
       <p id="grpInfo" class="small"></p>
     </div>
+  </section>
+
+  <!-- 🎫 events (server 0.8.0) -->
+  <section class="spage" data-page="events">
+    <div id="evtBox" class="events-only me-only">
+      <div class="scard">
+        <h3 data-i18n="evt.createTitle">Φτιάξε εκδήλωση</h3>
+        <p class="small" data-i18n="evt.createHint">Όσοι μπουν με τον κωδικό ή το QR βλέπουν τα ονόματα μεταξύ τους.</p>
+        <input id="evtName" type="text" maxlength="40" placeholder="Όνομα εκδήλωσης" data-i18n-ph="evt.namePh" autocomplete="off">
+        <button id="evtCreate" type="button" class="primary big" data-i18n="evt.create">＋ Φτιάξε εκδήλωση</button>
+      </div>
+      <div class="scard">
+        <h3 data-i18n="evt.joinTitle">Μπες με κωδικό ή QR</h3>
+        <input id="evtCode" type="text" maxlength="16" placeholder="Κωδικός" data-i18n-ph="evt.codePh" autocomplete="off" autocapitalize="characters">
+        <div class="row evt-row">
+          <button id="evtJoin" type="button" class="primary big" data-i18n="evt.join">Μπες</button>
+          <button id="evtScan" type="button" class="big" data-i18n="evt.scan">📷 Σάρωση QR</button>
+        </div>
+        <p class="small" data-i18n="evt.scanHint">Αν η σάρωση δεν δουλεύει, γράψε απλά τον κωδικό.</p>
+      </div>
+      <div id="evtShare" class="scard hidden">
+        <h3 id="evtShareTitle"></h3>
+        <p id="evtShareCode" class="evt-code"></p>
+        <img id="evtQr" alt="QR" class="evt-qr hidden">
+        <div class="row evt-row">
+          <button id="evtCopy" type="button" class="big" data-i18n="evt.copy">📋 Αντιγραφή συνδέσμου</button>
+          <button id="evtShareBtn" type="button" class="primary big" data-i18n="evt.share">📤 Κοινοποίηση</button>
+        </div>
+      </div>
+      <h4 data-i18n="evt.mine">Οι εκδηλώσεις μου</h4>
+      <ul id="evtMine" class="grp-list"></ul>
+      <div class="scard">
+        <label class="setting check"><input id="evtLbOpt" type="checkbox"> <span data-i18n="evt.lbOpt">Συμμετοχή στον πίνακα χαιρετισμών (προαιρετικό)</span></label>
+        <p class="small" data-i18n="evt.lbHint">Μόνο αν το ενεργοποιήσεις. Μπορείς να το κλείσεις όποτε θέλεις. Σέβεται αποκλεισμούς.</p>
+        <div id="evtLbBox" class="hidden">
+          <select id="evtLbGroup" aria-label="Εκδήλωση"></select>
+          <ul id="evtLbList" class="grp-list"></ul>
+        </div>
+      </div>
+      <p id="evtInfo" class="small"></p>
+    </div>
+    <p id="evtNeed" class="small" data-i18n="evt.needServer">Οι εκδηλώσεις χρειάζονται σύνδεση με τον server (έκδοση 0.8.0+).</p>
+  </section>
+
+  <!-- 🏅 achievements (local) -->
+  <section class="spage" data-page="ach">
+    <p class="small" data-i18n="ach.intro">Σήματα που κερδίζεις ήσυχα — χωρίς πίεση. Μένουν σε αυτό το κινητό.</p>
+    <p id="achStats" class="small"></p>
+    <ul id="achList" class="ach-list"></ul>
   </section>
 
   <!-- 💌 messages (server 0.6.0) -->
@@ -389,6 +445,41 @@
     <input id="tokVal" type="text" readonly>
     <div class="row"><button id="tokCopy" data-i18n="tok.copy">📋 Αντιγραφή</button><button id="tokOk" class="primary" data-i18n="tok.ok">Εντάξει</button></div>
     <p id="tokCopied" class="small"></p>
+  </div>
+</div>
+
+<!-- v33: first-meet card -->
+<div id="meetCard" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="meetTitle">
+  <div class="card meet-card">
+    <div class="meet-burst" aria-hidden="true">✨</div>
+    <h2 id="meetTitle" data-i18n="meet.title">Γνωριστήκατε!</h2>
+    <p id="meetNames" class="meet-names"></p>
+    <p id="meetDate" class="small"></p>
+    <div class="row meet-actions">
+      <button id="meetShare" type="button" class="primary big" data-i18n="meet.share">📤 Κοινοποίηση</button>
+      <button id="meetClose" type="button" class="big" data-i18n="common.close">Κλείσιμο</button>
+    </div>
+  </div>
+</div>
+
+<!-- v33: badge unlock toast -->
+<div id="achToast" class="ach-toast hidden" role="status" aria-live="polite">
+  <span class="ach-toast-ico" id="achToastIco">🏅</span>
+  <span><b id="achToastTitle"></b><small id="achToastHint"></small></span>
+</div>
+
+<!-- v33: full Help (categories + search + FAQ). Quick tour still via welcome. -->
+<div id="helpSheet" class="panel full hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="phead set-head">
+    <h2 id="helpTitle" data-i18n="help.title">Οδηγός και βοήθεια</h2>
+    <button id="helpClose" class="pill" type="button" aria-label="Κλείσιμο" data-i18n-aria="common.close">✕</button>
+  </div>
+  <div class="set-body help-body">
+    <input id="helpSearch" type="search" maxlength="60" placeholder="Αναζήτηση…" data-i18n-ph="help.searchPh" autocomplete="off">
+    <button id="helpTour" type="button" class="big" data-i18n="help.tour">▶️ Γρήγορη ξενάγηση</button>
+    <div id="helpCats"></div>
+    <h3 data-i18n="help.faqTitle">Συχνές ερωτήσεις</h3>
+    <div id="helpFaq"></div>
   </div>
 </div>
 

@@ -3,7 +3,7 @@ import { t } from './i18n.js';
 // as a floating card at the top. Pure helpers + the card queue (no server calls here).
 // v33: greeting reactions (👋 ❤️ 😂 🎉) first — they also trigger the head FX above the person.
 export const PING_EMOJI = ['👋', '❤️', '😂', '🎉', '👍', '😮', '🙏', '🔥'];
-export const GREET_EMOJI = new Set(['👋', '❤️', '😂', '🎉']);
+export const GREET_EMOJI = new Set(['👋', '❤️', '😂', '🎉', '👍']);
 export const PING_TEXT_MAX = 80;
 export const CARD_MS = 5000;
 

@@ -2226,7 +2226,7 @@ function maybeFirstMeet(pid, name) {
   if (!id || metIds.has(id)) { achievements.noteMet(id); return; }
   metIds.add(id); metSave(metIds);
   achievements.noteMet(id);
-  const mine = cfg.name || tr('disp.namePh');
+  const mine = cfg.name || tr('meet.you');
   meetQ.push({ id, name: name || '?', mine, at: Date.now() });
   if ($('meetCard').classList.contains('hidden')) showMeet(meetQ.shift());
 }
@@ -2235,7 +2235,7 @@ function showMeet(m) {
   $('meetNames').textContent = tr('meet.names', { a: m.mine, b: m.name });
   try {
     const d = new Date(m.at);
-    $('meetDate').textContent = tr('meet.date', { d: d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) });
+    $('meetDate').textContent = tr('meet.date', { d: d.toLocaleDateString(locale(), { year: 'numeric', month: 'long', day: 'numeric' }) });
   } catch (_) { $('meetDate').textContent = ''; }
   $('meetCard').dataset.pid = m.id; $('meetCard').dataset.name = m.name;
   $('meetCard').classList.remove('hidden'); syncShot();

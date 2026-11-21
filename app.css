@@ -400,3 +400,6 @@ body.a11y-contrast .pilot{background:#ffd54f;color:#000;border:2px solid #000}
 body.a11y-contrast input,body.a11y-contrast textarea,body.a11y-contrast select{background:#000;color:#fff;border:2px solid #fff}
 body.tut-on,body.help-on{overflow:hidden}
 #people input[type=number]{accent-color:#1e88e5}
+#emViewSheet .card,#askSheet .card,#waitSheet .card,#metSheet .card,#memImgSheet .card,#consentSheet .card{
+  background:#122033;border-radius:18px;border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 32px rgba(0,0,0,.45)
+}

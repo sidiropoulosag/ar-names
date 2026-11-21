@@ -167,6 +167,18 @@
 
 ---
 
+## Πίνακας ελέγχου στο PC (διαχειριστής)
+
+Ο διαχειριστής της οικογένειας τρέχει τον server στο σπίτι (πακέτο `ar-names-pc`, έκδοση **0.9.1**). Αυτό το README **δεν** δημοσιεύει προσωπικές διευθύνσεις ή κλειδιά.
+
+- **`dashboard-windows.bat`** ανοίγει τον **Πίνακα ελέγχου** στον ίδιο υπολογιστή (μεγάλα κουμπιά, απλά ελληνικά, χωρίς κλειδί στην οθόνη). Στην κορυφή φαίνεται καθαρή εικόνα: πόσοι είναι καταχωρισμένοι / ενεργοί / online, ανοιχτές αναφορές, ειδοποιήσεις σε αναμονή και ενεργές, μηνύματα σε αναμονή, κάρτες ανάγκης σε χρήση.
+- **Ειδοποιήσεις εξαφάνισης / προφίλ ασφαλείας:** λίστα, **Έγκριση**, **Όχι**, **Αφαίρεση**, ημερομηνία λήξης, και κάθε θέαση με ώρα και τόπο. Φαίνονται και οι αναφορές σε προφίλ (μπορείς να τις τακτοποιήσεις ή να αφαιρέσεις το προφίλ). Μέχρι την έγκριση, η ειδοποίηση δεν φαίνεται σε κανέναν στην εφαρμογή.
+- **Μηνύματα που περιμένουν:** πόσα είναι, πότε λήγουν (30 ημέρες). Το κείμενο εμφανίζεται **μόνο** αν κάποιος τα ανέφερε ως υβριστικά / ακατάλληλα. Μπορείς να διαγράψεις ένα μήνυμα.
+- **Κάρτες έκτακτης ανάγκης:** κανόνες (κλειστή από προεπιλογή, όριο 280 χαρακτήρες) και πόσοι τις έχουν ανοίξει. Το **ιατρικό κείμενο δεν εμφανίζεται** στον πίνακα, εκτός αν υπάρχει ανοιχτή αναφορά και χρειάζεται έλεγχος.
+- **`admin-windows.bat`** κάνει τα ίδια με εντολές, π.χ. `status`, `missing`, `approve 3`, `waiting`, `waiting-reports`, `delete-waiting 8`, `emergency`. Χωρίς όρισμα δείχνει τη βοήθεια. Λεπτομέρειες εγκατάστασης / ενημέρωσης: το αρχείο **ΟΔΗΓΙΕΣ.md** μέσα στο zip.
+
+---
+
 ## Ανανεώσεις
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
@@ -374,6 +386,18 @@ Needed for shared profiles, cross-device messages/greets, groups, events, and th
 Admins may use an access key (advanced). Your **personal token** is shown once at enrolment.
 
 Empty/custom server URL in advanced settings → on-device only.
+
+---
+
+## PC dashboard (administrator)
+
+The family administrator runs the server at home (the `ar-names-pc` package, version **0.9.1**). This README **does not** publish personal server URLs or keys.
+
+- **`dashboard-windows.bat`** opens the **control panel** on that same computer (large buttons, plain Greek, no key on the page). At the top is a clear status overview: how many people are enrolled / active / online, open reports, pending and active missing-person alerts, waiting messages, and how many emergency cards are in use.
+- **Missing-person alerts / safety profiles:** list them, **Approve**, **No**, or **Remove**; see the expiry date and each sighting with time and location; review reports on a profile (mark them handled, or remove the profile). Until approval, the alert is shown to nobody in the app.
+- **Waiting messages:** counts and expiry (30 days). Message text is shown **only** when someone has reported a message as abusive / inappropriate. You can delete a message.
+- **Emergency cards:** the rules (off by default, 280-character limit) and how many people have turned one on. **Medical text is not shown** on the dashboard, unless there is an open report that needs moderation.
+- **`admin-windows.bat`** does the same from the command line, e.g. `status`, `missing`, `approve 3`, `waiting`, `waiting-reports`, `delete-waiting 8`, `emergency`. With no argument it prints help. Install / update steps are in **ΟΔΗΓΙΕΣ.md** inside the zip.
 
 ---
 

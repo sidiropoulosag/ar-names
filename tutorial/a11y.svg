@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img" aria-hidden="true">
+  <rect width="320" height="180" rx="16" fill="#f3f0e8"/>
+  
+  <circle cx="80" cy="90" r="36" fill="#1d4e89"/>
+  <path d="M70 90 L80 78 L80 102 Z" fill="#fff"/>
+  <path d="M88 78 Q100 90 88 102" fill="none" stroke="#fff" stroke-width="3"/>
+  <text x="200" y="80" text-anchor="middle" font-size="28" font-weight="700" font-family="system-ui,sans-serif">Αα</text>
+  <text x="200" y="130" text-anchor="middle" font-size="14" font-family="system-ui,sans-serif">Μεγάλα γράμματα</text>
+
+</svg>

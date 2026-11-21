@@ -122,8 +122,27 @@ export class Api {
   block(pid) { return this.req('POST', `/people/${pid}/block`); }
   unblock(pid) { return this.req('DELETE', `/people/${pid}/block`); }
   report(pid, reason, note, block) { return this.req('POST', `/people/${pid}/report`, { json: { reason, note: note || '', block: !!block } }); }
-  recognize(faces) { return this.req('POST', '/recognize/embeddings', { json: { faces }, timeout: 5000 }); }
+  recognize(faces, extra = {}) {
+    const body = { faces };
+    if (extra && extra.emergency) body.emergency = true;   // only send when 0.9.0+ (caller checks hasCap)
+    return this.req('POST', '/recognize/embeddings', { json: body, timeout: 5000 });
+  }
+  // 0.9.0 safety / emergency / waiting
+  createSafety(body) { return this.req('POST', '/safety', { json: body }); }
+  listSafety() { return this.req('GET', '/safety', { timeout: 8000 }); }
+  addSafetyFrame(sid, pose, blob) {
+    const f = new FormData(); f.append('pose', pose); f.append('image', blob, 'frame.jpg');
+    return this.req('POST', `/safety/${sid}/frames`, { form: f, timeout: 30000 });
+  }
+  activateSafety(sid) { return this.req('POST', `/safety/${sid}/activate`); }
+  foundSafety(sid) { return this.req('POST', `/safety/${sid}/found`); }
+  sightSafety(sid, body) { return this.req('POST', `/safety/${sid}/sight`, { json: body, timeout: 8000 }); }
+  reportSafety(sid, body) { return this.req('POST', `/safety/${sid}/report`, { json: body }); }
+  sendWaiting(pid, body) { return this.req('POST', `/people/${pid}/waiting`, { json: body }); }
+  myWaiting() { return this.req('GET', '/me/waiting', { timeout: 6000 }); }
+  deleteWaiting(wid) { return this.req('DELETE', `/waiting/${wid}`); }
 }
+
 
 // Same pose classes as the server (ar_server/face.py classify_pose), on the same 5-point pose estimate.
 export function classifyPose(p) {

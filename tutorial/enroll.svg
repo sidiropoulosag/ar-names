@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img" aria-hidden="true">
+  <rect width="320" height="180" rx="16" fill="#f3f0e8"/>
+  
+  <rect x="40" y="30" width="140" height="120" rx="8" fill="#2b2b2b"/>
+  <rect x="52" y="42" width="116" height="80" rx="4" fill="#9ad0ea"/>
+  
+  <g transform="translate(110,100) scale(0.85)">
+    <circle cx="0" cy="-18" r="14" fill="#f4c7a5" stroke="#3a2f27" stroke-width="2"/>
+    <rect x="-16" y="-2" width="32" height="36" rx="12" fill="#f4c7a5" stroke="#3a2f27" stroke-width="2"/>
+  </g>
+  <rect x="200" y="40" width="90" height="18" rx="6" fill="#e8c15a"/>
+  <rect x="200" y="68" width="90" height="18" rx="6" fill="#d9d3c7"/>
+  <rect x="200" y="96" width="90" height="18" rx="6" fill="#d9d3c7"/>
+  <text x="245" y="53" text-anchor="middle" font-size="9" font-family="system-ui,sans-serif">1. ευθεία</text>
+
+</svg>

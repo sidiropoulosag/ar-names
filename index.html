@@ -54,6 +54,11 @@
   <div id="pingEmojis" class="ping-emojis"></div>
   <div class="row ping-row"><input id="pingText" type="text" maxlength="80" placeholder="Γράψε κάτι σύντομο…" data-i18n-ph="ping.ph" enterkeyhint="send" autocomplete="off"><button id="pingSend" type="button" class="primary" data-i18n="ping.send">Αποστολή</button></div>
   <p id="pingInfo" class="small"></p>
+  <div class="row wrap" id="pingExtra">
+    <button id="pingWait" type="button" class="big v34-waiting hidden" data-i18n="wait.leave">Άφησε ένα μήνυμα</button>
+    <button id="pingMet" type="button" class="big" data-i18n="mem.where">Πού γνωριστήκαμε</button>
+    <button id="pingEm" type="button" class="big hidden" data-i18n="em.open">Κάρτα ανάγκης</button>
+  </div>
   <button id="pingMod" type="button" class="linkbtn hidden" data-i18n="mod.open">⋯ Αναφορά / αποκλεισμός</button>
 </div>
 
@@ -144,6 +149,9 @@
       <button type="button" class="srow" data-go="adv"><span class="sico" aria-hidden="true">🔧</span><span class="stxt"><b data-i18n="m.adv">Για προχωρημένους</b><small data-i18n="m.advSub">Αναγνώριση, αντίγραφο ασφαλείας, επαναφορά</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="events"><span class="sico" aria-hidden="true">🎫</span><span class="stxt"><b data-i18n="m.events">Εκδηλώσεις</b><small data-i18n="m.eventsSub">Φτιάξε ή μπες με κωδικό / QR</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="ach"><span class="sico" aria-hidden="true">🏅</span><span class="stxt"><b data-i18n="m.ach">Τα επιτεύγματά μου</b><small data-i18n="m.achSub">Σήματα που κέρδισες</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="safety"><span class="sico" aria-hidden="true">🆘</span><span class="stxt"><b data-i18n="m.safety">Χαμένο άτομο</b><small data-i18n="m.safetySub">Προφίλ ασφαλείας, αν χαθεί κάποιος</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="a11y"><span class="sico" aria-hidden="true">♿</span><span class="stxt"><b data-i18n="m.a11y">Εύκολη χρήση</b><small data-i18n="m.a11ySub">Φωνή, μεγάλα γράμματα, αντίθεση</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="tutorial"><span class="sico" aria-hidden="true">📘</span><span class="stxt"><b data-i18n="m.tutorial">Οδηγός με σκίτσα</b><small data-i18n="m.tutorialSub">Πώς δουλεύουν όλα, βήμα-βήμα</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="help"><span class="sico" aria-hidden="true">❓</span><span class="stxt"><b data-i18n="m.help">Οδηγός και βοήθεια</b><small data-i18n="m.helpSub">Οδηγίες, ερωτήσεις, εγκατάσταση</small></span><span class="schev" aria-hidden="true">›</span></button>
     </nav>
   </section>
@@ -174,6 +182,15 @@
       <p class="small disp-only" data-i18n="look.moreHint">Γράμματα, μέγεθος και 3D αντικείμενο: «Εμφάνιση και ήχος».</p>
       <p id="srvDispOld" class="small adv-only hidden" data-i18n="srv.old03">⚠️ Χρειάζεται ενημέρωση server (0.3.0) για «Μήνυμα 2» και 3D αντικείμενα — τώρα φαίνεται μόνο το μήνυμα.</p>
       <div class="row"><button id="srvMsgSave" class="primary big" data-i18n="common.save">💾 Αποθήκευση</button></div>
+      <div class="v34-emergency scard" id="emBox">
+        <h3 data-i18n="em.title">Κάρτα έκτακτης ανάγκης</h3>
+        <p class="small" data-i18n="em.hint">Προαιρετικό, κλειστό από προεπιλογή. Π.χ. «Διαβητικός, αλλεργία στην πενικιλίνη, τηλ. επαφής…»</p>
+        <textarea id="emCard" rows="3" maxlength="280" data-i18n-ph="em.ph" placeholder="Σύντομες ιατρικές πληροφορίες"></textarea>
+        <label class="setting check"><input type="radio" name="emVis" value="off" checked> <span data-i18n="em.off">Κανείς (κλειστή)</span></label>
+        <label class="setting check"><input type="radio" name="emVis" value="everyone"> <span data-i18n="em.all">Όσοι με βλέπουν</span></label>
+        <label class="setting check"><input type="radio" name="emVis" value="emergency"> <span data-i18n="em.emerg">Μόνο αν κάποιος έχει ανοίξει τη λειτουργία «Βοηθώ σε ανάγκη»</span></label>
+        <div class="row"><button id="emSave" type="button" class="primary big" data-i18n="common.save">💾 Αποθήκευση</button></div>
+      </div>
     </div>
     <p class="small" data-i18n="srv.about">Με το online προφίλ, η αναγνώριση γίνεται από κοινό server: ο καθένας καταχωρίζει μόνο τον εαυτό του και διαλέγει ποιος βλέπει το μήνυμά του. Για την αναγνώριση στέλνεται μόνο ένα αριθμητικό αποτύπωμα του προσώπου, όχι εικόνα· στην καταχώριση στέλνονται οι φωτογραφίες σου.</p>
   </section>
@@ -301,9 +318,55 @@
       <label class="setting check"><input id="srvPings" type="checkbox"> <span data-i18n="pings.accept">Δέχομαι μηνύματα</span></label>
       <p class="small" data-i18n="pings.about">Όσοι σε βλέπουν στην κάμερα μπορούν να σε πατήσουν και να σου στείλουν μια καρδιά ❤️, ένα 👋 ή ένα σύντομο μήνυμα. Εμφανίζεται για λίγα δευτερόλεπτα στην οθόνη σου.</p>
     </div>
+    <div id="waitBox" class="v34-waiting hidden me-only">
+      <h3 data-i18n="wait.mine">Μηνύματα που περιμένουν</h3>
+      <div id="waitList"></div>
+      <p id="waitEmpty" class="small" data-i18n="wait.empty">Κανένα μήνυμα σε αναμονή.</p>
+    </div>
   </section>
 
-  <!-- 🌐 language -->
+  
+  <!-- v34: missing person -->
+  <section class="spage" data-page="safety">
+    <p class="pilot" data-i18n="saf.pilot">Αυτό είναι δοκιμαστικό (πιλοτικό). Σε πραγματικό κίνδυνο κάλεσε αμέσως το 100 ή το 112.</p>
+    <p class="small" data-i18n="saf.intro">Φτιάξε από πριν ένα προφίλ ασφαλείας για ένα ευάλωτο άτομο (π.χ. παππού με άνοια). Μένει ανενεργό. Αν χαθεί, ζητάς έγκριση από τον διαχειριστή — μέχρι τότε δεν το βλέπει κανείς.</p>
+    <p id="safNeed" class="small" data-i18n="saf.needServer">Χρειάζεται σύνδεση με τον server της οικογένειας (έκδοση 0.9.0+).</p>
+    <button id="safCreate" type="button" class="primary big hidden" data-i18n="saf.create">＋ Νέο προφίλ ασφαλείας</button>
+    <div id="safForm" class="scard hidden">
+      <input id="safName" type="text" maxlength="80" data-i18n-ph="saf.namePh" placeholder="Όνομα (π.χ. Παππούς Γιάννης)" autocomplete="off">
+      <textarea id="safMsg" rows="3" maxlength="200" data-i18n-ph="saf.msgPh" placeholder="Μήνυμα"></textarea>
+      <p class="small" data-i18n="saf.msgHint">Μόνο αυτό το μήνυμα εμφανίζεται. Μην γράφεις διεύθυνση ή άλλα προσωπικά στοιχεία.</p>
+      <label class="setting check"><input id="safConsentSelf" type="checkbox"> <span data-i18n="saf.consentSelf">Το άτομο συμφώνησε</span></label>
+      <label class="setting check"><input id="safConsentGuard" type="checkbox"> <span data-i18n="saf.consentGuard">Είμαι κηδεμόνας ή στενός συγγενής</span></label>
+      <textarea id="safConsentNote" rows="2" maxlength="300" data-i18n-ph="saf.consentNotePh" placeholder="Σύντομη δήλωση"></textarea>
+      <label class="setting"><span data-i18n="saf.days">Αυτόματη λήξη μετά από (ημέρες)</span>
+        <input id="safDays" type="number" min="1" max="30" value="7"></label>
+      <div class="row"><button id="safFormCancel" type="button" class="big" data-i18n="saf.cancel">Άκυρο</button>
+        <button id="safFormGo" type="button" class="primary big" data-i18n="saf.nextPhoto">Συνέχεια στη φωτογράφιση</button></div>
+    </div>
+    <div id="safList"></div>
+    <p id="safEmpty" class="small" data-i18n="saf.empty">Δεν έχεις προφίλ ασφαλείας ακόμα.</p>
+  </section>
+
+  <!-- v34: accessibility -->
+  <section class="spage" data-page="a11y">
+    <div class="scard">
+      <label class="setting check"><input id="a11yCare" type="checkbox"> <span data-i18n="a11y.care">Εμφάνιση για φροντιστή</span></label>
+      <p class="small" data-i18n="a11y.careHint">Ανοίγει μαζί φωνή, μεγάλα γράμματα και υψηλή αντίθεση. Μπορείς να τα κλείσεις όποτε θέλεις.</p>
+    </div>
+    <div class="scard">
+      <label class="setting check"><input id="a11ySpeak" type="checkbox"> <span data-i18n="a11y.speak">Εκφώνηση ονομάτων</span></label>
+      <p class="small" data-i18n="a11y.speakHint">Λέει π.χ. «Αυτή είναι η Μαρία» στη γλώσσα που διάλεξες.</p>
+      <label class="setting check"><input id="a11yLarge" type="checkbox"> <span data-i18n="a11y.large">Μεγάλα γράμματα</span></label>
+      <label class="setting check"><input id="a11yContrast" type="checkbox"> <span data-i18n="a11y.contrast">Υψηλή αντίθεση</span></label>
+    </div>
+    <div class="scard v34-emergency">
+      <label class="setting check"><input id="emMode" type="checkbox"> <span data-i18n="em.mode">Βοηθώ σε έκτακτη ανάγκη</span></label>
+      <p class="small" data-i18n="em.modeHint">Αν το ανοίξεις, βλέπεις κάρτες που οι άλλοι έχουν ορίσει «μόνο σε ανάγκη».</p>
+    </div>
+  </section>
+
+<!-- 🌐 language -->
   <section class="spage" data-page="lang">
     <div class="lang-list set-langs" role="radiogroup">
       <button type="button" class="set-lang" role="radio" data-lang="el"><span class="lang-flag">🇬🇷</span><span>Ελληνικά</span></button>
@@ -456,7 +519,8 @@
     <p id="meetNames" class="meet-names"></p>
     <p id="meetDate" class="small"></p>
     <div class="row meet-actions">
-      <button id="meetShare" type="button" class="primary big" data-i18n="meet.share">📤 Κοινοποίηση</button>
+      <button id="meetSaveImg" type="button" class="primary big" data-i18n="meet.shareImg">📤 Κοινοποίηση εικόνας</button>
+      <button id="meetShare" type="button" class="big" data-i18n="meet.share">📤 Κοινοποίηση</button>
       <button id="meetClose" type="button" class="big" data-i18n="common.close">Κλείσιμο</button>
     </div>
   </div>
@@ -476,6 +540,7 @@
   </div>
   <div class="set-body help-body">
     <input id="helpSearch" type="search" maxlength="60" placeholder="Αναζήτηση…" data-i18n-ph="help.searchPh" autocomplete="off">
+    <button id="helpTut" type="button" class="primary big" data-i18n="tut.start">Ξεκίνα τον οδηγό</button>
     <button id="helpTour" type="button" class="big" data-i18n="help.tour">▶️ Γρήγορη ξενάγηση</button>
     <div id="helpCats"></div>
     <h3 data-i18n="help.faqTitle">Συχνές ερωτήσεις</h3>
@@ -511,6 +576,81 @@
     <p id="delBody"></p>
     <p id="delInfo" class="small err" aria-live="polite"></p>
     <div class="row cs-row"><button id="delNo" type="button" data-i18n="cs.cancel">Άκυρο</button><button id="delYes" type="button" class="danger" data-i18n="del.yes">Ναι, διαγραφή</button></div>
+  </div>
+</div>
+
+
+<!-- v34 HUD overlays -->
+<div id="v34hud" aria-live="polite"></div>
+
+<!-- v34 illustrated tutorial -->
+<div id="tutSheet" class="panel full hidden" role="dialog" aria-modal="true" aria-labelledby="tutTitle">
+  <div class="phead set-head">
+    <h2 id="tutTitle" data-i18n="tut.title">Οδηγός Noera</h2>
+    <button id="tutClose" class="pill" type="button" aria-label="Κλείσιμο" data-i18n-aria="common.close">✕</button>
+  </div>
+  <div class="set-body tut-body">
+    <p id="tutStep" class="small"></p>
+    <img id="tutArt" class="tut-art" alt="">
+    <h3 id="tutHeading"></h3>
+    <p id="tutBody"></p>
+    <div class="row">
+      <button id="tutPrev" type="button" class="big" data-i18n="tut.prev">Πίσω</button>
+      <button id="tutNext" type="button" class="primary big" data-i18n="tut.next">Επόμενο</button>
+    </div>
+  </div>
+</div>
+
+<!-- v34 confirm -->
+<div id="askSheet" class="sheet center hidden" role="dialog" aria-modal="true">
+  <div class="card">
+    <h2 id="askTitle"></h2>
+    <p id="askBody"></p>
+    <div class="row cs-row"><button id="askNo" type="button" class="big" data-i18n="saf.cancel">Άκυρο</button>
+      <button id="askYes" type="button" class="primary big" data-i18n="saf.yes">Ναι</button></div>
+  </div>
+</div>
+
+<!-- v34 emergency card view -->
+<div id="emViewSheet" class="sheet center hidden" role="dialog" aria-modal="true">
+  <div class="card">
+    <h2 data-i18n="em.title">Κάρτα έκτακτης ανάγκης</h2>
+    <p id="emViewBody" class="em-body"></p>
+    <button id="emViewClose" type="button" class="primary big" data-i18n="common.close">Κλείσιμο</button>
+  </div>
+</div>
+
+<!-- v34 leave a waiting message -->
+<div id="waitSheet" class="sheet center hidden" role="dialog" aria-modal="true">
+  <div class="card">
+    <h2 data-i18n="wait.leave">Άφησε ένα μήνυμα</h2>
+    <p id="waitFor" class="small"></p>
+    <input id="waitEmoji" type="text" maxlength="8" placeholder="👋" style="max-width:5em">
+    <input id="waitText" type="text" maxlength="80" data-i18n-ph="wait.ph" placeholder="Μήνυμα">
+    <div class="row"><button id="waitClose" type="button" class="big" data-i18n="saf.cancel">Άκυρο</button>
+      <button id="waitSend" type="button" class="primary big" data-i18n="wait.send">Αποθήκευση μηνύματος</button></div>
+  </div>
+</div>
+
+<!-- v34 where we met (local note) -->
+<div id="metSheet" class="sheet center hidden" role="dialog" aria-modal="true">
+  <div class="card">
+    <h2 data-i18n="mem.where">Πού γνωριστήκαμε</h2>
+    <p id="metFor"></p>
+    <p id="metAuto" class="small"></p>
+    <textarea id="metNote" rows="3" maxlength="200" data-i18n-ph="mem.notePh" placeholder="Προσωπική σημείωση"></textarea>
+    <div class="row"><button id="metClose" type="button" class="big" data-i18n="saf.cancel">Άκυρο</button>
+      <button id="metSave" type="button" class="primary big" data-i18n="mem.save">Αποθήκευση σημείωσης</button></div>
+  </div>
+</div>
+
+<!-- v34 memory photo preview / iOS save -->
+<div id="memImgSheet" class="sheet center hidden" role="dialog" aria-modal="true">
+  <div class="card mem-card">
+    <img id="memImg" alt="Noera">
+    <p class="small" data-i18n="meet.imgHint">Στο iPhone: πάτησε παρατεταμένα την εικόνα και διάλεξε «Αποθήκευση εικόνας».</p>
+    <div class="row"><a id="memDl" class="btn primary big" data-i18n="meet.saveImg">📷 Αποθήκευση εικόνας</a>
+      <button id="memImgClose" type="button" class="big" data-i18n="common.close">Κλείσιμο</button></div>
   </div>
 </div>
 

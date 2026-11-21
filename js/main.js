@@ -559,7 +559,7 @@ function pageAvailable(pg) {
   if (pg === 'profile') return !!cfg.url;
   if (pg === 'who') return me && (!$('srvPrivBox').classList.contains('hidden') || !$('srvVisBox').classList.contains('hidden'));
   if (pg === 'pings') return me && !$('pingBox').classList.contains('hidden');
-  if (pg === 'help') return true;   // v33: full help sheet
+  if (pg === 'help' || pg === 'tutorial') return true;   // sheets opened from the menu
   if (pg === 'events') return !!(cfg.url && cfg.token && (hasCap('events') || hasCap('groups')));
   if (pg === 'safety') return true;   // page itself explains when a 0.9.0 server is needed
   if (pg === 'a11y') return true;

@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v33 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v34 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -72,7 +72,10 @@
 | **Για προχωρημένους** | Αυστηρότητα αναγνώρισης, εμβέλεια ανίχνευσης, αντίγραφο ασφαλείας / επαναφορά JSON, διαγραφή όλων στη συσκευή, αποσύνδεση συσκευής· για διαχειριστή: διεύθυνση server, token, έλεγχος σύνδεσης. |
 | **Εκδηλώσεις** | Φτιάξε ή μπες με κωδικό / QR (χρειάζεται server 0.8.0+). |
 | **Τα επιτεύγματά μου** | Τοπικά σήματα στη συσκευή — χωρίς πίεση / spam. |
-| **Οδηγός και βοήθεια** | Κατηγορίες, αναζήτηση, FAQ, γρήγορη ξενάγηση. |
+| **Χαμένο άτομο** | Προφίλ ασφαλείας για ευάλωτο άτομο (server 0.9.0+). |
+| **Εύκολη χρήση** | Εκφώνηση ονομάτων, μεγάλα γράμματα, υψηλή αντίθεση, εμφάνιση για φροντιστή. |
+| **Οδηγός με σκίτσα** | Βήμα-βήμα, με απλά σκίτσα, και στις 4 γλώσσες. |
+| **Οδηγός και βοήθεια** | Κατηγορίες, αναζήτηση, FAQ, γρήγορη ξενάγηση και σύνδεσμος στον οδηγό με σκίτσα. |
 
 ---
 
@@ -80,9 +83,53 @@
 
 - **Χαιρετισμοί / μηνύματα:** πάτα κάποιον που αναγνωρίστηκε → διάλεξε emoji (π.χ. 👋 ❤️ 😂 🎉 👍 και άλλα) ή σύντομο κείμενο. Εμφανίζεται λίγο στην οθόνη του· ισχύουν τα ίδια όρια/απόρρητο με τα μηνύματα. Για χαιρετισμούς με μικρό εφέ στο κεφάλι ισχύουν τα ίδια όρια.
 - **Επιτεύγματα** (μόνο σε αυτό το κινητό): ξεκλειδώνουν μόνα τους (π.χ. 10/50 γνωριμίες, 5/25 χαιρετισμοί, ποικιλία emoji σε μια μέρα, εκδήλωση, πρώτο φίλτρο). Σύντομο toast όταν ξεκλειδώνει κάτι νέο· λίστα στο «Τα επιτεύγματά μου».
-- **«Γνωριστήκατε!»:** κάρτα στην πρώτη συνάντηση, με ημερομηνία και κοινοποίηση.
+- **«Γνωριστήκατε!»:** κάρτα στην πρώτη συνάντηση, με ημερομηνία και κοινοποίηση. Μπορείς επίσης να **κοινοποιήσεις ή να αποθηκεύσεις μια εικόνα** («Γνωριστήκαμε στο … στις …») με τα ονόματα, την ημερομηνία και το λογότυπο Noera. Στο iPhone: κοινοποίηση ή παρατεταμένο πάτημα → «Αποθήκευση εικόνας».
 - **Εκδηλώσεις:** Ρυθμίσεις → Εκδηλώσεις → φτιάξε όνομα → μοιράσου **κωδικό**, **σύνδεσμο** ή **QR**. Οι άλλοι μπαίνουν με κωδικό ή σάρωση QR. Όσοι είναι στην ίδια εκδήλωση βλέπουν ονόματα μεταξύ τους (σύμφωνα με τις ρυθμίσεις ορατότητας).
 - **Πίνακας χαιρετισμών:** προαιρετικό **opt-in** («Συμμετοχή στον πίνακα χαιρετισμών»). Μόνο αν το ενεργοποιήσεις· μπορείς να το κλείσεις· σέβεται αποκλεισμούς.
+
+---
+
+## Οδηγός με σκίτσα
+
+Από το μενού **«📘 Οδηγός με σκίτσα»** ή από Βοήθεια → **«Ξεκίνα τον οδηγό»**. 14 βήματα με απλά σκίτσα (όχι πραγματικά πρόσωπα) και σύντομο κείμενο, στις γλώσσες Ελληνικά / English / Français / Deutsch. Εξηγεί την κάμερα, την καταχώριση, τα μηνύματα, τις εκδηλώσεις, τη φωτο ανάμνησης, το χαμένο άτομο, την κάρτα ανάγκης, την εύκολη χρήση και το απόρρητο.
+
+---
+
+## Χαμένο άτομο (πιλοτικό, ιδιωτικό)
+
+**Αυτό είναι δοκιμαστικό (πιλοτικό). Σε πραγματικό κίνδυνο κάλεσε αμέσως το 100 ή το 112.**
+
+Χρειάζεται οικογενειακό server **0.9.0+** και την εφαρμογή v34.
+
+1. **Από πριν:** Ρυθμίσεις → **Χαμένο άτομο** → «＋ Νέο προφίλ ασφαλείας». Γράφεις το όνομα και **μόνο ένα σύντομο μήνυμα** που θα δουν όσοι τον/την βρουν (π.χ. «Με λένε Γιάννη, μπορεί να έχω χαθεί, καλέστε το 100»). **Μην γράφεις διεύθυνση ή άλλα προσωπικά στοιχεία.** Δηλώνεις συναίνεση του ατόμου ή ότι είσαι κηδεμόνας / στενός συγγενής, με σύντομη δήλωση. Προεπιλογή: αυτόματη λήξη σε **7 ημέρες** (1–30).
+2. **Φωτογράφιση:** γίνεται **μόνο με την κάμερα**, όπως στην κανονική καταχώριση (όχι ανέβασμα φωτογραφίας αγνώστου). Το προφίλ μένει **ανενεργό** — δεν το βλέπει κανείς.
+3. Αν το άτομο χαθεί: πάτα **«Το άτομο χάθηκε»**. Ζητείται **έγκριση από τον διαχειριστή** του server (πίνακας ελέγχου ή εντολή `admin-windows.bat approve …`). **Μέχρι να εγκριθεί, η ειδοποίηση δεν φαίνεται σε κανέναν.**
+4. Ένας περαστικός που τον/την βλέπει στην κάμερα βλέπει **μόνο το μήνυμα** πάνω από το κεφάλι (όχι όνομα, όχι διεύθυνση) και ένα μεγάλο κουμπί **«Τον/την είδα»**. Η τοποθεσία στέλνεται **μόνο αν συμφωνήσει ρητά**, και **μόνο στην οικογένεια (δημιουργό) και τον διαχειριστή** — ποτέ δημόσια. Υπάρχει και **Αναφορά** σε περίπτωση κατάχρησης.
+5. Η οικογένεια πατά **«Τον/την βρήκαμε»** — ή η ειδοποίηση κλείνει μόνη της μετά τις ημέρες που όρισες. Τότε διαγράφονται τα αποτυπώματα, η ειδοποίηση και οι θεάσεις.
+
+Όρια προστασίας: λίγα προφίλ ανά δημιουργό (έως 3 ανοιχτά), φωτογράφιση μόνο με ζωντανή κάμερα, αναφορά, και ο διαχειριστής μπορεί να αφαιρέσει μια ειδοποίηση.
+
+---
+
+## Κάρτα έκτακτης ανάγκης
+
+Προαιρετική, **κλειστή από προεπιλογή**. Στο **Προφίλ μου** γράφεις σύντομες ιατρικές πληροφορίες (π.χ. «Διαβητικός, αλλεργία στην πενικιλίνη, τηλ. επαφής…») και διαλέγεις ποιος τις βλέπει: **κανείς** / **όσοι με βλέπουν** / **μόνο αν κάποιος έχει ανοίξει «Βοηθώ σε έκτακτη ανάγκη»** (στις Ρυθμίσεις → Εύκολη χρήση). Ο άλλος ανοίγει την κάρτα από την ετικέτα / το κουμπί 🚑 στην οθόνη της κάμερας.
+
+---
+
+## Πού γνωριστήκαμε και μηνύματα που περιμένουν
+
+- **Πού γνωριστήκαμε:** σε εκδηλώσεις, η ετικέτα μπορεί να δείχνει το όνομα της εκδήλωσης και την ημερομηνία. Μπορείς να γράψεις **προσωπική σημείωση** (πάτα το άτομο → «Πού γνωριστήκαμε»). Η σημείωση **μένει μόνο σε αυτό το κινητό**.
+- **Μήνυμα που περιμένει:** πάτα κάποιον που γνωρίζεις → **«Άφησε ένα μήνυμα»** (κείμενο και προαιρετικό emoji). Το βλέπει **πάνω από το κεφάλι σου** την επόμενη φορά που θα σας συναντήσει. Αποθηκεύεται στον server, εμφανίζεται **μία φορά**, λήγει σε **30 ημέρες**· μπορείς να το διαγράψεις πριν το δει. Σέβεται αποκλεισμούς. Τα δικά σου σε αναμονή φαίνονται στα **Μηνύματα**.
+
+---
+
+## Εύκολη χρήση
+
+Ρυθμίσεις → **Εύκολη χρήση**:
+- **Εκφώνηση ονομάτων** — λέει π.χ. «Αυτός/αυτή είναι: Μαρία» στη γλώσσα που διάλεξες (Web Speech).
+- **Μεγάλα γράμματα** και **υψηλή αντίθεση**.
+- **Εμφάνιση για φροντιστή:** ένα πάτημα ανοίγει και τα τρία μαζί. Μπορείς να τα κλείσεις όποτε θέλεις.
 
 ---
 
@@ -138,7 +185,7 @@
 
 ## Βοήθεια μέσα στην εφαρμογή
 
-Ρυθμίσεις → **Οδηγός και βοήθεια**: κατηγορίες (φωτογράφιση, ονόματα, χαιρετισμοί, εκδηλώσεις, προσκλήσεις, απόρρητο, αναφορά, επιτεύγματα, φίλτρα, γλώσσα, εγκατάσταση), **αναζήτηση** και **FAQ** (π.χ. «Γιατί δεν με βλέπει κανείς;», κάμερα, διαγραφή, χαιρετισμός).
+Ρυθμίσεις → **Οδηγός και βοήθεια**: κατηγορίες (φωτογράφιση, ονόματα, χαιρετισμοί, εκδηλώσεις, προσκλήσεις, απόρρητο, αναφορά, επιτεύγματα, φίλτρα, γλώσσα, εγκατάσταση, χαμένο άτομο, κάρτα ανάγκης, μήνυμα που περιμένει, εύκολη χρήση, οδηγός με σκίτσα), **αναζήτηση** και **FAQ** (π.χ. «Γιατί δεν με βλέπει κανείς;», κάμερα, διαγραφή, χαιρετισμός, «Πώς δηλώνω ότι χάθηκε κάποιος;»). Από εκεί ξεκινά και ο **οδηγός με σκίτσα**.
 
 ---
 
@@ -172,7 +219,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v33 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v34 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -237,7 +284,10 @@ Recognised faces get a **3D name** (and optional message / object / filter). Tap
 | **Advanced** | Recognition strictness, detection range, backup/restore JSON, clear device data, sign-out; admin: server URL, token, connection test. |
 | **Events** | Create or join with code / QR (server 0.8.0+). |
 | **My achievements** | Local badges on this device — no spam. |
-| **Help** | Categories, search, FAQ, quick tour. |
+| **Missing person** | Safety profile for a vulnerable person (server 0.9.0+). |
+| **Easier to use** | Spoken names, large text, high contrast, caregiver layout. |
+| **Illustrated guide** | Step-by-step sketches, in all 4 languages. |
+| **Help** | Categories, search, FAQ, quick tour, and a link to the illustrated guide. |
 
 ---
 
@@ -245,9 +295,53 @@ Recognised faces get a **3D name** (and optional message / object / filter). Tap
 
 - **Greetings / messages:** tap a recognised person → emoji (e.g. 👋 ❤️ 😂 🎉 👍 and more) or short text. Same privacy/limits as messages; greet FX follows the same rules.
 - **Achievements** (this device only): unlock quietly (e.g. 10/50 meets, 5/25 greets, emoji variety in a day, joined/created an event, tried a filter). Toast on unlock; list under My achievements.
-- **「You met!」** card on first encounter, with date and share.
+- **「You met!」** card on first encounter, with date and share. You can also **share or save an image** (“We met at … on …”) with the names, the date and Noera branding. On iPhone: share, or press and hold → “Save Image”.
 - **Events:** create → share **code**, **link**, or **QR**; others join by code or QR scan.
 - **Greetings leaderboard:** optional **opt-in** only; can turn off; respects blocks.
+
+---
+
+## Illustrated guide
+
+From the menu **“📘 Illustrated guide”** or Help → **“Start the guide”**. 14 steps with simple sketches (no real faces) and short text, in Greek / English / Français / Deutsch. It covers the camera, enrolment, messages, events, the memory photo, missing-person alerts, the emergency card, accessibility and privacy.
+
+---
+
+## Missing person (pilot, privacy-first)
+
+**This is a pilot. In a real emergency call 100 or 112 immediately.**
+
+Needs a family server **0.9.0+** and app v34.
+
+1. **In advance:** Settings → **Missing person** → “＋ New safety profile”. Enter the name and **only a short message** that others will see (e.g. “My name is John, I may be lost, please call 100”). **Do not include an address or other personal details.** Record the person’s consent, or declare that you are their legal guardian / close relative, with a short note. Default auto-close: **7 days** (1–30).
+2. **Photos:** taken **only with the live camera**, like a normal enrolment (no upload of a stranger’s photo). The profile stays **inactive** — nobody can see it.
+3. If they go missing: tap **“This person is missing”**. This asks the server **administrator** to approve (dashboard, or `admin-windows.bat approve …`). **Until approval, the alert is shown to nobody.**
+4. A passer-by who sees them in the camera gets **only that message** above the head (no name, no address) and a large **“I saw them”** button. Location is sent **only with explicit permission**, and **only to the family (creator) and the administrator** — never publicly. There is also a **Report** button against abuse.
+5. The family taps **“We found them”**, or the alert closes automatically after the days you set. Then the fingerprints, the alert and the sightings are deleted.
+
+Safeguards: a few profiles per creator (max 3 open), live-camera enrolment only, report button, and the administrator can remove an alert.
+
+---
+
+## Emergency card
+
+Optional, **off by default**. In **My profile** you can write short medical information (e.g. “Diabetic, penicillin allergy, contact number…”) and choose who sees it: **no one** / **people who can see me** / **only if someone has turned on “I am helping in an emergency”** (Settings → Easier to use). Others open the card from the label / the 🚑 button on the camera screen.
+
+---
+
+## Where we met, and waiting messages
+
+- **Where we met:** in events, the label can show the event name and date. You can add a **personal note** (tap the person → “Where we met”). The note **stays on this phone only**.
+- **Waiting message:** tap someone you have met → **“Leave a message”** (text and optional emoji). They see it **above your head** the next time you meet. Stored on the server, shown **once**, expires after **30 days**; you can delete it beforehand. Respects blocks. Your waiting messages are listed under **Messages**.
+
+---
+
+## Easier to use
+
+Settings → **Easier to use**:
+- **Speak names aloud** — e.g. “This is: Maria” in the language you chose (Web Speech).
+- **Large text** and **high contrast**.
+- **Caregiver layout:** one tap turns all three on. You can switch them off any time.
 
 ---
 
@@ -301,7 +395,7 @@ From **v25** onward, app code is **network-first**: you get a new published vers
 
 ## In-app help
 
-Settings → **Help**: categories, search, FAQ (why nobody sees me, camera, delete, greetings).
+Settings → **Help**: categories (enrolment, names, greetings, events, invites, privacy, report, achievements, filters, language, install, missing person, emergency card, waiting message, accessibility, illustrated guide), **search**, and **FAQ** (why nobody sees me, camera, delete, greetings, “How do I report someone missing?”). The **illustrated guide** also starts from here.
 
 ---
 

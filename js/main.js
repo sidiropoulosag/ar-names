@@ -985,7 +985,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v34';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v35';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -2329,7 +2329,7 @@ function renderAch() {
 
 // help sheet
 const HELP_CATS = ['photo', 'names', 'greet', 'events', 'invite', 'privacy', 'report', 'ach', 'filt', 'lang', 'install', 'safety', 'emergency', 'waiting', 'a11y', 'tutorial'];
-const HELP_FAQ = ['see', 'cam', 'del', 'greet', 'lost'];
+const HELP_FAQ = ['see', 'cam', 'del', 'greet', 'lost', 'update'];
 function buildHelp(q) {
   const qq = (q || '').trim().toLowerCase();
   const cats = $('helpCats'); cats.innerHTML = '';

@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v34 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v35 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -99,7 +99,7 @@
 
 **Αυτό είναι δοκιμαστικό (πιλοτικό). Σε πραγματικό κίνδυνο κάλεσε αμέσως το 100 ή το 112.**
 
-Χρειάζεται οικογενειακό server **0.9.0+** και την εφαρμογή v34.
+Χρειάζεται οικογενειακό server **0.9.0+** και την εφαρμογή v34+.
 
 1. **Από πριν:** Ρυθμίσεις → **Χαμένο άτομο** → «＋ Νέο προφίλ ασφαλείας». Γράφεις το όνομα και **μόνο ένα σύντομο μήνυμα** που θα δουν όσοι τον/την βρουν (π.χ. «Με λένε Γιάννη, μπορεί να έχω χαθεί, καλέστε το 100»). **Μην γράφεις διεύθυνση ή άλλα προσωπικά στοιχεία.** Δηλώνεις συναίνεση του ατόμου ή ότι είσαι κηδεμόνας / στενός συγγενής, με σύντομη δήλωση. Προεπιλογή: αυτόματη λήξη σε **7 ημέρες** (1–30).
 2. **Φωτογράφιση:** γίνεται **μόνο με την κάμερα**, όπως στην κανονική καταχώριση (όχι ανέβασμα φωτογραφίας αγνώστου). Το προφίλ μένει **ανενεργό** — δεν το βλέπει κανείς.
@@ -154,7 +154,7 @@
 
 ## Σύνδεση με οικογενειακό / ομαδικό server
 
-Χρειάζεται σύνδεση (και προφίλ στο δίκτυο) για κοινά προφίλ, μηνύματα/χαιρετισμούς μεταξύ συσκευών, ομάδες, εκδηλώσεις και πίνακα χαιρετισμών. Ο διαχειριστής τρέχει έναν server στο σπίτι / στον οργανισμό· **δεν** περιγράφουμε εδώ προσωπικές διευθύνσεις ή κλειδιά.
+Χρειάζεται σύνδεση (και προφίλ στο δίκτυο) για κοινά προφίλ, μηνύματα/χαιρετισμούς μεταξύ συσκευών, ομάδες, εκδηλώσεις και πίνακα χαιρετισμών. Ο διαχειριστής τρέχει έναν server· **δεν** περιγράφουμε εδώ προσωπικές διευθύνσεις ή κλειδιά.
 
 **Τρόποι εγγραφής νέων** (όπως τους λέει ο server στην εφαρμογή):
 - **Ανοιχτή** — γράφεις όνομα και καταχωρίζεσαι
@@ -169,7 +169,7 @@
 
 ## Πίνακας ελέγχου στο PC (διαχειριστής)
 
-Ο διαχειριστής της οικογένειας τρέχει τον server στο σπίτι (πακέτο `ar-names-pc`, έκδοση **0.9.1**). Αυτό το README **δεν** δημοσιεύει προσωπικές διευθύνσεις ή κλειδιά.
+Ο διαχειριστής της οικογένειας τρέχει τον server (πακέτο `ar-names-pc`, έκδοση **0.9.1**). Αυτό το README **δεν** δημοσιεύει προσωπικές διευθύνσεις ή κλειδιά.
 
 - **`dashboard-windows.bat`** ανοίγει τον **Πίνακα ελέγχου** στον ίδιο υπολογιστή (μεγάλα κουμπιά, απλά ελληνικά, χωρίς κλειδί στην οθόνη). Στην κορυφή φαίνεται καθαρή εικόνα: πόσοι είναι καταχωρισμένοι / ενεργοί / online, ανοιχτές αναφορές, ειδοποιήσεις σε αναμονή και ενεργές, μηνύματα σε αναμονή, κάρτες ανάγκης σε χρήση.
 - **Ειδοποιήσεις εξαφάνισης / προφίλ ασφαλείας:** λίστα, **Έγκριση**, **Όχι**, **Αφαίρεση**, ημερομηνία λήξης, και κάθε θέαση με ώρα και τόπο. Φαίνονται και οι αναφορές σε προφίλ (μπορείς να τις τακτοποιήσεις ή να αφαιρέσεις το προφίλ). Μέχρι την έγκριση, η ειδοποίηση δεν φαίνεται σε κανέναν στην εφαρμογή.
@@ -182,6 +182,8 @@
 ## Ανανεώσεις
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
+
+**v35:** ο προεπιλεγμένος οικογενειακός server μεταφέρθηκε. Στο επόμενο άνοιγμα, όσες συσκευές χρησιμοποιούσαν την ενσωματωμένη διεύθυνση ενημερώνονται μόνες τους. Αν είχες γράψει δικιά σου διεύθυνση στις προχωρημένες ρυθμίσεις, μένει όπως είναι.
 
 ---
 
@@ -231,7 +233,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v34 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v35 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -323,7 +325,7 @@ From the menu **“📘 Illustrated guide”** or Help → **“Start the guide�
 
 **This is a pilot. In a real emergency call 100 or 112 immediately.**
 
-Needs a family server **0.9.0+** and app v34.
+Needs a family server **0.9.0+** and app v34+.
 
 1. **In advance:** Settings → **Missing person** → “＋ New safety profile”. Enter the name and **only a short message** that others will see (e.g. “My name is John, I may be lost, please call 100”). **Do not include an address or other personal details.** Record the person’s consent, or declare that you are their legal guardian / close relative, with a short note. Default auto-close: **7 days** (1–30).
 2. **Photos:** taken **only with the live camera**, like a normal enrolment (no upload of a stranger’s photo). The profile stays **inactive** — nobody can see it.
@@ -391,7 +393,7 @@ Empty/custom server URL in advanced settings → on-device only.
 
 ## PC dashboard (administrator)
 
-The family administrator runs the server at home (the `ar-names-pc` package, version **0.9.1**). This README **does not** publish personal server URLs or keys.
+The family administrator runs the server (the `ar-names-pc` package, version **0.9.1**). This README **does not** publish personal server URLs or keys.
 
 - **`dashboard-windows.bat`** opens the **control panel** on that same computer (large buttons, plain Greek, no key on the page). At the top is a clear status overview: how many people are enrolled / active / online, open reports, pending and active missing-person alerts, waiting messages, and how many emergency cards are in use.
 - **Missing-person alerts / safety profiles:** list them, **Approve**, **No**, or **Remove**; see the expiry date and each sighting with time and location; review reports on a profile (mark them handled, or remove the profile). Until approval, the alert is shown to nobody in the app.
@@ -404,6 +406,8 @@ The family administrator runs the server at home (the `ar-names-pc` package, ver
 ## Updates
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
+
+**v35:** the built-in family server moved. On the next open, devices that used the built-in address update automatically. If you typed your own address in advanced settings, it is left as it is.
 
 ---
 

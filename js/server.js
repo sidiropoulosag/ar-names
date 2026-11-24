@@ -2,21 +2,41 @@ import { t, has as hasKey, getLang } from './i18n.js';
 // "Family server" mode: API client, settings (localStorage) and Greek messages.
 // The family server below is used by default; change it here (one place). Users can change it or clear it
 // (= on-device only) in Settings.
-export const DEFAULT_SERVER_URL = 'https://arnames.taila38131.ts.net';
+export const DEFAULT_SERVER_URL = 'https://5-222-26-155.sslip.io';
+export const FALLBACK_SERVER_URL = 'https://arnames.taila38131.ts.net';
 const KEY = 'ar-names-server';
+const FALLBACK_MS = 5 * 60 * 1000;
+let fallbackUntil = 0;   // session-only: after a failed default, use the old server for a few minutes
 
 // Stored settings: 'serverUrl' exists ONLY if the user edited the address ('' = server switched off).
 // No 'serverUrl' -> DEFAULT_SERVER_URL. Older versions stored 'url': a non-empty one counts as the user's choice.
+// A saved copy of the previous built-in default (Tailscale) is treated as "no custom URL" and moved to the new default.
+export function canonUrl(u) {
+  u = normUrl(u);
+  if (!u) return '';
+  try {
+    const x = new URL(u);
+    x.hostname = x.hostname.toLowerCase();
+    const path = x.pathname === '/' ? '' : x.pathname.replace(/\/+$/, '');
+    return x.protocol + '//' + x.hostname + (x.port ? ':' + x.port : '') + path + x.search;
+  } catch (e) { return u.toLowerCase(); }
+}
+export function isLegacyDefaultUrl(u) { return canonUrl(u) === canonUrl(FALLBACK_SERVER_URL); }
+function canFallback(cfg) { return cfg && cfg.customUrl === null && canonUrl(cfg.url) === canonUrl(DEFAULT_SERVER_URL); }
 export function loadCfg() {
   let c = {};
   try { c = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { c = {}; }
   let custom = null;
   if (typeof c.serverUrl === 'string') custom = c.serverUrl;
   else if (typeof c.url === 'string' && c.url.trim()) custom = c.url;
-  return {
+  let migrated = false;
+  if (custom !== null && custom !== '' && isLegacyDefaultUrl(custom)) { custom = null; migrated = true; }
+  const cfg = {
     token: c.token || '', enabled: !!c.enabled, personId: c.personId ?? null, name: c.name || '',
     customUrl: custom, url: custom === null ? DEFAULT_SERVER_URL : normUrl(custom),
   };
+  if (migrated) saveCfg(cfg);
+  return cfg;
 }
 export function saveCfg(c) {
   const o = { token: c.token, enabled: c.enabled, personId: c.personId, name: c.name };
@@ -65,22 +85,43 @@ export class Api {
     let body;
     if (json !== undefined) { headers['Content-Type'] = 'application/json'; body = JSON.stringify(json); }
     else if (form) body = form;
-    const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), timeout);
-    let r;
+    const go = async (base) => {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), timeout);
+      let r;
+      try {
+        r = await fetch(base + path, { method, headers, body, mode: 'cors', credentials: 'omit', cache: 'no-store', signal: ctl.signal });
+      } catch (e) {
+        throw new ApiError(0, e.name === 'AbortError' ? 'timeout' : 'offline', String(e && e.message || e));
+      } finally { clearTimeout(timer); }
+      let data = null;
+      try { data = await r.json(); } catch (e) { data = null; }
+      if (!r.ok) {
+        const d = data && data.detail;
+        if (d && typeof d === 'object' && !Array.isArray(d)) throw new ApiError(r.status, d.code, d.message, d);
+        throw new ApiError(r.status, r.status === 422 ? 'validation' : 'http_' + r.status, typeof d === 'string' ? d : 'HTTP ' + r.status, d);
+      }
+      return data;
+    };
+    // If the built-in default is unreachable, retry the previous (Tailscale) server. Custom URLs are never redirected.
+    // After a miss, keep using the fallback for a few minutes so later calls are not delayed; then try the default again.
+    const primary = this.url;
+    const preferFb = canFallback(this.cfg) && Date.now() < fallbackUntil;
+    const first = preferFb ? FALLBACK_SERVER_URL : primary;
+    const second = preferFb ? primary
+      : (canFallback(this.cfg) && canonUrl(primary) === canonUrl(DEFAULT_SERVER_URL) ? FALLBACK_SERVER_URL : null);
     try {
-      r = await fetch(this.url + path, { method, headers, body, mode: 'cors', credentials: 'omit', cache: 'no-store', signal: ctl.signal });
+      const data = await go(first);
+      if (canonUrl(first) === canonUrl(DEFAULT_SERVER_URL)) fallbackUntil = 0;
+      return data;
     } catch (e) {
-      throw new ApiError(0, e.name === 'AbortError' ? 'timeout' : 'offline', String(e && e.message || e));
-    } finally { clearTimeout(timer); }
-    let data = null;
-    try { data = await r.json(); } catch (e) { data = null; }
-    if (!r.ok) {
-      const d = data && data.detail;
-      if (d && typeof d === 'object' && !Array.isArray(d)) throw new ApiError(r.status, d.code, d.message, d);
-      throw new ApiError(r.status, r.status === 422 ? 'validation' : 'http_' + r.status, typeof d === 'string' ? d : 'HTTP ' + r.status, d);
+      const net = e && (e.code === 'offline' || e.code === 'timeout');
+      if (net && second) {
+        fallbackUntil = (canonUrl(second) === canonUrl(FALLBACK_SERVER_URL)) ? Date.now() + FALLBACK_MS : 0;
+        return await go(second);
+      }
+      throw e;
     }
-    return data;
   }
   health(timeout = 6000) { return this.req('GET', '/health', { auth: false, timeout }); }
   me() { return this.req('GET', '/people/me'); }

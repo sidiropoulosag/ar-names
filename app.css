@@ -418,3 +418,15 @@ body.tut-on,body.help-on{overflow:hidden}
 #emViewSheet .card,#askSheet .card,#waitSheet .card,#metSheet .card,#memImgSheet .card,#consentSheet .card{
   background:#122033;border-radius:18px;border:1px solid rgba(255,255,255,.18);box-shadow:0 8px 32px rgba(0,0,0,.45)
 }
+/* v37 «Λογαριασμός» */
+.acc-lead{font-size:16px;line-height:1.45;margin:4px 0 12px}
+.acc-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;font-size:18px;font-weight:600;background:#fff;color:#1f1f1f;border:1px solid #dadce0;border-radius:14px;margin:6px 0}
+.acc-g{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-weight:800;font-size:18px;color:#fff;background:conic-gradient(#ea4335 0 25%,#fbbc05 0 50%,#34a853 0 75%,#4285f4 0)}
+.acc-or{text-align:center;opacity:.7;margin:8px 0}
+.acc-who{font-size:17px;font-weight:600;margin:4px 0 8px}
+.acc-msg.ok{color:#a5d6a7}
+#accCodeBox{margin-top:10px}
+#accCode{font-size:22px;letter-spacing:6px;text-align:center}
+#accEmail{display:block;width:100%;box-sizing:border-box;margin-top:6px;font-size:18px;min-height:48px;padding:12px;border-radius:12px;border:1px solid #3d5a80;background:#0d1b2a;color:#fff}
+#accCode{display:block;width:100%;box-sizing:border-box;margin:6px 0 8px;min-height:52px}
+#accEmailBox .primary{margin-top:10px}

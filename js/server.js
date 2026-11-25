@@ -33,6 +33,8 @@ export function loadCfg() {
   if (custom !== null && custom !== '' && isLegacyDefaultUrl(custom)) { custom = null; migrated = true; }
   const cfg = {
     token: c.token || '', enabled: !!c.enabled, personId: c.personId ?? null, name: c.name || '',
+    // v37: the linked sign-in account { provider, email } and a «signed in, no profile yet» ticket
+    account: c.account && typeof c.account === 'object' ? c.account : null, ticket: c.ticket || '', pendingEmail: c.pendingEmail || '',
     customUrl: custom, url: custom === null ? DEFAULT_SERVER_URL : normUrl(custom),
   };
   if (migrated) saveCfg(cfg);
@@ -40,6 +42,8 @@ export function loadCfg() {
 }
 export function saveCfg(c) {
   const o = { token: c.token, enabled: c.enabled, personId: c.personId, name: c.name };
+  if (c.account) o.account = c.account;
+  if (c.ticket) { o.ticket = c.ticket; o.pendingEmail = c.pendingEmail || ''; }
   if (c.customUrl !== null && c.customUrl !== undefined) o.serverUrl = c.customUrl;
   localStorage.setItem(KEY, JSON.stringify(o));
 }
@@ -182,6 +186,14 @@ export class Api {
   sendWaiting(pid, body) { return this.req('POST', `/people/${pid}/waiting`, { json: body }); }
   myWaiting() { return this.req('GET', '/me/waiting', { timeout: 6000 }); }
   deleteWaiting(wid) { return this.req('DELETE', `/waiting/${wid}`); }
+  // 0.10.0 sign-in (the device's token, if any, is sent so the server can link it)
+  authGoogle(idToken, nonce, sw = false) { return this.req('POST', '/auth/google', { json: { id_token: idToken, nonce, switch: !!sw }, timeout: 15000 }); }
+  emailStart(email) { return this.req('POST', '/auth/email/start', { json: { email }, timeout: 20000 }); }
+  emailVerify(email, code, sw = false) { return this.req('POST', '/auth/email/verify', { json: { email, code, switch: !!sw }, timeout: 15000 }); }
+  authLink(ticket) { return this.req('POST', '/auth/link', { json: { ticket } }); }
+  myAccounts() { return this.req('GET', '/me/accounts', { timeout: 6000 }); }
+  unlinkAccounts() { return this.req('DELETE', '/me/accounts'); }
+  authLogout() { return this.req('POST', '/auth/logout', { timeout: 6000 }); }
 }
 
 

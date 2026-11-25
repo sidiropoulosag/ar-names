@@ -13,7 +13,9 @@ import { OBJECTS, objectInfo, DEFAULT_OBJECT, assetUrl } from './objects3d.js';
 import { ortInfo, ORT_1T_KEY, IOS } from './ort.js';
 import { t as tr, setLang, getLang, savedLang, guessLang, applyI18n, locale, dict as I18N, LANGS } from './i18n.js';
 import { initV34 } from './v34.js';
+import { initAccount } from './account.js';
 let v34 = null;
+let account = null;   // v37 «Λογαριασμός» (js/account.js)
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
 const $ = (id) => document.getElementById(id);
@@ -128,7 +130,11 @@ function errMsg(e) {
 // 0.3.0+: features ['display','presence']; older servers have no 'features' -> message only, no online list.
 let caps = null; // null = unknown, else { version, features:Set }
 let srvHealth = null;   // v32: last /health answer (enroll_mode, consent_version)
-function noteHealth(h) { caps = { version: h.version || '', features: new Set(h.features || []) }; srvHealth = h; return h; }
+function noteHealth(h) {
+  caps = { version: h.version || '', features: new Set(h.features || []) }; srvHealth = h;
+  try { syncMenu(); if (account) account.render(); if (!$('welcome').classList.contains('hidden')) welShow(wel.step); } catch (_) {}   // v37: the «Λογαριασμός» row / buttons
+  return h;
+}
 const hasCap = (f) => !!(caps && caps.features.has(f));
 // presence heartbeat: tells the server "I'm here" so others see me as online (recognition calls count too)
 setInterval(() => {
@@ -502,7 +508,7 @@ function isDeadToken(e, fromMe = false) { return !!e && (e.code === 'bad_token' 
 // Forget this device's server profile (token + my id) so «＋ Νέο άτομο» comes back. Nothing is deleted on the server.
 function forgetServerProfile() {
   if (!cfg.token && cfg.personId == null) return false;
-  Object.assign(cfg, { token: '', personId: null, name: '', enabled: false }); server.saveCfg(cfg);
+  Object.assign(cfg, { token: '', personId: null, name: '', enabled: false, account: null }); server.saveCfg(cfg);
   srv.offline = false;
   for (const t of tracker.tracks) if (t.srv) { t.srv = false; t.label = null; t.message = ''; t.objectId = ''; t.personId = null; t.showName = true; t.sizes = null; t.style = null; }
   tracker.relabel(); $('srvMe').classList.add('hidden'); syncServerUi();
@@ -552,11 +558,12 @@ window.__ar.lookPv = { get on() { return lookPv.on; }, stats: lookStats, snapsho
 // ---------- v29: Settings = main menu + sub-pages ----------
 // Rows show only when their page has something to show (profile: a server is set; who / messages: my server
 // profile and a server that supports them). «‹ Πίσω» (or Esc) returns to the menu; ✕ closes as before.
-const SET_PAGES = ['main', 'people', 'profile', 'look', 'who', 'pings', 'events', 'ach', 'lang', 'privacy', 'adv', 'safety', 'a11y'];
+const SET_PAGES = ['main', 'people', 'profile', 'account', 'look', 'who', 'pings', 'events', 'ach', 'lang', 'privacy', 'adv', 'safety', 'a11y'];
 let setPage = 'main';
 function pageAvailable(pg) {
   const me = !$('srvMe').classList.contains('hidden');
   if (pg === 'profile') return !!cfg.url;
+  if (pg === 'account') return !!(account && account.available());   // v37: only when the server has sign-in set up
   if (pg === 'who') return me && (!$('srvPrivBox').classList.contains('hidden') || !$('srvVisBox').classList.contains('hidden'));
   if (pg === 'pings') return me && !$('pingBox').classList.contains('hidden');
   if (pg === 'help' || pg === 'tutorial') return true;   // sheets opened from the menu
@@ -588,6 +595,7 @@ function setGo(pg) {
   syncMenu();
   syncLookPv();
   if (pg === 'privacy') renderPrivacy();
+  if (pg === 'account' && account) { $('accMsg').textContent = ''; account.refresh(); }
   if (pg === 'ach') try { renderAch(); } catch (_) {}
   if (pg === 'events') try { refreshEvents(); } catch (_) {}
   if (pg === 'safety' && v34) try { v34.refreshSafety(); } catch (_) {}
@@ -647,6 +655,7 @@ function welShow(i) {
   $('welGo').classList.toggle('hidden', !last || own);
   $('welHas').classList.toggle('hidden', !last || !own);
   $('welLater').classList.toggle('hidden', !last);
+  $('welSignIn').classList.toggle('hidden', !last || own || !(account && account.available()));
   $('welLater').textContent = tr(wel.help || own ? 'wel.close' : 'wel.later');
   welPrivText();
   const f = last ? (own ? $('welLater') : $('welGo')) : $('welNext');
@@ -690,6 +699,8 @@ $('welNext').onclick = () => welShow(wel.step + 1);
 $('welBack').onclick = () => welShow(wel.step - 1);
 $('welSkip').onclick = () => welShow(WEL_N - 1);   // straight to the last step (the two choices)
 $('welGo').onclick = () => { unlockAudio(); goFullscreen(); closeWelcome('enroll'); };
+$('welSignIn').onclick = () => { unlockAudio(); closeWelcome('skip'); openPeople(); setGo('account'); };
+$('enSignIn').onclick = () => { closeEnroll(); openPeople(); setGo('account'); };
 $('welLater').onclick = () => { unlockAudio(); if (!wel.help) goFullscreen(); closeWelcome(wel.help ? 'close' : 'skip'); };
 document.addEventListener('keydown', (e) => {
   if ($('welcome').classList.contains('hidden')) return;
@@ -910,6 +921,7 @@ $('pAddNew').onclick = () => { if (hasOwnProfile()) return syncEnrollBtn(); clos
 // v20: «Αποσύνδεση / επαναφορά αυτής της συσκευής» — forget my profile on THIS phone only (server profile untouched)
 $('pResetDevice').onclick = async () => {
   if (!confirm(tr('set.resetConfirm'))) return;
+  if (account) account.signOutDevice();   // v37: this phone's sign-in token stops on the server too
   forgetServerProfile();
   for (const p of localPeople) if (p.me) { delete p.me; await db.putPerson(p); }
   await reloadPeople(); syncEnrollBtn();
@@ -985,7 +997,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v36';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v37';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -1095,7 +1107,34 @@ window.__ar.lang = { get: getLang, set: setLang };
 
 // v27: first run (no language saved yet, also for existing users) -> the language picker comes first; nothing
 // else starts (no models, no camera) until a language is chosen. Saved data is never touched.
-langReady().then(() => { initServerUi(); welcomeP = welcomeFirstRun(); boot(); });
+// v37: «Λογαριασμός» — sign in with Google / email; a sign-in on a new phone brings the profile back (no new photos)
+function accountOfferEnroll(text) {
+  openPeople(); setGo('account');
+  if (hasOwnProfile()) return;
+  const m = $('accMsg'); m.textContent = text;
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'primary info-enroll'; b.textContent = tr('fab.new');
+  b.onclick = () => { closePeople(); welcomeAfter('enroll'); };
+  m.appendChild(document.createElement('br')); m.appendChild(b);
+}
+async function accountRestored(person, token) {
+  Object.assign(cfg, { token, personId: person.id, name: person.name, enabled: true }); server.saveCfg(cfg);
+  welcomeSeen(); srv.offline = false;
+  if (mode === 'enroll') closeEnroll();
+  syncServerUi(); tracker.relabel(); syncEnrollBtn();
+  try { await refreshServer(); } catch (_) {}
+  refreshFamily();
+  setStatus(lt('acc.restoredStatus', { name: person.name }));
+}
+langReady().then(() => {
+  initServerUi();
+  account = initAccount({
+    api, cfg, hasCap, toast, errMsg, health: () => srvHealth, loadHealth: async () => noteHealth(await api.health()),
+    saveCfg: () => server.saveCfg(cfg), onRestored: accountRestored, offerEnroll: accountOfferEnroll,
+  });
+  window.__ar.account = account;
+  if (account.hasPendingSignIn()) welcomeSeen();   // back from Google: no first-run tour on top of the sign-in
+  welcomeP = welcomeFirstRun(); boot();
+});
 
 // ======================================================================
 // Family-server mode (optional; everything below is inactive until a server URL is set)
@@ -1378,6 +1417,7 @@ async function saveEnrollServer() {
       $('enFamKey').value = '';
       if (adv) showToken(r.token);   // normal users: the token stays on this phone, no technical screen
       syncServerUi();
+      if (account) account.linkAfterEnroll();   // v37: signed in first (no profile yet) -> link the new profile
     }
     if (!cfg.personId) { const me = await api.me(); cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg); }
     let i = 0;
@@ -1466,7 +1506,8 @@ function initServerUi() {
   };
   $('srvLogout').onclick = () => {
     if (cfg.token && !confirm(tr('srv.logoutConfirm'))) return;
-    Object.assign(cfg, { token: '', personId: null, name: '', enabled: false }); server.saveCfg(cfg);
+    if (account) account.signOutDevice();
+    Object.assign(cfg, { token: '', personId: null, name: '', enabled: false, account: null }); server.saveCfg(cfg);
     syncServerUi(); $('srvMe').classList.add('hidden'); setText($('srvInfo'), lt('srv.loggedOut')); tracker.relabel(); refreshFamily();
   };
   $('srvMsgSave').onclick = async () => {
@@ -1706,6 +1747,7 @@ async function refreshServer(verbose = false) {
     let me;
     try { me = await api.me(); } catch (e) { e.fromMe = true; throw e; }
     cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg);
+    if (account) { account.noteMe(me); account.maybeHint(); }
     consentSync(me);
     const { people } = await api.people();
     const e = me.enrollment;
@@ -2340,8 +2382,8 @@ function renderAch() {
 }
 
 // help sheet
-const HELP_CATS = ['photo', 'names', 'greet', 'events', 'invite', 'privacy', 'report', 'ach', 'filt', 'lang', 'install', 'safety', 'emergency', 'waiting', 'a11y', 'tutorial'];
-const HELP_FAQ = ['see', 'cam', 'del', 'greet', 'lost', 'update'];
+const HELP_CATS = ['photo', 'account', 'names', 'greet', 'events', 'invite', 'privacy', 'report', 'ach', 'filt', 'lang', 'install', 'safety', 'emergency', 'waiting', 'a11y', 'tutorial'];
+const HELP_FAQ = ['see', 'phone', 'cam', 'del', 'greet', 'lost', 'update'];
 function buildHelp(q) {
   const qq = (q || '').trim().toLowerCase();
   const cats = $('helpCats'); cats.innerHTML = '';

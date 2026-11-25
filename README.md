@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v36 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v37 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -152,6 +152,17 @@
 
 ---
 
+## Λογαριασμός και νέο κινητό (v37)
+
+**Ρυθμίσεις → 🔐 Λογαριασμός** → **«Σύνδεση με Google»** (κύριος τρόπος) ή **σύνδεση με email** (σου έρχεται 6ψήφιος κωδικός). Από εκεί και πέρα το προφίλ σου είναι δεμένο με τον λογαριασμό σου.
+
+- **Νέο κινητό ή επανεγκατάσταση:** άνοιξε την εφαρμογή → Ρυθμίσεις → Λογαριασμός (ή «🔐 Έχω ήδη προφίλ — Σύνδεση» στο καλωσόρισμα / στην καταχώριση) → σύνδεση με τον ίδιο τρόπο. Επιστρέφουν όνομα, μηνύματα, ομάδες και το πρόσωπό σου, **χωρίς νέες φωτογραφίες**. Το παλιό κινητό συνεχίζει να δουλεύει.
+- **Πρώτα σύνδεση, μετά προφίλ:** αν ο λογαριασμός δεν έχει ακόμα προφίλ, φτιάχνεις ένα με «＋ Νέο άτομο» και δένεται αυτόματα με τον λογαριασμό.
+- Η σύνδεση είναι **προαιρετική**: όσοι δεν συνδεθούν συνεχίζουν όπως πριν. Κρατάμε μόνο το email (για να σε αναγνωρίζουμε)· αν διαγράψεις το προφίλ, σβήνεται κι αυτό. «Αφαίρεση σύνδεσης λογαριασμού» αφήνει το προφίλ ως έχει.
+- Το κουμπί Google / το email εμφανίζονται μόνο όταν ο διαχειριστής τα έχει ενεργοποιήσει στον server (server **0.10.0**).
+
+---
+
 ## Σύνδεση με οικογενειακό / ομαδικό server
 
 Χρειάζεται σύνδεση (και προφίλ στο δίκτυο) για κοινά προφίλ, μηνύματα/χαιρετισμούς μεταξύ συσκευών, ομάδες, εκδηλώσεις και πίνακα χαιρετισμών. Ο διαχειριστής τρέχει έναν server· **δεν** περιγράφουμε εδώ προσωπικές διευθύνσεις ή κλειδιά.
@@ -182,6 +193,8 @@
 ## Ανανεώσεις
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
+
+**v37:** **σύνδεση με Google ή email** (Ρυθμίσεις → Λογαριασμός): σε νέο κινητό ή μετά από επανεγκατάσταση συνδέεσαι με τον ίδιο τρόπο και το προφίλ σου επανέρχεται χωρίς νέες φωτογραφίες. Προαιρετικό· χρειάζεται server 0.10.0.
 
 **v36:** το μεγάλο παράθυρο «Γνωριστήκατε!» έγινε σύντομο κείμενο πάνω από την κάμερα· φαίνεται 3 δευτερόλεπτα και φεύγει μόνο του (ή με ένα πάτημα). Η κοινοποίηση εικόνας ανάμνησης γίνεται από «Πού γνωριστήκαμε».
 
@@ -235,7 +248,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v36 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v37 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -378,6 +391,17 @@ Only enrol people who agree.
 
 ---
 
+## Account and new phone (v37)
+
+**Settings → 🔐 Account** → **“Sign in with Google”** (main way) or **sign in with email** (you get a 6-digit code). From then on your profile is tied to your account.
+
+- **New phone or reinstall:** open the app → Settings → Account (or “🔐 I already have a profile — Sign in” on the welcome / enrolment screen) → sign in the same way. Name, messages, groups and your face come back, **no new photos**. The old phone keeps working.
+- **Sign in first, profile later:** if the account has no profile yet, create one with “＋ New person” and it is linked automatically.
+- Signing in is **optional**: people who don’t sign in carry on as before. Only the email is kept (to recognise you); deleting the profile deletes it too. “Remove account link” leaves the profile as it is.
+- The Google button / email sign-in appear only when the administrator has switched them on in the server (server **0.10.0**).
+
+---
+
 ## Family / group server
 
 Needed for shared profiles, cross-device messages/greets, groups, events, and the greetings board. The organiser runs a server; **this README does not publish personal server URLs or keys**.
@@ -408,6 +432,8 @@ The family administrator runs the server (the `ar-names-pc` package, version **0
 ## Updates
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
+
+**v37:** **sign in with Google or email** (Settings → Account): on a new phone or after a reinstall, sign in the same way and your profile comes back without new photos. Optional; needs server 0.10.0.
 
 **v36:** the large “You met!” dialog is now a short text over the camera; it stays 3 seconds and fades away by itself (or on a tap). Sharing the memory image is under “Where we met”.
 

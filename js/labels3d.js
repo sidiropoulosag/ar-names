@@ -103,7 +103,8 @@ export class Labels3D {
       let text = null, unk = false;
       if (t.label) text = t.label;
       else if (showUnknown && t.embeds >= 3) { text = '?'; unk = true; }
-      if (!text || t.missed > 3) continue;
+      const alpha = t.labelAlpha == null ? 1 : t.labelAlpha;
+      if (!text || (t.missed > 3 && !(t.locked && t.label && alpha > 0.12))) continue;
       alive.add(t.id);
       // what this person chose (0.4.0): name on/off + per-person sizes (0.5-2); defaults = name, x1
       const showName = unk || t.showName !== false;
@@ -184,6 +185,7 @@ export class Labels3D {
         rec.mesh.position.set(k.x, H - k.y, 0);
         rec.mesh.quaternion.copy(k.q);
         rec.mesh.scale.setScalar(ns * ease);
+        rec.mesh.visible = alpha > 0.12;
       }
       if (rec.objWant !== objId) {
         if (rec.obj) { this.dropObj(rec.obj); rec.obj = null; }
@@ -201,7 +203,9 @@ export class Labels3D {
       // for the HTML comment bubble: always above the stack (never over the face)
       rec.msg = (!unk && t.message) || ''; rec.sx = k.x; rec.sy = k.y; rec.ss = ns * ease;
       rec.top = top - k.s * 0.08; rec.low = k.y + 6; rec.textScale = tScale;
-      rec.hasObj = !!rec.obj; rec.faceTop = Math.min(k.y, faceTop + 4);
+      rec.hasObj = !!rec.obj; rec.faceTop = Math.min(k.y, faceTop + 4); rec.labelAlpha = alpha;
+      if (rec.obj) rec.obj.visible = alpha > 0.12;
+      if (rec.filt) rec.filt.visible = alpha > 0.12;
       // v33: funny/seasonal filter above the stack
       const filt = (!unk && t.filterId) || '';
       if (rec.filtWant !== filt) {

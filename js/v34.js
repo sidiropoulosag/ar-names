@@ -364,7 +364,7 @@ export function tickHud(tracks, vw, vh) {
   const scan = ctx.mode === 'scan';
   if (scan && vw) {
     for (const t of tracks) {
-      if (t.missed > 3) continue;
+      if (t.missed > 3 && !(t.locked && t.label)) continue;
       const pos = faceXY(t, vw, vh); if (!pos) continue;
       if (t.missing && t.missingId) {
         live.add('m' + t.id);

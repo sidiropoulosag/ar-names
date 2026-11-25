@@ -324,7 +324,7 @@ async function loop() {
   stats.det = ema(stats.det, dt); stats.detSamples.push(dt); if (stats.detSamples.length > 600) stats.detSamples.shift();
   if (stats.lastT) stats.fps = ema(stats.fps, 1000 / (now - stats.lastT));
   stats.lastT = now; stats.frames++;
-  const tracks = tracker.update(res, vw, vh);
+  const tracks = tracker.update(res, vw, vh, frameCanvas, now);
   stats.faces = res.faces.length;
 
   if (mode === 'scan') {
@@ -981,7 +981,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v46';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v47';   // keep in sync with CACHE in sw.js
 
 // v40: decorative avatar images are webp, with a PNG fallback if the file fails to load
 document.querySelectorAll('img[data-png]').forEach((img) => {
@@ -1275,6 +1275,7 @@ function renderBubbles() {
       // rather than falling over the face.
       const pad = 64, h = el.offsetHeight || 24;
       const y = Math.max(top, pad + h);
+      el.style.opacity = rec.labelAlpha == null ? '1' : String(rec.labelAlpha);
       el.style.transform = `translate(${rec.sx}px, ${y}px) translate(-50%, -100%)`;
     }
   }

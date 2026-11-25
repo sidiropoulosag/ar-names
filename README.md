@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v46 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v47 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -202,6 +202,8 @@
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
 
+**v47:** όταν αναγνωριστεί κάποιος, το όνομα (και ό,τι άλλο φαίνεται πάνω από το κεφάλι) κλειδώνει στο άτομο και συνεχίζει να τον ακολουθεί αν γυρίσει για λίγο το κεφάλι. Αν η εφαρμογή δεν είναι σίγουρη, το όνομα σβήνει — δεν δείχνει λάθος άτομο.
+
 **v46:** στην προεπισκόπηση «Εμφάνιση και ήχος» το «Προεπισκόπηση — έτσι θα φαίνεται» είναι λεζάντα πάνω από την εικόνα, ώστε να μην καλύπτει το όνομα.
 
 **v45:** στην προεπισκόπηση «Εμφάνιση και ήχος», όταν είναι ενεργό το «?» σε αγνώστους, δεξιά εμφανίζεται ένα μικρό στεναχωρημένο άβαταρ με το ίδιο χρυσό «?» που χρησιμοποιεί η κάμερα.
@@ -272,7 +274,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v46 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v47 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -464,6 +466,8 @@ The family administrator runs the server (the `ar-names-pc` package, version **0
 ## Updates
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
+
+**v47:** once someone is recognised, their name (and anything else above the head) stays locked on that person and keeps following if they turn their head for a few seconds. If the app is not sure, the name fades out — it will not show the wrong person.
 
 **v46:** in the “Look and sound” preview, “Preview — this is how it will look” is a caption above the image, so it no longer covers the name.
 

@@ -3084,3 +3084,18 @@ Object.assign(D.fr, {
 Object.assign(D.de, {
   'help.body.filt': 'Einstellungen → Aussehen → Lustiger Filter. Live-Vorschau auf dem Avatar (und, wenn „?“ an ist, ein kleines trauriges Avatar rechts mit dem Fragezeichen über dem Kopf). Saisonal (Weihnachten, Halloween).',
 });
+
+
+/* v47: name stays on the person when they turn their head */
+Object.assign(D.el, {
+  'help.body.names': 'Άνοιξε την κάμερα. Όταν αναγνωριστεί κάποιος, το όνομά του εμφανίζεται σε 3D πάνω από το κεφάλι του. Αν γυρίσει για λίγο το κεφάλι (προφίλ ή πλάτη), το όνομα συνεχίζει να τον ακολουθεί. Την πρώτη φορά που συναντιέστε, εμφανίζεται για 3 δευτερόλεπτα το μήνυμα «Γνωριστήκατε!» πάνω από την κάμερα και μετά χάνεται μόνο του. Αν δεν φαίνεται κανείς, έλεγξε αν είστε στην ίδια εκδήλωση/ομάδα ή αν έχει ενεργοποιηθεί η εμφάνιση.',
+});
+Object.assign(D.en, {
+  'help.body.names': 'Open the camera. When someone is recognised, their name appears in 3D above their head. If they turn their head for a moment (profile or looking away), the name keeps following them. The first time you meet, a short “You met!” message appears over the camera for 3 seconds and then fades away by itself. If nobody shows, check you are in the same event/group or that visibility is set to Everyone.',
+});
+Object.assign(D.fr, {
+  'help.body.names': 'Ouvre la caméra. Quand quelqu’un est reconnu, son nom apparaît en 3D. S’il tourne un moment la tête (profil ou dos), le nom continue de le suivre. La première fois, un court message « Vous vous êtes rencontrés ! » s’affiche 3 secondes au-dessus de la caméra, puis disparaît tout seul. Si personne n’apparaît, vérifie l’événement/groupe ou « Qui me voit ».',
+});
+Object.assign(D.de, {
+  'help.body.names': 'Kamera öffnen. Bei Erkennung erscheint der Name in 3D über dem Kopf. Dreht die Person den Kopf kurz weg (Profil oder Rücken), bleibt der Name bei ihr. Beim ersten Treffen erscheint 3 Sekunden lang der Text „Ihr habt euch kennengelernt!“ über der Kamera und verschwindet dann von selbst. Wenn niemand erscheint: gleiches Event/Gruppe oder „Wer sieht mich“ prüfen.',
+});

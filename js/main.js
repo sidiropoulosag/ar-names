@@ -100,7 +100,7 @@ window.__ar.msgHist = { load: msgHistLoad, add: msgHistAdd, del: msgHistDel, ren
 // Normal users never see the server address, the token or the names of people who are not online.
 let adv = localStorage.getItem('ar-names-adv') === '1';
 // v32: privacy / consent / report-block / delete sheets (camera + pings + update reload pause while one is open)
-const V32_SHEETS = ['modSheet', 'privSheet', 'consentSheet', 'delSheet', 'meetCard', 'helpSheet', 'tutSheet', 'askSheet', 'emViewSheet', 'waitSheet', 'metSheet', 'memImgSheet'];
+const V32_SHEETS = ['modSheet', 'privSheet', 'consentSheet', 'delSheet', 'helpSheet', 'tutSheet', 'askSheet', 'emViewSheet', 'waitSheet', 'metSheet', 'memImgSheet'];
 const CONSENT_KEY = 'ar-names-consent', CONSENT_ASKED_KEY = 'ar-names-consent-asked', INVITE_KEY = 'ar-names-invite', DEVICE_KEY = 'ar-names-device';
 function applyAdv() { document.body.classList.toggle('adv', adv); }
 applyAdv();
@@ -985,7 +985,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v35';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v36';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -2265,6 +2265,10 @@ function metLoad() { try { return new Set(JSON.parse(localStorage.getItem(MEET_K
 function metSave(s) { try { localStorage.setItem(MEET_KEY, JSON.stringify([...s])); } catch (_) {} }
 let metIds = metLoad();
 let meetQ = [];
+let meetTimer = 0;
+const MEET_SHOW_MS = 3000;
+const MEET_FADE_MS = 350;
+function meetVisible() { const el = $('meetCard'); return el && !el.classList.contains('hidden'); }
 function maybeFirstMeet(pid, name) {
   const id = String(pid);
   if (v34) try { v34.maybeRememberMeet(pid, name); } catch (_) {}
@@ -2273,32 +2277,40 @@ function maybeFirstMeet(pid, name) {
   achievements.noteMet(id);
   const mine = cfg.name || tr('meet.you');
   meetQ.push({ id, name: name || '?', mine, at: Date.now() });
-  if ($('meetCard').classList.contains('hidden')) showMeet(meetQ.shift());
+  if (!meetVisible()) showMeet(meetQ.shift());
 }
 function showMeet(m) {
   if (!m) return;
+  const el = $('meetCard');
+  if (!el) return;
+  clearTimeout(meetTimer);
+  el.classList.remove('out');
+  if ($('meetTitle')) $('meetTitle').textContent = tr('meet.title');
   $('meetNames').textContent = tr('meet.names', { a: m.mine, b: m.name });
   try {
     const d = new Date(m.at);
     $('meetDate').textContent = tr('meet.date', { d: d.toLocaleDateString(locale(), { year: 'numeric', month: 'long', day: 'numeric' }) });
   } catch (_) { $('meetDate').textContent = ''; }
-  $('meetCard').dataset.pid = m.id; $('meetCard').dataset.name = m.name;
-  $('meetCard').classList.remove('hidden'); syncShot();
+  el.dataset.pid = m.id; el.dataset.name = m.name;
+  el.classList.remove('hidden');
+  meetTimer = setTimeout(() => closeMeet(), MEET_SHOW_MS);
 }
 function closeMeet() {
-  $('meetCard').classList.add('hidden'); syncShot();
-  if (meetQ.length) showMeet(meetQ.shift());
+  const el = $('meetCard');
+  if (!el) return;
+  clearTimeout(meetTimer);
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finish = () => {
+    el.classList.add('hidden');
+    el.classList.remove('out');
+    if (meetQ.length) showMeet(meetQ.shift());
+  };
+  if (el.classList.contains('hidden')) { if (meetQ.length) showMeet(meetQ.shift()); return; }
+  if (el.classList.contains('out') || reduced) { finish(); return; }
+  el.classList.add('out');
+  meetTimer = setTimeout(finish, MEET_FADE_MS);
 }
-$('meetClose').onclick = closeMeet;
-$('meetShare').onclick = async () => {
-  const title = tr('meet.title');
-  const text = ($('meetNames').textContent || '') + '\n' + ($('meetDate').textContent || '');
-  try {
-    if (navigator.share) { await navigator.share({ title, text }); toast(tr('meet.shared')); }
-    else if (navigator.clipboard) { await navigator.clipboard.writeText(text); toast(tr('meet.shared')); }
-    else await takeShot();
-  } catch (e) { if (e && e.name !== 'AbortError') try { await takeShot(); } catch (_) {} }
-};
+$('meetCard').onclick = closeMeet;
 
 // achievements UI + toast
 achievements.onUnlock((b) => showAchToast(b));

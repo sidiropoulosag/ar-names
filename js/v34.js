@@ -545,6 +545,10 @@ export function initV34(c) {
     const m = { id: $('meetCard').dataset.pid, name: $('meetCard').dataset.name, mine: (ctx.cfg && ctx.cfg.name) || tr('meet.you'), at: Date.now() };
     shareOrSaveMemory(m);
   };
+  if ($('metShareImg')) $('metShareImg').onclick = () => {
+    const m = { id: $('metSheet').dataset.pid, name: $('metSheet').dataset.name, mine: (ctx.cfg && ctx.cfg.name) || tr('meet.you'), at: Date.now() };
+    shareOrSaveMemory(m);
+  };
   window.addEventListener('langchange', () => {
     applyI18n($('tutSheet'));
     if (!$('tutSheet').classList.contains('hidden')) renderTut();

@@ -511,19 +511,11 @@
   </div>
 </div>
 
-<!-- v33: first-meet card -->
-<div id="meetCard" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="meetTitle">
-  <div class="card meet-card">
-    <div class="meet-burst" aria-hidden="true">✨</div>
-    <h2 id="meetTitle" data-i18n="meet.title">Γνωριστήκατε!</h2>
-    <p id="meetNames" class="meet-names"></p>
-    <p id="meetDate" class="small"></p>
-    <div class="row meet-actions">
-      <button id="meetSaveImg" type="button" class="primary big" data-i18n="meet.shareImg">📤 Κοινοποίηση εικόνας</button>
-      <button id="meetShare" type="button" class="big" data-i18n="meet.share">📤 Κοινοποίηση</button>
-      <button id="meetClose" type="button" class="big" data-i18n="common.close">Κλείσιμο</button>
-    </div>
-  </div>
+<!-- v36: first-meet note — plain text over the camera, auto-hides -->
+<div id="meetCard" class="meet-note hidden" role="status" aria-live="polite">
+  <p id="meetTitle" class="meet-note-title" data-i18n="meet.title">Γνωριστήκατε!</p>
+  <p id="meetNames" class="meet-names"></p>
+  <p id="meetDate" class="meet-note-date"></p>
 </div>
 
 <!-- v33: badge unlock toast -->
@@ -641,6 +633,7 @@
     <textarea id="metNote" rows="3" maxlength="200" data-i18n-ph="mem.notePh" placeholder="Προσωπική σημείωση"></textarea>
     <div class="row"><button id="metClose" type="button" class="big" data-i18n="saf.cancel">Άκυρο</button>
       <button id="metSave" type="button" class="primary big" data-i18n="mem.save">Αποθήκευση σημείωσης</button></div>
+    <button id="metShareImg" type="button" class="big" data-i18n="meet.shareImg">📤 Κοινοποίηση εικόνας</button>
   </div>
 </div>
 

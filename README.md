@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v35 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v36 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -52,7 +52,7 @@
 - Αναγνωρισμένα πρόσωπα παίρνουν **3D όνομα** πάνω από το κεφάλι (ακολουθεί την κίνηση).
 - Μπορεί να φαίνονται και **μήνυμα**, **3D αντικείμενο** ή **αστείο φίλτρο** — ό,τι διάλεξες στο προφίλ / Εμφάνιση.
 - Πάτα πάνω σε κάποιον για **χαιρετισμό / μήνυμα** (αν δέχεται και αν σας επιτρέπει η ορατότητα).
-- Η πρώτη φορά που συναντάτε κάποιον μπορεί να εμφανίσει κάρτα **«Γνωριστήκατε!»** με δυνατότητα κοινοποίησης.
+- Η πρώτη φορά που συναντάτε κάποιον εμφανίζει για 3 δευτερόλεπτα ένα σύντομο κείμενο **«Γνωριστήκατε!»** πάνω από την κάμερα (χωρίς κάρτα)· μετά χάνεται μόνο του. Μπορείς να το κλείσεις και με ένα πάτημα.
 
 ---
 
@@ -83,7 +83,7 @@
 
 - **Χαιρετισμοί / μηνύματα:** πάτα κάποιον που αναγνωρίστηκε → διάλεξε emoji (π.χ. 👋 ❤️ 😂 🎉 👍 και άλλα) ή σύντομο κείμενο. Εμφανίζεται λίγο στην οθόνη του· ισχύουν τα ίδια όρια/απόρρητο με τα μηνύματα. Για χαιρετισμούς με μικρό εφέ στο κεφάλι ισχύουν τα ίδια όρια.
 - **Επιτεύγματα** (μόνο σε αυτό το κινητό): ξεκλειδώνουν μόνα τους (π.χ. 10/50 γνωριμίες, 5/25 χαιρετισμοί, ποικιλία emoji σε μια μέρα, εκδήλωση, πρώτο φίλτρο). Σύντομο toast όταν ξεκλειδώνει κάτι νέο· λίστα στο «Τα επιτεύγματά μου».
-- **«Γνωριστήκατε!»:** κάρτα στην πρώτη συνάντηση, με ημερομηνία και κοινοποίηση. Μπορείς επίσης να **κοινοποιήσεις ή να αποθηκεύσεις μια εικόνα** («Γνωριστήκαμε στο … στις …») με τα ονόματα, την ημερομηνία και το λογότυπο Noera. Στο iPhone: κοινοποίηση ή παρατεταμένο πάτημα → «Αποθήκευση εικόνας».
+- **«Γνωριστήκατε!»:** στην πρώτη συνάντηση εμφανίζεται για 3 δευτερόλεπτα ένα σύντομο κείμενο πάνω από την κάμερα (ονόματα και ημερομηνία) και μετά χάνεται μόνο του· μπορείς να το κλείσεις και με ένα πάτημα. Δεν υπάρχει κάρτα ούτε κουμπί «Κλείσιμο». Μπορείς να **κοινοποιήσεις ή να αποθηκεύσεις μια εικόνα** («Γνωριστήκαμε στο … στις …») από το μενού του ατόμου → **«Πού γνωριστήκαμε»**, με τα ονόματα, την ημερομηνία και το λογότυπο Noera. Στο iPhone: κοινοποίηση ή παρατεταμένο πάτημα → «Αποθήκευση εικόνας».
 - **Εκδηλώσεις:** Ρυθμίσεις → Εκδηλώσεις → φτιάξε όνομα → μοιράσου **κωδικό**, **σύνδεσμο** ή **QR**. Οι άλλοι μπαίνουν με κωδικό ή σάρωση QR. Όσοι είναι στην ίδια εκδήλωση βλέπουν ονόματα μεταξύ τους (σύμφωνα με τις ρυθμίσεις ορατότητας).
 - **Πίνακας χαιρετισμών:** προαιρετικό **opt-in** («Συμμετοχή στον πίνακα χαιρετισμών»). Μόνο αν το ενεργοποιήσεις· μπορείς να το κλείσεις· σέβεται αποκλεισμούς.
 
@@ -183,6 +183,8 @@
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
 
+**v36:** το μεγάλο παράθυρο «Γνωριστήκατε!» έγινε σύντομο κείμενο πάνω από την κάμερα· φαίνεται 3 δευτερόλεπτα και φεύγει μόνο του (ή με ένα πάτημα). Η κοινοποίηση εικόνας ανάμνησης γίνεται από «Πού γνωριστήκαμε».
+
 **v35:** ο προεπιλεγμένος οικογενειακός server μεταφέρθηκε. Στο επόμενο άνοιγμα, όσες συσκευές χρησιμοποιούσαν την ενσωματωμένη διεύθυνση ενημερώνονται μόνες τους. Αν είχες γράψει δικιά σου διεύθυνση στις προχωρημένες ρυθμίσεις, μένει όπως είναι.
 
 ---
@@ -233,7 +235,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v35 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v36 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -280,7 +282,7 @@ Tips: good light, no sunglasses/mask, face ~⅓ of the frame. Add more shots lat
 
 ## Camera screen
 
-Recognised faces get a **3D name** (and optional message / object / filter). Tap someone to **greet or message** them (if they accept and visibility allows). First meeting may show a **「You met!」** card with share.
+Recognised faces get a **3D name** (and optional message / object / filter). Tap someone to **greet or message** them (if they accept and visibility allows). The first time you meet someone, a short **「You met!」** text appears over the camera for 3 seconds and then fades away by itself (tap to dismiss sooner).
 
 ---
 
@@ -305,11 +307,11 @@ Recognised faces get a **3D name** (and optional message / object / filter). Tap
 
 ---
 
-## Greetings, achievements, meet card, events
+## Greetings, achievements, first meeting, events
 
 - **Greetings / messages:** tap a recognised person → emoji (e.g. 👋 ❤️ 😂 🎉 👍 and more) or short text. Same privacy/limits as messages; greet FX follows the same rules.
 - **Achievements** (this device only): unlock quietly (e.g. 10/50 meets, 5/25 greets, emoji variety in a day, joined/created an event, tried a filter). Toast on unlock; list under My achievements.
-- **「You met!」** card on first encounter, with date and share. You can also **share or save an image** (“We met at … on …”) with the names, the date and Noera branding. On iPhone: share, or press and hold → “Save Image”.
+- **「You met!」:** on first encounter a short text (names and date) appears over the camera for 3 seconds and then fades away by itself; tap to dismiss sooner. There is no card and no Close button. You can **share or save an image** (“We met at … on …”) from the person’s menu → **“Where we met”**, with the names, the date and Noera branding. On iPhone: share, or press and hold → “Save Image”.
 - **Events:** create → share **code**, **link**, or **QR**; others join by code or QR scan.
 - **Greetings leaderboard:** optional **opt-in** only; can turn off; respects blocks.
 
@@ -406,6 +408,8 @@ The family administrator runs the server (the `ar-names-pc` package, version **0
 ## Updates
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
+
+**v36:** the large “You met!” dialog is now a short text over the camera; it stays 3 seconds and fades away by itself (or on a tap). Sharing the memory image is under “Where we met”.
 
 **v35:** the built-in family server moved. On the next open, devices that used the built-in address update automatically. If you typed your own address in advanced settings, it is left as it is.
 

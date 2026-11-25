@@ -175,8 +175,9 @@ export class LookPreview {
     const fs = Math.round(16 * (rec.textScale || 1)) + 'px';
     if (el.style.fontSize !== fs) el.style.fontSize = fs;
     const top = rec.top ?? rec.sy - rec.ss * 1.2;
-    const below = top - el.offsetHeight < this.lab.topPad;
-    el.style.transform = below ? `translate(${rec.sx}px, ${rec.low ?? rec.sy + 6}px) translate(-50%, 0)` : `translate(${rec.sx}px, ${top}px) translate(-50%, -100%)`;
+    const pad = this.lab.topPad, h = el.offsetHeight || 24;
+    const y = Math.max(top, pad + h);
+    el.style.transform = `translate(${rec.sx}px, ${y}px) translate(-50%, -100%)`;
   }
   // tests / screenshots: draw now and read the pixels in the same task (no preserveDrawingBuffer)
   snapshot() {

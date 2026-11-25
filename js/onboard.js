@@ -17,7 +17,7 @@ function lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return n
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
 
 export function initOnboard(ctx) {
-  const st = { step: 'obj', obj: '', msg: '', pick: 'object3d', shown: false };
+  const st = { step: 'obj', obj: '', msg: '', pick: 'object3d', pickUser: false, shown: false };
 
   const isDone = () => lsGet(KEY) === '1';
   const markDone = () => lsSet(KEY, '1');
@@ -66,7 +66,11 @@ export function initOnboard(ctx) {
       const b = document.createElement('span'); b.textContent = text; li.append(a, b); ul.appendChild(li);
     }
     const both = !!st.obj && !!st.msg.trim() && ctx.hasCap('combo');
+    const triple = both && ctx.hasCap('combo3');
     $('suPick').classList.toggle('hidden', !both);
+    $('suPickBoth').classList.toggle('hidden', !triple);
+    if (triple && !st.pickUser) st.pick = 'both';
+    if (!triple && st.pick === 'both') st.pick = 'object3d';
     for (const r of document.querySelectorAll('#suPick input')) r.checked = r.value === st.pick;
   }
 
@@ -75,7 +79,7 @@ export function initOnboard(ctx) {
 
   function open(opts = {}) {
     buildGrid();
-    st.obj = ''; st.msg = ''; st.pick = 'object3d';
+    st.obj = ''; st.msg = ''; st.pick = 'object3d'; st.pickUser = false;
     if (opts.prefill && ctx.prefill) { const p = ctx.prefill(); st.obj = p.obj || ''; st.msg = p.msg || ''; }
     $('suMsg').value = st.msg;
     markDone(); st.shown = true;
@@ -97,8 +101,12 @@ export function initOnboard(ctx) {
         if (st.obj) f.object_id = st.obj;
         if (text) f.message = text;
         if (ctx.hasCap('combo')) {
-          const useObj = st.obj && (!text || st.pick === 'object3d');
-          f.display_items = ['name', useObj ? 'object3d' : 'message1'];
+          if (st.pick === 'both' && st.obj && text && ctx.hasCap('combo3')) {
+            f.display_items = ['name', 'object3d', 'message1'];
+          } else {
+            const useObj = st.obj && (!text || st.pick === 'object3d');
+            f.display_items = ['name', useObj ? 'object3d' : 'message1'];
+          }
         } else f.display_mode = st.obj && (!text || st.pick === 'object3d') ? 'object3d' : 'message';
         if (c.personId == null) { const me = await ctx.api.me(); c.personId = me.id; c.name = me.name; ctx.saveCfg(); }
         await ctx.api.patchMe(c.personId, f);
@@ -118,7 +126,7 @@ export function initOnboard(ctx) {
   $('suLater').onclick = () => { close(); ctx.afterSave(); };
   $('suDone').onclick = finish;
   $('suMsg').oninput = () => { st.msg = $('suMsg').value.slice(0, MSG_MAX); paint(); };
-  for (const r of document.querySelectorAll('#suPick input')) r.onchange = () => { if (r.checked) st.pick = r.value; };
+  for (const r of document.querySelectorAll('#suPick input')) r.onchange = () => { if (r.checked) { st.pick = r.value; st.pickUser = true; } };
   const chips = $('suChips');
   for (const k of CHIPS) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'su-chip'; b.dataset.i18n = k; b.textContent = tr(k);

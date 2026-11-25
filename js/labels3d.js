@@ -131,20 +131,37 @@ export class Labels3D {
       const bb = rec.mesh && rec.mesh.geometry.boundingBox;
       const gw = rec.mesh ? (bb ? bb.max.x - bb.min.x : 0.6 * text.length) : 0;
       // base size from the face width (smoothed below); the name's own size also fits the screen width
-      const size = Math.max(14, Math.min(150, fw * (unk ? 0.35 : 0.3)));
+      const size0 = Math.max(14, Math.min(150, fw * (unk ? 0.35 : 0.3)));
       // eyes sit ~40% down the box; go up to the top of the head + a small gap
-      const lift = fh * 0.5 + size * 0.25;
-      let px = ex + ux * lift, py = ey + uy * lift;
+      const lift = fh * 0.5 + size0 * 0.25;
+      let px = ex + ux * lift, pyHead = ey + uy * lift;
       const objId = (!unk && t.objectId) || '';
-      // stack, from the head up: name -> 3D object -> (HTML) comment bubble
-      const nameS = (b) => (gw ? Math.max(10, Math.min(b * sN, (W * 0.92) / Math.max(gw, 0.5))) : 0);
-      const stackH = (b) => (gw ? nameS(b) * 1.05 : b * 0.15) + (objId ? b * 2.2 * sO * 1.1 : 0);
-      // keep the whole stack on screen (below the top bar) even for very close faces
-      // (+ room for the comment bubble above it, so it does not have to drop over the face)
       const msg = (!unk && t.message) || '';
-      const bubH = msg ? (16 * sT * 1.3) * Math.min(4, msg.split('\n').length) + 18 : 0;
-      py = Math.max(py, stackH(size) + this.topPad + size * 0.25 + Math.min(bubH, H * 0.25));
-      const half = Math.max(nameS(size) * gw / 2, objId ? size * 1.1 * sO : 0) + 4;
+      // stack, from the head up: name -> 3D object -> (HTML) comment bubble
+      // v39: all three can show together. Shrink to fit under the top bar; never push the
+      // stack down over the face (and never drop the bubble onto the face).
+      const three = !!(showName && objId && msg);
+      const objMul = three ? 1.7 : 2.2;
+      const nameS = (b) => (gw ? Math.max(10, Math.min(b * sN, (W * 0.92) / Math.max(gw, 0.5))) : 0);
+      const nameHOf = (b) => (gw ? nameS(b) * 1.05 : b * 0.15);
+      const objHOf = (b) => (objId ? b * objMul * sO * 1.05 : 0);
+      const bubHOf = (ts) => (msg ? (16 * ts * 1.25) * Math.min(4, msg.split('\n').length) + 16 : 0);
+      const stackHOf = (b, ts) => nameHOf(b) + objHOf(b) + (msg ? b * 0.16 : b * 0.25) + bubHOf(ts);
+      const room = Math.max(36, pyHead - this.topPad);
+      let size = size0, tScale = sT;
+      const need0 = stackHOf(size, tScale);
+      if (need0 > room) {
+        const fit = Math.max(0.5, room / need0);
+        size = size0 * fit;
+        tScale = Math.max(0.5, sT * Math.min(1, fit * 1.05));
+      }
+      let py = pyHead;
+      const need = stackHOf(size, tScale);
+      // last resort only: a tiny downward nudge, never past the forehead
+      const faceTop = t.box.y0 * vh * s + oy;
+      const maxPy = Math.min(pyHead + fh * 0.1, faceTop + fh * 0.15);
+      if (need > (py - this.topPad) && py < maxPy) py = Math.min(maxPy, this.topPad + need);
+      const half = Math.max(nameS(size) * gw / 2, objId ? size * 0.95 * sO : 0) + 4;
       px = Math.min(Math.max(px, Math.min(W / 2, half)), Math.max(W / 2, W - half));
       // head orientation from the 5-point pose estimate (damped)
       const m = this.mirror ? -1 : 1, D = Math.PI / 180;
@@ -173,16 +190,16 @@ export class Labels3D {
       }
       let top = k.y - nameH;                              // screen y of the top of the stack
       if (rec.obj) {
-        const full = k.s * 2.2 * sO, os = full * Math.min(1, (now - rec.objBorn) / 250);
+        const full = k.s * objMul * sO, os = full * Math.min(1, (now - rec.objBorn) / 250);
         rec.obj.position.set(k.x, H - k.y + nameH + os * 0.55, 0);
         rec.obj.scale.setScalar(os);
         animateObject(rec.obj, now / 1000);
-        top -= full * 1.1;
+        top -= full * 1.05;
       }
-      // for the HTML comment bubble: above the stack; `low` = fallback spot just under the name
+      // for the HTML comment bubble: always above the stack (never over the face)
       rec.msg = (!unk && t.message) || ''; rec.sx = k.x; rec.sy = k.y; rec.ss = ns * ease;
-      rec.top = top - k.s * 0.08; rec.low = k.y + 6; rec.textScale = sT;
-      rec.hasObj = !!rec.obj;
+      rec.top = top - k.s * 0.08; rec.low = k.y + 6; rec.textScale = tScale;
+      rec.hasObj = !!rec.obj; rec.faceTop = Math.min(k.y, faceTop + 4);
       // v33: funny/seasonal filter above the stack
       const filt = (!unk && t.filterId) || '';
       if (rec.filtWant !== filt) {

@@ -967,7 +967,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v38';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v39';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -1182,7 +1182,7 @@ async function serverStep(tracks, vw, vh, now) {
         v34.applyRecognize(t, f);
         if (!t.recognisedAt) t.recognisedAt = performance.now();
       } else if (f.status === 'known') {
-        // 0.4.0: 'display.items' (1-2 of name/message1/message2/object3d) + sizes; 0.3.0: one 'display.mode'; older: 'message'
+        // 0.4.0: 'display.items' (1-2 of name/message1/message2/object3d) + sizes; 0.10.1/combo3: up to 3; 0.3.0: one 'display.mode'; older: 'message'
         const v = viewOf(f.display || { mode: 'message', text: f.message || '' });
         t.srvMiss = 0; t.srvUnknownAt = 0; t.srv = true; t.label = f.name; t.personId = f.person_id; t.sim = f.similarity;
         t.objectId = v.objectId; t.filterId = v.filterId || ''; t.message = v.text; t.showName = v.showName; t.sizes = v.sizes; t.style = v.style;
@@ -1248,8 +1248,11 @@ function renderBubbles() {
       const fs = Math.round(16 * (rec.textScale || 1)) + 'px';   // the person's «μέγεθος σχολίου»
       if (el.style.fontSize !== fs) el.style.fontSize = fs;
       const top = rec.top ?? rec.sy - rec.ss * 1.2;      // above the name / 3D object stack
-      const below = top - el.offsetHeight < 64;          // no room under the top bar -> put it under the name
-      el.style.transform = below ? `translate(${rec.sx}px, ${rec.low ?? rec.sy + 6}px) translate(-50%, 0)` : `translate(${rec.sx}px, ${top}px) translate(-50%, -100%)`;
+      // v39: keep the bubble above the stack (and above the face). If the top bar is tight, sit just under it
+      // rather than falling over the face.
+      const pad = 64, h = el.offsetHeight || 24;
+      const y = Math.max(top, pad + h);
+      el.style.transform = `translate(${rec.sx}px, ${y}px) translate(-50%, -100%)`;
     }
   }
   for (const [id, el] of bubbleEls) if (!live.has(id)) { el.remove(); bubbleEls.delete(id); }
@@ -1678,32 +1681,34 @@ function pickObject(id) {
   updatePreview();
 }
 
-// «Τι βλέπουν οι άλλοι»: 0.4.0 = 1-2 of name/message1/message2/object3d (+ sizes);
+// «Τι βλέπουν οι άλλοι»: 0.4.0 = 1-2 of name/message1/message2/object3d (+ sizes); 0.10.1 = up to 3;
 // 0.3.0 = the name always + exactly one of the other three; 0.2.0 = message only.
 function itemBoxes() { return [...document.querySelectorAll('.dispItem')]; }
 function activeBoxes() { return itemBoxes().filter((b) => dispMulti || b.value !== 'name'); }
 const selItems = () => activeBoxes().filter((b) => b.checked).map((b) => b.value);
+const itemMax = () => (dispMulti && hasCap('combo3') ? 3 : 2);
 function syncItems(changed = null) {
   const boxes = activeBoxes();
   let warn = '';
+  const max = itemMax();
   if (!dispMulti) {
     if (changed && changed.checked) for (const b of boxes) if (b !== changed) b.checked = false;
     if (!boxes.some((b) => b.checked)) { (changed || boxes[0]).checked = true; if (changed) warn = tr('disp.warnOne'); }
     for (const b of boxes) b.disabled = false;
   } else {
-    if (changed && changed.checked && boxes.filter((b) => b.checked).length > 2) { changed.checked = false; warn = tr('disp.warnMax'); }
+    if (changed && changed.checked && boxes.filter((b) => b.checked).length > max) { changed.checked = false; warn = tr(max >= 3 ? 'disp.warnMax3' : 'disp.warnMax'); }
     if (!boxes.some((b) => b.checked)) { (changed || boxes[0]).checked = true; warn = tr('disp.warnMin'); }
     const n = boxes.filter((b) => b.checked).length;
-    for (const b of boxes) b.disabled = !b.checked && n >= 2;
+    for (const b of boxes) b.disabled = !b.checked && n >= max;
   }
   const n = selItems().length;
-  $('dispHint').textContent = dispMulti ? tr('disp.hintTwo', { n, warn }) : tr('disp.hintOne', { warn });
+  $('dispHint').textContent = dispMulti ? tr(max >= 3 ? 'disp.hintThree' : 'disp.hintTwo', { n, warn }) : tr('disp.hintOne', { warn });
   $('dispHint2').textContent = $('dispHint').textContent;   // v29: same hint next to the 3D object («Εμφάνιση»)
   updatePreview();
 }
 function autoPick(item) {   // typing a message / tapping an object ticks it, if there is room
   const b = activeBoxes().find((x) => x.value === item);
-  if (!b || b.checked || (dispMulti && selItems().length >= 2)) return;
+  if (!b || b.checked || (dispMulti && selItems().length >= itemMax())) return;
   b.checked = true; dispDirty = true; syncItems(b);
 }
 function setItems(items) { for (const b of itemBoxes()) b.checked = items.includes(b.value); syncItems(); }
@@ -1741,7 +1746,7 @@ async function refreshServer(verbose = false) {
       : tr('srv.missingShots', { miss: server.posesEl(e.missing_poses) || e.frames_still_needed })));
     if (adv) advInfo.textContent += tr('srv.profileInfo', { id: me.id, n: e.frames });
     $('srvMe').classList.remove('hidden');
-    // «Τι βλέπουν οι άλλοι»: 0.4.0 two items + sizes; 0.3.0 one item; older servers: the one message only
+    // «Τι βλέπουν οι άλλοι»: 0.4.0 two items + sizes; 0.10.1 three items; 0.3.0 one item; older servers: the one message only
     const disp = hasCap('display');
     dispMulti = disp && hasCap('combo');
     for (const el of document.querySelectorAll('#people .disp-only')) el.classList.toggle('hidden', !disp);

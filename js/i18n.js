@@ -2878,3 +2878,33 @@ Object.assign(D.de, {
   'help.body.photo': '1) Beim ersten Mal tippe auf „📸 Los geht’s“. Gib deinen Namen ein, sorge für gutes Licht (ohne Sonnenbrille oder Maske) und schau in die Kamera; dreh den Kopf leicht. Dauert 1 Minute.\n2) Dann zwei einfache Schritte: ein 3D-Objekt wählen und eine kurze Nachricht schreiben (beides darfst du überspringen).\n3) Am Ende „Fertig, los geht’s“. Alles lässt sich später ändern unter Einstellungen → Mein Profil (oder „Schritt-für-Schritt-Hilfe“ hier).',
   'tut.t3.b': 'Beim ersten Mal tippe auf „📸 Los geht’s“: Name eingeben und den Hinweisen folgen (gerade, leicht zur Seite). Etwa eine Minute, gutes Licht, keine Sonnenbrille. Dann 3D-Objekt und Nachricht wählen und „Fertig“ tippen.',
 });
+
+// v39: name + 3D object + message can all show together (server 0.10.1, combo3)
+Object.assign(D.el, {
+  'su.pickQ': 'Πάνω από το κεφάλι σου μπορούν να φαίνονται το όνομα, το αντικείμενο και το μήνυμα μαζί. Τι να δείχνουμε;',
+  'su.pickBoth': '✨ Και τα δύο',
+  'disp.hintThree': 'Διάλεξε έως 3 (π.χ. όνομα + 3D αντικείμενο + μήνυμα). Επιλεγμένα: {n}/3.{warn}',
+  'disp.warnMax3': ' Το πολύ 3 — ξετσέκαρε πρώτα ένα.',
+  'help.body.photo': '1) Την πρώτη φορά πάτα «📸 Ξεκινάμε». Γράψε το όνομά σου, κράτα καλό φως (χωρίς γυαλιά ηλίου ή μάσκα) και κοίτα την κάμερα· γύρνα λίγο το κεφάλι. Θέλει 1 λεπτό.\n2) Μετά σε οδηγώ με δύο απλά βήματα: διάλεξε ένα 3D αντικείμενο και γράψε ένα μικρό μήνυμα (και τα δύο μπορείς να τα παραλείψεις).\n3) Στο τέλος, αν έβαλες και αντικείμενο και μήνυμα, διάλεξε αν θα φαίνεται το ένα ή «Και τα δύο» (όνομα + αντικείμενο + μήνυμα μαζί) και πάτα «Έτοιμο, χρησιμοποίησέ το». Τα αλλάζεις όποτε θες από Ρυθμίσεις → Εμφάνιση και ήχος (ή «Οδηγός βήμα-βήμα» εδώ στη Βοήθεια).',
+});
+Object.assign(D.en, {
+  'su.pickQ': 'Above your head, your name, the object and the message can all show together. What should we show?',
+  'su.pickBoth': '✨ Both',
+  'disp.hintThree': 'Choose up to 3 (e.g. name + 3D object + message). Selected: {n}/3.{warn}',
+  'disp.warnMax3': ' At most 3 — untick one first.',
+  'help.body.photo': '1) The first time, tap “📸 Let’s start”. Type your name, keep good light (no sunglasses or mask) and look at the camera; turn your head a little. It takes 1 minute.\n2) Then two easy steps: pick a 3D object and write a short message (you can skip both).\n3) At the end, if you chose both an object and a message, pick one of them or “Both” (name + object + message together) and tap “Done, start using it”. Change this later in Settings → Look and sound (or “Step-by-step guide” here in Help).',
+});
+Object.assign(D.fr, {
+  'su.pickQ': 'Au-dessus de votre tête, le nom, l’objet et le message peuvent s’afficher ensemble. Que montrer ?',
+  'su.pickBoth': '✨ Les deux',
+  'disp.hintThree': 'Choisissez jusqu’à 3 éléments (ex. nom + objet 3D + message). Sélectionnés : {n}/3.{warn}',
+  'disp.warnMax3': ' 3 au maximum — décochez-en un d’abord.',
+  'help.body.photo': '1) La première fois, touchez « 📸 C’est parti ». Écrivez votre nom, gardez une bonne lumière (sans lunettes de soleil ni masque) et regardez la caméra ; tournez un peu la tête. 1 minute.\n2) Puis deux étapes simples : choisir un objet 3D et écrire un petit message (vous pouvez passer les deux).\n3) À la fin, si vous avez choisi un objet et un message, choisissez l’un des deux ou « Les deux » (nom + objet + message ensemble) et touchez « Prêt, je l’utilise ». Modifiable ensuite dans Réglages → Apparence et son (ou « Guide pas à pas » ici).',
+});
+Object.assign(D.de, {
+  'su.pickQ': 'Über deinem Kopf können Name, Objekt und Nachricht zusammen erscheinen. Was sollen wir zeigen?',
+  'su.pickBoth': '✨ Beides',
+  'disp.hintThree': 'Wähle bis zu 3 (z. B. Name + 3D-Objekt + Nachricht). Ausgewählt: {n}/3.{warn}',
+  'disp.warnMax3': ' Höchstens 3 — entferne zuerst ein Häkchen.',
+  'help.body.photo': '1) Beim ersten Mal tippe auf „📸 Los geht’s“. Gib deinen Namen ein, sorge für gutes Licht (ohne Sonnenbrille oder Maske) und schau in die Kamera; dreh den Kopf leicht. Dauert 1 Minute.\n2) Dann zwei einfache Schritte: ein 3D-Objekt wählen und eine kurze Nachricht schreiben (beides darfst du überspringen).\n3) Am Ende, wenn du Objekt und Nachricht gewählt hast, wähle eines oder „Beides“ (Name + Objekt + Nachricht zusammen) und tippe auf „Fertig, los geht’s“. Später änderbar unter Einstellungen → Aussehen und Ton (oder „Schritt-für-Schritt-Hilfe“ hier).',
+});

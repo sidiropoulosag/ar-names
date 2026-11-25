@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v38 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v39 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -29,7 +29,7 @@
 1. **Γλώσσα** — εμφανίζεται αν δεν έχεις διαλέξει ακόμα.
 2. **«📸 Ξεκινάμε»** — η πρώτη οθόνη ανοίγει την κάμερα και σε πάει κατευθείαν στην καταχώριση, χωρίς ξεχωριστή «ξενάγηση». Αν έχεις ήδη προφίλ από άλλο κινητό, πάτα «🔐 Έχω ήδη προφίλ — Σύνδεση»· αν θες μόνο να δεις, «Μόνο να δω πρώτα».
 3. **Συναίνεση** — πριν την πρώτη καταχώριση (και μία φορά αν ενημερώθηκε η πολιτική) εμφανίζεται ερώτηση με σύνδεσμο στην **πολιτική απορρήτου**. Χρειάζεται τσεκάρισμα «Διάβασα και συμφωνώ» και «Συμφωνώ».
-4. **Οδηγός σε 4 βήματα (v38)** — μέσα στην ίδια πρώτη ρύθμιση: **① όνομα και φωτογραφίες** → **② 3D αντικείμενο πάνω από το κεφάλι** → **③ μικρό μήνυμα πάνω από το κεφάλι** → **④ «Έτοιμο, χρησιμοποίησέ το»**. Μόνο τα βασικά (όχι χαμένο άτομο, έκτακτη ανάγκη κ.λπ.). Τα βήματα ②–③ έχουν «Παράλειψη αυτού του βήματος» και υπάρχει πάντα «Αργότερα». Όποιος έχει ήδη προφίλ **δεν** περνά ξανά από αυτόν· ξανανοίγει με το «🪄 Οδηγός βήμα-βήμα» στο Ρυθμίσεις → Το προφίλ μου ή στη Βοήθεια. Αν βάλεις και αντικείμενο και μήνυμα, πάνω από το κεφάλι χωράνε το όνομα και ένα από τα δύο· διαλέγεις ποιο στο τέλος (τα αλλάζεις αργότερα από «Εμφάνιση και ήχος»).
+4. **Οδηγός σε 4 βήματα (v39)** — μέσα στην ίδια πρώτη ρύθμιση: **① όνομα και φωτογραφίες** → **② 3D αντικείμενο πάνω από το κεφάλι** → **③ μικρό μήνυμα πάνω από το κεφάλι** → **④ «Έτοιμο, χρησιμοποίησέ το»**. Μόνο τα βασικά (όχι χαμένο άτομο, έκτακτη ανάγκη κ.λπ.). Τα βήματα ②–③ έχουν «Παράλειψη αυτού του βήματος» και υπάρχει πάντα «Αργότερα». Όποιος έχει ήδη προφίλ **δεν** περνά ξανά από αυτόν· ξανανοίγει με το «🪄 Οδηγός βήμα-βήμα» στο Ρυθμίσεις → Το προφίλ μου ή στη Βοήθεια. Αν βάλεις και αντικείμενο και μήνυμα, στο τέλος διαλέγεις: μόνο το αντικείμενο, μόνο το μήνυμα, ή «Και τα δύο» (όνομα + 3D αντικείμενο + μήνυμα μαζί — προεπιλογή). Τα αλλάζεις αργότερα από «Εμφάνιση και ήχος» (έως 3 στοιχεία).
 
 ---
 
@@ -195,6 +195,8 @@
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
 
+**v39:** πάνω από το κεφάλι μπορούν να φαίνονται **μαζί** το όνομα, το 3D αντικείμενο και το μήνυμα (όριο 3). Στον οδηγό, στο βήμα 4, αν έβαλες και τα δύο, η προεπιλογή είναι «Και τα δύο». Το ίδιο στις ρυθμίσεις «Εμφάνιση και ήχος». Χρειάζεται server 0.10.1.
+
 **v38:** η πρώτη ρύθμιση έγινε **ένας οδηγός 4 βημάτων** μέσα στην καταχώριση φωτογραφιών: όνομα και φωτογραφίες → 3D αντικείμενο → μήνυμα → «Έτοιμο, χρησιμοποίησέ το». Η παλιά ξεχωριστή «ξενάγηση» αφαιρέθηκε· όσοι έχουν ήδη προφίλ δεν περνούν ξανά από αυτήν.
 
 **v37:** **σύνδεση με Google ή email** (Ρυθμίσεις → Λογαριασμός): σε νέο κινητό ή μετά από επανεγκατάσταση συνδέεσαι με τον ίδιο τρόπο και το προφίλ σου επανέρχεται χωρίς νέες φωτογραφίες. Προαιρετικό· χρειάζεται server 0.10.0.
@@ -251,7 +253,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v38 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v39 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -278,7 +280,7 @@ Main UI: **👥** settings, **🔄** flip camera, **⚪** snapshot (frame + labe
 1. **Language** picker if none saved.
 2. **«📸 Let’s start»** — the first screen opens the camera and goes straight into enrolment, no separate tour. Already have a profile on another phone? «🔐 I already have a profile — Sign in»; just want a look? «Just look around first».
 3. **Consent** before first enrolment (and once if the policy updated): read the **privacy policy**, tick agree, tap Agree.
-4. **4-step guide (v38)** — inside that same first setup: **① name and photos** → **② 3D object above your head** → **③ a short message above your head** → **④ «Done, start using it»**. Basics only (no missing-person, emergency card etc.). Steps ②–③ have «Skip this step», and «Later» is always there. People who already have a profile are **not** sent through it again; reopen it with «🪄 Step-by-step guide» in Settings → My profile or in Help. If you choose both an object and a message, there is room for your name plus one of them; you pick which at the end (change later in «Look and sound»).
+4. **4-step guide (v39)** — inside that same first setup: **① name and photos** → **② 3D object above your head** → **③ a short message above your head** → **④ «Done, start using it»**. Basics only (no missing-person, emergency card etc.). Steps ②–③ have «Skip this step», and «Later» is always there. People who already have a profile are **not** sent through it again; reopen it with «🪄 Step-by-step guide» in Settings → My profile or in Help. If you choose both an object and a message, at the end you pick: object only, message only, or «Both» (name + 3D object + message together — the default). Change this later in «Look and sound» (up to 3 items).
 
 ---
 
@@ -436,6 +438,8 @@ The family administrator runs the server (the `ar-names-pc` package, version **0
 ## Updates
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
+
+**v39:** the name, the 3D object and the message can now all show **together** above the head (limit 3). In the guide, step 4 defaults to «Both» if you picked both. The same choice is in Settings → Look and sound. Needs server 0.10.1.
 
 **v38:** first-time setup is now **one 4-step guide** inside the photo setup: name and photos → 3D object → message → «Done, start using it». The old separate tour is gone; people who already have a profile are not sent through it again.
 

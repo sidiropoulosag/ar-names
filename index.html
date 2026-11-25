@@ -164,6 +164,7 @@
       <button type="button" class="srow" data-go="safety"><span class="sico" aria-hidden="true">🆘</span><span class="stxt"><b data-i18n="m.safety">Χαμένο άτομο</b><small data-i18n="m.safetySub">Προφίλ ασφαλείας, αν χαθεί κάποιος</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="a11y"><span class="sico" aria-hidden="true">♿</span><span class="stxt"><b data-i18n="m.a11y">Εύκολη χρήση</b><small data-i18n="m.a11ySub">Φωνή, μεγάλα γράμματα, αντίθεση</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="tutorial"><span class="sico" aria-hidden="true">📘</span><span class="stxt"><b data-i18n="m.tutorial">Οδηγός</b><small data-i18n="m.tutorialSub">Πώς δουλεύουν όλα, βήμα-βήμα</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <a class="srow" href="guide.html" target="_blank" rel="noopener"><span class="sico" aria-hidden="true">📖</span><span class="stxt"><b data-i18n="guide.webLink">Πλήρης οδηγός χρήσης</b><small data-i18n="guide.webSub">Απλά, στα ελληνικά, με εικόνες</small></span><span class="schev" aria-hidden="true">›</span></a>
       <button type="button" class="srow" data-go="help"><span class="sico" aria-hidden="true">❓</span><span class="stxt"><b data-i18n="m.help">Οδηγός και βοήθεια</b><small data-i18n="m.helpSub">Οδηγίες, ερωτήσεις, εγκατάσταση</small></span><span class="schev" aria-hidden="true">›</span></button>
     </nav>
   </section>
@@ -213,11 +214,19 @@
     <p id="accLead" class="acc-lead"></p>
     <p id="accOff" class="small hidden"></p>
     <div id="accIn" class="scard hidden">
+      <picture class="acc-art">
+        <source type="image/webp" srcset="tutorial/t-account-restore.webp">
+        <img src="tutorial/t-account-restore.png" alt="" width="240" height="258">
+      </picture>
       <p id="accWho" class="acc-who"></p>
       <p class="small" data-i18n="acc.inNote">Σε νέο κινητό ή μετά από επανεγκατάσταση: Ρυθμίσεις → Λογαριασμός → σύνδεση με τον ίδιο τρόπο. Όλα επιστρέφουν χωρίς νέες φωτογραφίες.</p>
       <button id="accUnlink" type="button" class="wide" data-i18n="acc.unlink">Αφαίρεση σύνδεσης λογαριασμού</button>
     </div>
     <div id="accOut" class="hidden">
+      <picture class="acc-art">
+        <source type="image/webp" srcset="tutorial/t-account-signin.webp">
+        <img src="tutorial/t-account-signin.png" alt="" width="240" height="258">
+      </picture>
       <button id="accGoogle" type="button" class="acc-google big hidden"><span class="acc-g" aria-hidden="true">G</span> <span data-i18n="acc.google">Σύνδεση με Google</span></button>
       <p id="accOr" class="acc-or hidden" data-i18n="acc.or">ή</p>
       <div id="accEmailBox" class="scard hidden">
@@ -234,6 +243,7 @@
     </div>
     <p id="accMsg" class="small acc-msg" aria-live="polite"></p>
     <p class="small" data-i18n="acc.privacy">Κρατάμε μόνο το email σου, για να σε αναγνωρίζουμε όταν συνδέεσαι. Δεν βλέπουμε τον κωδικό σου στο Google. Αν διαγράψεις το προφίλ σου, σβήνεται κι αυτό.</p>
+    <p class="small"><a href="guide.html" target="_blank" rel="noopener" data-i18n="guide.webLink">📖 Πλήρης οδηγός χρήσης</a></p>
     <p class="small"><a href="privacy.html" target="_blank" rel="noopener" data-i18n="pv.webLink">📄 Πολιτική απορρήτου στον ιστό</a></p>
   </section>
 
@@ -579,6 +589,7 @@
   <div class="set-body help-body">
     <input id="helpSearch" type="search" maxlength="60" placeholder="Αναζήτηση…" data-i18n-ph="help.searchPh" autocomplete="off">
     <button id="helpTut" type="button" class="primary big" data-i18n="tut.start">Ξεκίνα τον οδηγό</button>
+    <a id="helpGuide" class="btn wide" href="guide.html" target="_blank" rel="noopener" data-i18n="guide.webLink">📖 Πλήρης οδηγός χρήσης</a>
     <button id="helpTour" type="button" class="big" data-i18n="help.tour">▶️ Γρήγορη ξενάγηση</button>
     <div id="helpCats"></div>
     <h3 data-i18n="help.faqTitle">Συχνές ερωτήσεις</h3>

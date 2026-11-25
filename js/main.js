@@ -581,7 +581,10 @@ function pageAvailable(pg) {
 function syncMenu() {
   const me = !$('srvMe').classList.contains('hidden');
   $('people').classList.toggle('has-me', me);
-  for (const r of document.querySelectorAll('#people .srow')) r.classList.toggle('hidden', !pageAvailable(r.dataset.go));
+  for (const r of document.querySelectorAll('#people .srow')) {
+    if (!r.dataset.go) continue;   // v43: «Πλήρης οδηγός χρήσης» is a plain link
+    r.classList.toggle('hidden', !pageAvailable(r.dataset.go));
+  }
   const L = LANGS.find((l) => l.id === getLang()); $('mLangSub').textContent = L ? `${L.flag} ${L.label}` : '';
   for (const b of document.querySelectorAll('#people .set-lang')) b.setAttribute('aria-checked', String(b.dataset.lang === getLang()));
   const row = document.querySelector(`#people .srow[data-go="${setPage}"] b`); $('subTitle').textContent = row ? row.textContent : '';
@@ -608,6 +611,7 @@ function setGo(pg) {
   if (pg === 'a11y' && v34) try { v34.applyA11y(); v34.syncV34Ui(); } catch (_) {}
 }
 for (const r of document.querySelectorAll('#people .srow')) r.onclick = () => {
+  if (!r.dataset.go) return;   // let href links (the public user guide) navigate normally
   if (r.dataset.go === 'help') return openHelp();
   if (r.dataset.go === 'tutorial') { closePeople(); return v34 && v34.openTutorial(); }
   setGo(r.dataset.go);
@@ -967,7 +971,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v42';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v43';   // keep in sync with CACHE in sw.js
 
 // v40: decorative avatar images are webp, with a PNG fallback if the file fails to load
 document.querySelectorAll('img[data-png]').forEach((img) => {

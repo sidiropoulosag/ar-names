@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0d1b2a">
+  <meta name="description" content="Απλός οδηγός χρήσης του Noera: εγκατάσταση, πρώτες φωτογραφίες, σύνδεση με Google ή email, βασική χρήση και απόρρητο.">
+  <title>Οδηγός χρήσης · Noera</title>
+  <link rel="icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <style>
+    :root { --bg:#0d1b2a; --card:#132536; --text:#f4f7fb; --muted:#c5d0dc; --line:rgba(255,255,255,.14); --acc:#8cc8ff; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.55; }
+    body { padding: 24px 18px 64px; }
+    main { max-width: 40rem; margin: 0 auto; }
+    header { display: flex; gap: 14px; align-items: center; margin-bottom: 28px; }
+    header img { width: 56px; height: 56px; border-radius: 14px; }
+    header p { margin: 0; color: var(--muted); font-size: .95rem; }
+    h1 { font-size: 1.7rem; line-height: 1.25; margin: 0 0 6px; }
+    h2 { font-size: 1.15rem; margin: 1.8rem 0 .55rem; }
+    p, li { font-size: 1.02rem; color: var(--text); }
+    ol.toc { padding-left: 1.3rem; margin: 0; }
+    ol.toc li { margin: .3rem 0; }
+    ul, ol { padding-left: 1.2rem; }
+    li { margin: .35rem 0; }
+    a { color: var(--acc); }
+    .updated { color: var(--muted); font-size: .9rem; margin: 0 0 1.2rem; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 8px 20px 16px; margin: 12px 0 28px; }
+    .back { display: inline-block; margin-bottom: 18px; }
+    .art { display: block; width: min(280px, 70vw); height: auto; max-height: 260px; object-fit: contain; margin: 8px auto 4px; }
+    figure { margin: 12px 0 18px; text-align: center; }
+    figcaption { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+    .steps { counter-reset: step; list-style: none; padding: 0; }
+    .steps li { position: relative; padding: 10px 12px 10px 48px; margin: 8px 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+    .steps li::before { counter-increment: step; content: counter(step); position: absolute; left: 12px; top: 12px; width: 26px; height: 26px; border-radius: 50%; background: rgba(140,200,255,.18); color: var(--acc); font-weight: 700; font-size: .95rem; display: flex; align-items: center; justify-content: center; }
+    footer { color: var(--muted); font-size: .9rem; margin-top: 2rem; }
+    hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="./">← Πίσω στην εφαρμογή Noera</a>
+    <header>
+      <img src="icons/icon-192.png" alt="Λογότυπο Noera" width="56" height="56">
+      <div>
+        <h1>Οδηγός χρήσης του Noera</h1>
+        <p>Απλά βήματα, για να ξεκινήσεις από το κινητό</p>
+      </div>
+    </header>
+    <p class="updated">Τελευταία ενημέρωση: 25 Νοεμβρίου 2026</p>
+
+    <div class="card">
+      <p>Το Noera είναι μια εφαρμογή για το κινητό. Ανοίγεις την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το όνομά του — και, αν το θέλεις, ένα αντικείμενο ή ένα μικρό μήνυμα — πάνω από το κεφάλι του.</p>
+      <p>Αυτός ο οδηγός εξηγεί μόνο τα βασικά. Μέσα στην εφαρμογή υπάρχει και ένας οδηγός 14 βημάτων (μενού <strong>📘 Οδηγός</strong>).</p>
+    </div>
+
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/01-welcome.webp">
+        <img class="art" src="tutorial/01-welcome.png" alt="Το άβαταρ του Noera χαιρετά με το χέρι" width="280" height="288">
+      </picture>
+    </figure>
+
+    <h2>Περιεχόμενα</h2>
+    <ol class="toc">
+      <li><a href="#install">Εγκατάσταση στο κινητό</a></li>
+      <li><a href="#photos">Πρώτες φωτογραφίες και όνομα</a></li>
+      <li><a href="#google">Σύνδεση με Google</a></li>
+      <li><a href="#email">Σύνδεση με email</a></li>
+      <li><a href="#data">Πώς σώζονται φωτογραφίες και δεδομένα στον λογαριασμό</a></li>
+      <li><a href="#use">Βασική χρήση</a></li>
+      <li><a href="#privacy">Απόρρητο και διαγραφή</a></li>
+      <li><a href="#faq">Συχνές ερωτήσεις</a></li>
+    </ol>
+
+    <h2 id="install">1. Εγκατάσταση στο κινητό</h2>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/t02-install.webp">
+        <img class="art" src="tutorial/t02-install.png" alt="Άνθρωπος δείχνει την εφαρμογή Noera στην οθόνη του κινητού" width="280" height="307">
+      </picture>
+    </figure>
+    <p>Άνοιξε τον σύνδεσμο της εφαρμογής σε <strong>Chrome (Android)</strong> ή <strong>Safari (iPhone, iOS 16.4 ή νεότερο)</strong>. Χρειάζεται σύνδεση https.</p>
+    <p>Για να τη βάζεις στην αρχική οθόνη, σαν εφαρμογή:</p>
+    <ul>
+      <li><strong>Android (Chrome):</strong> μενού ⋮ → «Εγκατάσταση εφαρμογής» ή «Προσθήκη στην αρχική οθόνη».</li>
+      <li><strong>iPhone (Safari):</strong> Κοινοποίηση ⬆︎ → «Προσθήκη στην αρχική οθόνη».</li>
+    </ul>
+    <p>Το ίδιο σύνδεσμο τον ανοίγεις σε κάθε συσκευή.</p>
+
+    <h2 id="photos">2. Πρώτες φωτογραφίες και όνομα</h2>
+    <p>Την πρώτη φορά που καταχωρίζεις τον εαυτό σου, η εφαρμογή σε πάει σε έναν σύντομο οδηγό 4 βημάτων. Όποιος έχει ήδη προφίλ δεν περνά ξανά από αυτόν.</p>
+    <ol class="steps">
+      <li><strong>Όνομα και φωτογραφίες.</strong> Γράφεις το όνομά σου και βγάζεις μερικές φωτογραφίες του προσώπου σου (λίγο αριστερά και δεξιά), για να σε αναγνωρίζει η εφαρμογή.</li>
+      <li><strong>3D αντικείμενο πάνω από το κεφάλι</strong> — αν το θέλεις. Μπορείς να το παραλείψεις και να το βάλεις αργότερα.</li>
+      <li><strong>Μικρό μήνυμα πάνω από το κεφάλι</strong> — κι αυτό προαιρετικό.</li>
+      <li><strong>«Έτοιμο, χρησιμοποίησέ το».</strong> Αν έβαλες και αντικείμενο και μήνυμα, διαλέγεις τι θα φαίνεται: μόνο το αντικείμενο, μόνο το μήνυμα, ή <strong>«Και τα δύο»</strong> (όνομα, αντικείμενο και μήνυμα μαζί — αυτή είναι η προεπιλογή).</li>
+    </ol>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/02-photos.webp">
+        <img class="art" src="tutorial/02-photos.png" alt="Σέλφι με το κινητό για την καταχώριση του προσώπου" width="280" height="296">
+      </picture>
+      <figcaption>Βήμα 1: όνομα και φωτογραφίες</figcaption>
+    </figure>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/03-above-head.webp">
+        <img class="art" src="tutorial/03-above-head.png" alt="Δείχνει προς τα πάνω, εκεί που εμφανίζεται το όνομα πάνω από το κεφάλι" width="280" height="274">
+      </picture>
+      <figcaption>Βήματα 2 και 3: τι φαίνεται πάνω από το κεφάλι</figcaption>
+    </figure>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/04-ready.webp">
+        <img class="art" src="tutorial/04-ready.png" alt="Έτοιμος, με τον αντίχειρα σηκωμένο" width="280" height="360">
+      </picture>
+      <figcaption>Βήμα 4: έτοιμο — μπορείς να διαλέξεις και τα δύο</figcaption>
+    </figure>
+    <p>Αυτά τα αλλάζεις αργότερα από Ρυθμίσεις → <strong>Εμφάνιση και ήχος</strong> (έως 3 στοιχεία μαζί: όνομα, αντικείμενο, μήνυμα).</p>
+    <p>Αν έχεις ήδη προφίλ σε άλλο κινητό, διάλεξε «Έχω ήδη προφίλ — Σύνδεση» και δες τα επόμενα βήματα.</p>
+
+    <h2 id="google">3. Σύνδεση με Google</h2>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/t-account-signin.webp">
+        <img class="art" src="tutorial/t-account-signin.png" alt="Κινητό με κουμπιά Google και email, και ένα λουκέτο" width="280" height="301">
+      </picture>
+    </figure>
+    <p>Η σύνδεση είναι <strong>προαιρετική</strong>. Χρησιμεύει για να δέσεις το προφίλ σου με έναν λογαριασμό, ώστε σε νέο κινητό ή μετά από επανεγκατάσταση να επανέλθει χωρίς νέες φωτογραφίες.</p>
+    <ol>
+      <li>Άνοιξε τις <strong>Ρυθμίσεις</strong> και πάτα <strong>🔐 Λογαριασμός</strong>.</li>
+      <li>Πάτα <strong>Σύνδεση με Google</strong>.</li>
+      <li>Διάλεξε τον λογαριασμό Google σου και ολοκλήρωσε τη διαδικασία της Google.</li>
+    </ol>
+    <p>Κρατάμε μόνο το email σου και το αναγνωριστικό του λογαριασμού Google, για να σε αναγνωρίζουμε όταν συνδέεσαι. Δεν βλέπουμε τον κωδικό σου στο Google.</p>
+
+    <h2 id="email">4. Σύνδεση με email</h2>
+    <p>Αν προτιμάς, αντί για Google:</p>
+    <ol>
+      <li>Ρυθμίσεις → <strong>🔐 Λογαριασμός</strong>.</li>
+      <li>Γράψε το email σου και πάτα «Στείλε μου κωδικό».</li>
+      <li>Σου έρχεται ένα <strong>6ψήφιο κωδικό</strong> από <a href="mailto:noera.app@gmail.com">noera.app@gmail.com</a>. Ισχύει <strong>10 λεπτά</strong>. Αν δεν το βλέπεις, έλεγξε και τα <strong>ανεπιθύμητα</strong> (spam).</li>
+      <li>Γράψε τον κωδικό στην εφαρμογή και πάτα «Σύνδεση».</li>
+    </ol>
+    <p>Αν δεν ήρθε, μπορείς να ζητήσεις νέο κωδικό από την ίδια οθόνη.</p>
+
+    <h2 id="data">5. Πώς σώζονται φωτογραφίες και δεδομένα στον λογαριασμό</h2>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/t-account-restore.webp">
+        <img class="art" src="tutorial/t-account-restore.png" alt="Παλιό κινητό, σύνδεσμος με τον λογαριασμό, και το προφίλ σε νέο κινητό" width="280" height="301">
+      </picture>
+    </figure>
+    <p>Όταν καταχωρίζεσαι, οι φωτογραφίες του προσώπου σου στέλνονται στον διακομιστή <strong>μόνο</strong> για να υπολογιστεί ένα αριθμητικό «αποτύπωμα» του προσώπου (μια σειρά αριθμών). Ο διακομιστής είναι ρυθμισμένος ώστε <strong>να μην κρατά τις φωτογραφίες</strong> μετά· μένει το αποτύπωμα, δεμένο με το προφίλ σου, μαζί με το όνομα και όσα έχεις διαλέξει (μήνυμα, αντικείμενο, ομάδες, ρυθμίσεις).</p>
+    <p>Η ζωντανή εικόνα της κάμερας <strong>μένει στο κινητό σου</strong>. Για την αναγνώριση στέλνεται μόνο το αποτύπωμα, όχι η εικόνα της κάμερας.</p>
+    <p>Αν έχεις συνδεθεί με Google ή email, σε <strong>νέο κινητό</strong> ή αν σβήσεις και ξαναβάλεις την εφαρμογή: άνοιξέ την → Ρυθμίσεις → 🔐 Λογαριασμός → σύνδεση με τον ίδιο τρόπο. <strong>Όλα επιστρέφουν χωρίς νέες φωτογραφίες</strong> — δεν χρειάζεται να ξαναβγάλεις τις πόζες.</p>
+    <p>Χωρίς σύνδεση, η εφαρμογή δουλεύει κανονικά στο ίδιο κινητό· απλώς, αν το αλλάξεις, το προφίλ στον διακομιστή δεν «έρχεται» μόνο του.</p>
+
+    <h2 id="use">6. Βασική χρήση</h2>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/03-above-head.webp">
+        <img class="art" src="tutorial/03-above-head.png" alt="Το όνομα εμφανίζεται πάνω από το κεφάλι" width="280" height="274">
+      </picture>
+    </figure>
+    <p>Άνοιξε την κάμερα και στρέψέ την προς τα πρόσωπα. Όταν η εφαρμογή αναγνωρίσει κάποιον που έχει καταχωριστεί (και που επιτρέπεται να τον βλέπεις), εμφανίζεται πάνω από το κεφάλι του το όνομα — και, αν τα έχει διαλέξει, το 3D αντικείμενο και το μήνυμα.</p>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/t08-met.webp">
+        <img class="art" src="tutorial/t08-met.png" alt="Δύο άνθρωποι χειραψία, πρώτη γνωριμία" width="280" height="287">
+      </picture>
+    </figure>
+    <p>Την πρώτη φορά που «γνωρίζεστε» μέσα στην εφαρμογή, εμφανίζεται για <strong>3 δευτερόλεπτα</strong> ένα σύντομο, διακριτικό μήνυμα <strong>«Γνωριστήκατε!»</strong> και μετά χάνεται μόνο του.</p>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/t07-events.webp">
+        <img class="art" src="tutorial/t07-events.png" alt="Εισιτήριο εκδήλωσης με κωδικό QR και κομφετί" width="280" height="295">
+      </picture>
+    </figure>
+    <p>Σε <strong>εκδηλώσεις</strong> μπορείς να φτιάξεις μια συνάντηση και να μοιραστείς κωδικό, σύνδεσμο ή QR. Όσοι μπουν βλέπουν ονόματα μεταξύ τους, σύμφωνα με τις ρυθμίσεις της εκδήλωσης.</p>
+
+    <h2 id="privacy">7. Απόρρητο και διαγραφή</h2>
+    <figure>
+      <picture>
+        <source type="image/webp" srcset="tutorial/t14-privacy.webp">
+        <img class="art" src="tutorial/t14-privacy.png" alt="Ασπίδα με λουκέτο, για το απόρρητο" width="280" height="305">
+      </picture>
+    </figure>
+    <p>Μπορείς να διαγράψεις το προφίλ σου οποιαδήποτε στιγμή: Ρυθμίσεις → <strong>Απόρρητο</strong>.</p>
+    <p>Η πλήρης περιγραφή — τι κρατιέται, πώς γίνεται η σύνδεση, πώς διαγράφεσαι — είναι στη σελίδα:</p>
+    <p><a href="privacy.html">📄 Πολιτική απορρήτου του Noera</a></p>
+
+    <h2 id="faq">8. Συχνές ερωτήσεις</h2>
+    <div class="card">
+      <p><strong>Η σύνδεση είναι υποχρεωτική;</strong><br>Όχι. Χωρίς σύνδεση η εφαρμογή δουλεύει όπως πριν. Η σύνδεση βοηθά μόνο για να μη χάσεις το προφίλ σε νέο κινητό.</p>
+      <p><strong>Κρατάτε τις φωτογραφίες μου;</strong><br>Όχι. Από τις φωτογραφίες καταχώρισης υπολογίζεται ένα αριθμητικό αποτύπωμα προσώπου και οι φωτογραφίες δεν κρατιούνται στον διακομιστή. Η ζωντανή κάμερα μένει στο κινητό σου.</p>
+      <p><strong>Άλλαξα κινητό. Τι κάνω;</strong><br>Άνοιξε την εφαρμογή → Ρυθμίσεις → 🔐 Λογαριασμός → συνδέσου με τον ίδιο λογαριασμό Google ή το ίδιο email. Το προφίλ επιστρέφει χωρίς νέες φωτογραφίες.</p>
+      <p><strong>Δεν ήρθε ο κωδικός στο email;</strong><br>Έρχεται από noera.app@gmail.com και ισχύει 10 λεπτά. Έλεγξε τα ανεπιθύμητα. Από την εφαρμογή μπορείς να ζητήσεις νέο κωδικό.</p>
+      <p><strong>Κανείς δεν με βλέπει;</strong><br>Βεβαιώσου ότι έχετε δώσει άδεια κάμερας, ότι είστε στην ίδια εκδήλωση ή ομάδα (αν χρησιμοποιείτε αυτές τις λειτουργίες), και ότι στις ρυθμίσεις επιτρέπεται να σε βλέπουν.</p>
+      <p><strong>Πώς σβήνω τα δεδομένα μου;</strong><br>Ρυθμίσεις → Απόρρητο → διαγραφή προφίλ. Λεπτομέρειες στην <a href="privacy.html">πολιτική απορρήτου</a>.</p>
+      <p><strong>Υπάρχει κάτι για αγνοούμενο άτομο;</strong><br>Ναι, μια προαιρετική λειτουργία ασφαλείας μέσα στην εφαρμογή. Δεν χρειάζεται για την καθημερινή χρήση· αν σε αφορά, δες τον οδηγό 14 βημάτων στην εφαρμογή και την πολιτική απορρήτου.</p>
+    </div>
+
+    <hr>
+    <footer>
+      <p>Noera · <a href="./">Άνοιγμα της εφαρμογής</a> · <a href="privacy.html">Πολιτική απορρήτου</a></p>
+      <p>Για ερωτήσεις: <a href="mailto:noera.app@gmail.com">noera.app@gmail.com</a>.</p>
+    </footer>
+  </main>
+</body>
+</html>

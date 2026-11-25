@@ -8,6 +8,12 @@ const K = 2;          // the scene is laid out like a real phone screen and show
 const FRAME_MS = 32;  // ~30 fps is plenty for a preview (keeps the camera loop behind it light)
 export const lookStats = { created: 0, disposed: 0, alive: 0, frames: 0, starts: 0, ownedLive: 0 };
 
+// v43: the preview face is the Noera avatar in a cafe (tutorial/preview-avatar.webp).
+// HEAD is the face box in the SOURCE image, 0–1. If that JPEG is regenerated, re-measure
+// (hair line, chin, face center) or run a screenshot and tweak these numbers.
+const PREVIEW_SRC = 'tutorial/preview-avatar.webp';
+const HEAD = { cx: 0.48, top: 0.29, bottom: 0.70, fw: 0.42 };
+
 // Give a preview copy of a 3D object its own geometry / materials / textures, so they can be disposed
 // on leave without touching the copies the camera screen uses (makeObject() shares them between copies).
 function own(root, bag) {
@@ -39,6 +45,11 @@ export class LookPreview {
     this.on = false; this.lab = null; this.canvas = null; this.raf = 0; this.last = 0; this.bub = null;
     this.objs = new Set(); this.fontP = null; this.popAt = 0; this.sig = '';
     this.ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => this.on && this.layout()) : null;
+    this.view = null;
+    this.photo = new Image();
+    this.photo.onload = () => { this.sig = ''; if (this.on) this.draw(performance.now()); };
+    this.photo.onerror = () => { this.sig = ''; };
+    this.photo.src = PREVIEW_SRC;
   }
   async font() {
     const f = this.getFont && this.getFont();
@@ -57,7 +68,7 @@ export class LookPreview {
     this.host.insertBefore(canvas, this.layer);
     const lab = new Labels3D(canvas);
     lookStats.created++; lookStats.alive++;
-    lab.topPad = 14;
+    lab.topPad = 40;  // v43: leave room for the name above the avatar's hair
     lab.beforeDraw = () => this.track();
     Object.assign(this, { canvas, lab });
     if (this.ro) this.ro.observe(this.host);
@@ -111,42 +122,73 @@ export class LookPreview {
     this.layer.style.transform = `scale(${1 / K})`;
     this.size = { w, h }; this.sig = '';
   }
-  // the sample people (virtual = real-screen pixels): me in the middle, an unknown face on the right if «?» is on
+  // Map the avatar's head from the source photo into the preview box, leaving room above the hair for labels.
+  prepareView() {
+    const { w, h } = this.size || { w: 0, h: 0 };
+    const img = this.photo;
+    if (!w || !h || !img || !img.naturalWidth) { this.view = null; return; }
+    const sw0 = img.naturalWidth, sh0 = img.naturalHeight;
+    const hairY = HEAD.top * sh0, chinY = HEAD.bottom * sh0;
+    const aspect = w / h;
+    let srcH = sw0 / aspect, srcW = sw0;
+    if (srcH > sh0) { srcH = sh0; srcW = srcH * aspect; }
+    let srcX = Math.max(0, HEAD.cx * sw0 - srcW / 2);
+    if (srcX + srcW > sw0) srcX = Math.max(0, sw0 - srcW);
+    // Prefer ~32% of the window above the hair so the name / object / message fit; keep the chin if possible.
+    let srcY = hairY - 0.40 * srcH;
+    if (srcY + srcH < chinY + 0.04 * sh0) srcY = Math.min(hairY - 0.28 * srcH, chinY + 0.04 * sh0 - srcH);
+    srcY = Math.max(0, Math.min(srcY, sh0 - srcH));
+    this.view = { srcX, srcY, srcW, srcH, sw0, sh0, w, h };
+  }
+  // me = the avatar's real head (labels sit above it). If «?» is on, a small unknown face on the right.
   people(st) {
     const VW = this.size.w * K, VH = this.size.h * K;
-    const out = [], fw0 = Math.min(VH * 0.22, VW * 0.22);
-    const add = (id, cx, fw) => {
-      const fh = fw * 1.3, y0 = VH - fh * 1.12, y1 = y0 + fh;
-      const kps = [[cx - fw * 0.2, y0 + fh * 0.42], [cx + fw * 0.2, y0 + fh * 0.42], [cx, y0 + fh * 0.6], [cx - fw * 0.15, y0 + fh * 0.78], [cx + fw * 0.15, y0 + fh * 0.78]];
+    const out = [];
+    const add = (id, cx, fw, y0, fh) => {
+      if (y0 == null) { fh = fw * 1.3; y0 = VH - fh * 1.12; }
+      const y1 = y0 + fh;
+      const kps = [[cx - fw * 0.18, y0 + fh * 0.42], [cx + fw * 0.18, y0 + fh * 0.42], [cx, y0 + fh * 0.56], [cx - fw * 0.14, y0 + fh * 0.74], [cx + fw * 0.14, y0 + fh * 0.74]];
       const p = { id, cx, fw, fh, y0, kps, box: { x0: (cx - fw / 2) / VW, x1: (cx + fw / 2) / VW, y0: y0 / VH, y1: y1 / VH } };
       out.push(p); return p;
     };
-    add(1, st.unknown ? VW * 0.38 : VW * 0.5, fw0);
-    if (st.unknown) add(2, VW * 0.82, fw0 * 0.78);
+    const v = this.view;
+    if (v && v.srcW) {
+      const cx = ((HEAD.cx * v.sw0 - v.srcX) / v.srcW) * VW;
+      const y0 = ((HEAD.top * v.sh0 - v.srcY) / v.srcH) * VH;
+      const y1 = ((HEAD.bottom * v.sh0 - v.srcY) / v.srcH) * VH;
+      const fw = (HEAD.fw * v.sw0 / v.srcW) * VW;
+      add(1, cx, fw, y0, y1 - y0);
+    } else {
+      add(1, VW * 0.5, Math.min(VH * 0.22, VW * 0.22));
+    }
+    if (st.unknown) add(2, VW * 0.88, Math.min(VH * 0.14, VW * 0.12));
     return out;
   }
-  background(ppl, st) {   // a dim «camera» room + head-and-shoulders silhouettes (2D canvas, redrawn on layout only)
-    const sig = `${this.size.w}x${this.size.h}:${st.unknown ? 1 : 0}`;
+  background(ppl, st) {   // v43: cafe + avatar photo; fallback gradient if the image is still loading
+    const ready = !!(this.photo && this.photo.naturalWidth);
+    const sig = `${this.size.w}x${this.size.h}:${st.unknown ? 1 : 0}:${ready ? 1 : 0}:${this.view ? this.view.srcY.toFixed(1) : 0}`;
     if (sig === this.sig) return;
     this.sig = sig;
     const dpr = Math.min(window.devicePixelRatio || 1, 2), { w, h } = this.size, c = this.bg;
     c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
     const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const bgr = g.createLinearGradient(0, 0, 0, h); bgr.addColorStop(0, '#33475b'); bgr.addColorStop(1, '#1b2633');
-    g.fillStyle = bgr; g.fillRect(0, 0, w, h);
-    g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(w * 0.06, h * 0.12, w * 0.2, h * 0.55); g.fillRect(w * 0.7, h * 0.08, w * 0.22, h * 0.3);
+    const v = this.view;
+    if (ready && v) {
+      g.drawImage(this.photo, v.srcX, v.srcY, v.srcW, v.srcH, 0, 0, w, h);
+    } else {
+      const bgr = g.createLinearGradient(0, 0, 0, h); bgr.addColorStop(0, '#33475b'); bgr.addColorStop(1, '#1b2633');
+      g.fillStyle = bgr; g.fillRect(0, 0, w, h);
+    }
     for (const p of ppl) {
-      const cx = p.cx / K, fw = p.fw / K, fh = p.fh / K, y0 = p.y0 / K, unk = p.id === 2;
-      g.fillStyle = unk ? '#5d6d7e' : '#8fa3b8';
-      g.beginPath(); g.ellipse(cx, h + fh * 0.2, fw * 1.25, fh * 0.75, 0, Math.PI, 0); g.fill();           // shoulders
-      g.fillRect(cx - fw * 0.2, y0 + fh * 0.8, fw * 0.4, fh * 0.4);                                     // neck
-      g.fillStyle = unk ? '#7b8a99' : '#c9d6e3';
-      g.beginPath(); g.ellipse(cx, y0 + fh / 2, fw / 2, fh / 2, 0, 0, Math.PI * 2); g.fill();            // head
-      g.fillStyle = unk ? '#4e5b68' : '#55687c';
-      g.beginPath(); g.ellipse(cx, y0 + fh * 0.18, fw * 0.5, fh * 0.2, 0, Math.PI, 0); g.fill();        // hair
-      for (const s of [-1, 1]) { g.beginPath(); g.arc(cx + s * fw * 0.18, y0 + fh * 0.44, fw * 0.045, 0, Math.PI * 2); g.fill(); }
-      g.lineWidth = Math.max(1, fw * 0.03); g.strokeStyle = g.fillStyle;
-      g.beginPath(); g.arc(cx, y0 + fh * 0.62, fw * 0.14, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+      if (p.id !== 2) continue;   // only the optional unknown face is drawn as a silhouette
+      const cx = p.cx / K, fw = p.fw / K, fh = p.fh / K, y0 = p.y0 / K;
+      g.fillStyle = '#5d6d7e';
+      g.beginPath(); g.ellipse(cx, h + fh * 0.2, fw * 1.25, fh * 0.75, 0, Math.PI, 0); g.fill();
+      g.fillRect(cx - fw * 0.2, y0 + fh * 0.8, fw * 0.4, fh * 0.4);
+      g.fillStyle = '#7b8a99';
+      g.beginPath(); g.ellipse(cx, y0 + fh / 2, fw / 2, fh / 2, 0, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#4e5b68';
+      g.beginPath(); g.ellipse(cx, y0 + fh * 0.18, fw * 0.5, fh * 0.2, 0, Math.PI, 0); g.fill();
     }
   }
   draw(ms) {
@@ -154,6 +196,7 @@ export class LookPreview {
     if (!lab || !lab.font || !this.on) return;
     this.last = ms;
     const st = this.getState();
+    this.prepareView();
     const ppl = this.people(st);
     this.background(ppl, st);
     const t = ms / 1000, VW = this.size.w * K, VH = this.size.h * K;

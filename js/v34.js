@@ -4,13 +4,14 @@ import { t as tr, getLang, applyI18n, locale } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const TUT = ['t1','t2','t3','t4','t5','t6','t7','t8','t9','t10','t11','t12','t13','t14'];
-// v40: approved Noera avatar poses (same character, logo on the shirt).
-// Steps without a dedicated pose reuse the closest of the four.
+// v43: approved Noera avatar poses (same character, logo on the shirt, varied heads).
+// Dedicated poses for install, events, met, where-met, emergency, missing, easy, privacy.
+// Remaining steps reuse the closest of the original four.
 const TUT_ART = {
-  t1: '01-welcome', t2: '02-photos', t3: '02-photos', t4: '03-above-head',
-  t5: '03-above-head', t6: '01-welcome', t7: '01-welcome', t8: '01-welcome',
-  t9: '03-above-head', t10: '01-welcome', t11: '04-ready', t12: '02-photos',
-  t13: '04-ready', t14: '04-ready',
+  t1: '01-welcome', t2: 't02-install', t3: '02-photos', t4: '03-above-head',
+  t5: '03-above-head', t6: '01-welcome', t7: 't07-events', t8: 't08-met',
+  t9: '03-above-head', t10: 't10-where-met', t11: 't11-emergency', t12: 't12-missing',
+  t13: 't13-easy', t14: 't14-privacy',
 };
 const A11Y_KEY = 'ar-names-a11y';
 const MET_NOTES_KEY = 'ar-names-met-notes';

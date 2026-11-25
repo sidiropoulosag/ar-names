@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v42 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v43 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -65,7 +65,7 @@
 |---|---|
 | **Άτομα** | Ποιους αναγνωρίζει η κάμερα σε αυτή τη συσκευή: μετονομασία, διαγραφή, «＋ λήψεις». |
 | **Το προφίλ μου** | Όνομα και μηνύματα στο δίκτυο (όταν έχεις online προφίλ). |
-| **Εμφάνιση και ήχος** | Στην οθόνη μου: ήχος αναγνώρισης, «?» σε αγνώστους. Πάνω από το κεφάλι μου (το βλέπουν οι άλλοι): τι δείχνει (όνομα / μήνυμα 1 / μήνυμα 2 / 3D αντικείμενο), **στυλ γραμμάτων** (Τολμηρό / Καμπυλωτό / Ήπιο), **μέγεθος**, **αστείο φίλτρο** με **ζωντανή προεπισκόπηση** (κορώνα, καπέλο, κομφετί, φωτοστέφανο· εποχιακά Χριστούγεννα / Απόκριες). |
+| **Εμφάνιση και ήχος** | Στην οθόνη μου: ήχος αναγνώρισης, «?» σε αγνώστους. Πάνω από το κεφάλι μου (το βλέπουν οι άλλοι): τι δείχνει (όνομα / μήνυμα 1 / μήνυμα 2 / 3D αντικείμενο), **στυλ γραμμάτων** (Τολμηρό / Καμπυλωτό / Ήπιο), **μέγεθος**, **αστείο φίλτρο** με **ζωντανή προεπισκόπηση** πάνω στο άβαταρ του Noera (κορώνα, καπέλο, κομφετί, φωτοστέφανο· εποχιακά Χριστούγεννα / Απόκριες). |
 | **Ποιος με βλέπει** | 🌍 Όλοι, ή 👥 μόνο οι ομάδες που τσεκάρεις. |
 | **Μηνύματα** | Αν δέχεσαι καρδιές / χαιρετισμούς / σύντομα κείμενα από άλλους. |
 | **Γλώσσα** | Ελληνικά, English, Français, Deutsch. |
@@ -75,7 +75,7 @@
 | **Τα επιτεύγματά μου** | Τοπικά σήματα στη συσκευή — χωρίς πίεση / spam. |
 | **Χαμένο άτομο** | Προφίλ ασφαλείας για ευάλωτο άτομο (server 0.9.0+). |
 | **Εύκολη χρήση** | Εκφώνηση ονομάτων, μεγάλα γράμματα, υψηλή αντίθεση, εμφάνιση για φροντιστή. |
-| **Οδηγός** | Βήμα-βήμα, με το άβαταρ του Noera (4 πόζες), και στις 4 γλώσσες. |
+| **Οδηγός** | Βήμα-βήμα, με το άβαταρ του Noera (αφιερωμένες πόζες στα βασικά βήματα), και στις 4 γλώσσες. |
 | **Οδηγός και βοήθεια** | Κατηγορίες, αναζήτηση, FAQ, οδηγός βήμα-βήμα και σύνδεσμος στον εικονογραφημένο οδηγό. |
 
 ---
@@ -92,7 +92,9 @@
 
 ## Οδηγός
 
-Από το μενού **«📘 Οδηγός»** ή από Βοήθεια → **«Ξεκίνα τον οδηγό»**. 14 βήματα με το **άβαταρ του Noera** (ίδιος χαρακτήρας, λογότυπο στη μπλούζα) και σύντομο κείμενο, στις γλώσσες Ελληνικά / English / Français / Deutsch. Οι εικόνες είναι: καλωσόρισμα (γεια), φωτογραφίες (σέλφι με το κινητό), πάνω από το κεφάλι (δείχνει ψηλά), έτοιμο (like). Όπου ένα βήμα δεν έχει δική του πόζα, χρησιμοποιείται η πιο κοντινή από τις τέσσερις. Εξηγεί την κάμερα, την καταχώριση, τα μηνύματα, τις εκδηλώσεις, τη φωτο ανάμνησης, το χαμένο άτομο, την κάρτα ανάγκης, την εύκολη χρήση και το απόρρητο. Το ίδιο άβαταρ εμφανίζεται και στην πρώτη ρύθμιση (καλωσόρισμα, φωτογραφίες, αντικείμενο/μήνυμα, «Έτοιμο»).
+Από το μενού **«📘 Οδηγός»** ή από Βοήθεια → **«Ξεκίνα τον οδηγό»**. 14 βήματα με το **άβαταρ του Noera** (ίδιος χαρακτήρας, λογότυπο στη μπλούζα, διάφορες εκφράσεις) και σύντομο κείμενο, στις γλώσσες Ελληνικά / English / Français / Deutsch. Υπάρχουν αφιερωμένες πόζες για την εγκατάσταση, τις εκδηλώσεις, το «Γνωριστήκατε», το «Πού γνωριστήκαμε», την κάρτα ανάγκης, το χαμένο άτομο, την εύκολη χρήση και το απόρρητο· τα υπόλοιπα βήματα χρησιμοποιούν τις πόζες καλωσορίσματος, φωτογραφιών ή «πάνω από το κεφάλι». Το ίδιο άβαταρ εμφανίζεται και στην πρώτη ρύθμιση και στη ζωντανή προεπισκόπηση του «Εμφάνιση και ήχος».
+
+**Πλήρης οδηγός χρήσης (στα ελληνικά, για μη τεχνικούς):** https://sidiropoulosag.github.io/ar-names/guide.html — εγκατάσταση, πρώτες φωτογραφίες, σύνδεση με Google ή email, πώς σώζονται τα δεδομένα, βασική χρήση, απόρρητο. Άνοιγμα και από το μενού («Πλήρης οδηγός χρήσης»), από τη Βοήθεια και από τη σελίδα Λογαριασμός.
 
 ---
 
@@ -145,7 +147,9 @@
 
 **Μόνο στη συσκευή (χωρίς / εκτός server):** τα άτομα που προσθέτεις τοπικά μένουν στο κινητό (IndexedDB: αποτυπώματα + μικρή μικρογραφία για τη λίστα). Καμία εικόνα δεν φεύγει από το κινητό σε καθαρά τοπική λειτουργία.
 
-**Δημόσια πολιτική απορρήτου (v42):** https://sidiropoulosag.github.io/ar-names/privacy.html — η πλήρης περιγραφή (ελληνικά και αγγλικά) για το τι κρατιέται, πώς γίνεται η σύνδεση με Google ή email, και πώς διαγράφεσαι. Άνοιγμα και από Ρυθμίσεις → Απόρρητο, από τη Βοήθεια και από τη σελίδα Λογαριασμός.
+**Δημόσια πολιτική απορρήτου:** https://sidiropoulosag.github.io/ar-names/privacy.html — η πλήρης περιγραφή (ελληνικά και αγγλικά) για το τι κρατιέται, πώς γίνεται η σύνδεση με Google ή email, και πώς διαγράφεσαι. Άνοιγμα και από Ρυθμίσεις → Απόρρητο, από τη Βοήθεια και από τη σελίδα Λογαριασμός.
+
+**Πλήρης οδηγός χρήσης (v43):** https://sidiropoulosag.github.io/ar-names/guide.html — απλά ελληνικά, με τις εικόνες του άβαταρ.
 
 **Διαγραφή:** Ρυθμίσεις → Απόρρητο και ασφάλεια → «Διαγραφή του προφίλ μου» — σβήνει προφίλ/αποτυπώματα/μηνύματα/ομάδες στον server και τα δεδομένα σε αυτό το κινητό.
 
@@ -197,7 +201,9 @@
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
 
-**v42:** δημόσια **πολιτική απορρήτου** στη διεύθυνση https://sidiropoulosag.github.io/ar-names/privacy.html (ελληνικά και αγγλικά). Σύνδεσμος από Ρυθμίσεις → Απόρρητο, από τη Βοήθεια και από τη σελίδα Λογαριασμός. (Το v41 κρατήθηκε για τις επόμενες πόζες του οδηγού, όταν εγκριθούν.)
+**v43:** πλήρης **οδηγός χρήσης** στα ελληνικά στη διεύθυνση https://sidiropoulosag.github.io/ar-names/guide.html, με τις εικόνες του άβαταρ. Οκτώ νέες πόζες στον οδηγό 14 βημάτων (εγκατάσταση, εκδηλώσεις, «Γνωριστήκατε», «Πού γνωριστήκαμε», κάρτα ανάγκης, χαμένο άτομο, εύκολη χρήση, απόρρητο). Εικόνες σύνδεσης στη σελίδα Λογαριασμός. Η ζωντανή προεπισκόπηση στο «Εμφάνιση και ήχος» δείχνει το άβαταρ σε καφέ, με το όνομα πάνω από το κεφάλι. Οι πόζες ξαναμετατρέπονται με `python3 scripts/process-avatar-poses.py` (από `/workspace/noera-avatar-poses/*.jpg`).
+
+**v42:** δημόσια **πολιτική απορρήτου** στη διεύθυνση https://sidiropoulosag.github.io/ar-names/privacy.html (ελληνικά και αγγλικά). Σύνδεσμος από Ρυθμίσεις → Απόρρητο, από τη Βοήθεια και από τη σελίδα Λογαριασμός.
 
 **v40:** ο οδηγός και η πρώτη ρύθμιση δείχνουν πλέον το **άβαταρ του Noera** (4 πόζες, λογότυπο στη μπλούζα) αντί για τα παλιά σκίτσα.
 
@@ -225,7 +231,7 @@
 
 ## Βοήθεια μέσα στην εφαρμογή
 
-Ρυθμίσεις → **Οδηγός και βοήθεια**: κατηγορίες (φωτογράφιση, ονόματα, χαιρετισμοί, εκδηλώσεις, προσκλήσεις, απόρρητο, αναφορά, επιτεύγματα, φίλτρα, γλώσσα, εγκατάσταση, χαμένο άτομο, κάρτα ανάγκης, μήνυμα που περιμένει, εύκολη χρήση, οδηγός), **αναζήτηση** και **FAQ** (π.χ. «Γιατί δεν με βλέπει κανείς;», κάμερα, διαγραφή, χαιρετισμός, «Πώς δηλώνω ότι χάθηκε κάποιος;»). Από εκεί ξεκινά και ο **εικονογραφημένος οδηγός**. Στην κατηγορία Απορρήτου υπάρχει σύνδεσμος προς την [πολιτική απορρήτου στον ιστό](https://sidiropoulosag.github.io/ar-names/privacy.html).
+Ρυθμίσεις → **Οδηγός και βοήθεια**: κατηγορίες (φωτογράφιση, ονόματα, χαιρετισμοί, εκδηλώσεις, προσκλήσεις, απόρρητο, αναφορά, επιτεύγματα, φίλτρα, γλώσσα, εγκατάσταση, χαμένο άτομο, κάρτα ανάγκης, μήνυμα που περιμένει, εύκολη χρήση, οδηγός), **αναζήτηση** και **FAQ** (π.χ. «Γιατί δεν με βλέπει κανείς;», κάμερα, διαγραφή, χαιρετισμός, «Πώς δηλώνω ότι χάθηκε κάποιος;»). Από εκεί ξεκινά και ο **εικονογραφημένος οδηγός**, και υπάρχει σύνδεσμος στον [πλήρη οδηγό χρήσης](https://sidiropoulosag.github.io/ar-names/guide.html). Στην κατηγορία Απορρήτου υπάρχει σύνδεσμος προς την [πολιτική απορρήτου στον ιστό](https://sidiropoulosag.github.io/ar-names/privacy.html).
 
 ---
 
@@ -259,7 +265,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v42 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v43 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -317,7 +323,7 @@ Recognised faces get a **3D name** (and optional message / object / filter). Tap
 |---|---|
 | **People** | Who this device can recognise: rename, delete, add shots. |
 | **My profile** | Name and messages on the network (when you have an online profile). |
-| **Look and sound** | On my screen: recognition sound, 「?」 for strangers. Above my head (what others see): name / message 1 / message 2 / 3D object, **letter style** (Bold / Curved / Soft), **sizes**, **funny filter** with **live preview** (crown, hat, confetti, halo; seasonal Christmas / Halloween). |
+| **Look and sound** | On my screen: recognition sound, 「?」 for strangers. Above my head (what others see): name / message 1 / message 2 / 3D object, **letter style** (Bold / Curved / Soft), **sizes**, **funny filter** with **live preview** over the Noera avatar (crown, hat, confetti, halo; seasonal Christmas / Halloween). |
 | **Who can see me** | Everyone, or only selected groups. |
 | **Messages** | Whether you accept hearts / greets / short texts. |
 | **Language** | el / en / fr / de. |
@@ -327,7 +333,7 @@ Recognised faces get a **3D name** (and optional message / object / filter). Tap
 | **My achievements** | Local badges on this device — no spam. |
 | **Missing person** | Safety profile for a vulnerable person (server 0.9.0+). |
 | **Easier to use** | Spoken names, large text, high contrast, caregiver layout. |
-| **Guide** | Step-by-step, with the Noera avatar (4 poses), in all 4 languages. |
+| **Guide** | Step-by-step, with the Noera avatar (dedicated poses for the main steps), in all 4 languages. |
 | **Help** | Categories, search, FAQ, step-by-step guide, and a link to the picture guide. |
 
 ---
@@ -344,7 +350,9 @@ Recognised faces get a **3D name** (and optional message / object / filter). Tap
 
 ## Guide
 
-From the menu **“📘 Guide”** or Help → **“Start the guide”**. 14 steps with the **Noera avatar** (same character, logo on the shirt) and short text, in Greek / English / Français / Deutsch. The pictures are: welcome (waving), photos (selfie with the phone), above the head (pointing up), and ready (thumbs up). Steps without their own pose reuse the closest of the four. It covers the camera, enrolment, messages, events, the memory photo, missing-person alerts, the emergency card, accessibility and privacy. The same avatar also appears in first-time setup (welcome, photos, object/message, “Done”).
+From the menu **“📘 Guide”** or Help → **“Start the guide”**. 14 steps with the **Noera avatar** (same character, logo on the shirt, varied expressions) and short text, in Greek / English / Français / Deutsch. There are dedicated poses for install, events, “You met”, “Where we met”, the emergency card, missing person, accessibility and privacy; the other steps reuse welcome, photos or “above the head”. The same avatar also appears in first-time setup and in the live preview on “Look and sound”.
+
+**Full user guide (Greek, for non-technical readers):** https://sidiropoulosag.github.io/ar-names/guide.html — install, first photos, Google or email sign-in, how data is saved, everyday use, privacy. Also linked from the menu (“Full user guide”), from Help and from the Account page.
 
 ---
 
@@ -397,7 +405,9 @@ Settings → **Easier to use**:
 
 **On-device only:** local people stay in IndexedDB (embeddings + a small list thumbnail). In pure local mode no image leaves the phone.
 
-**Public privacy policy (v42):** https://sidiropoulosag.github.io/ar-names/privacy.html — the full description (Greek and English) of what is kept, how Google / email sign-in works, and how to delete your data. Also linked from Settings → Privacy, Help, and the Account page.
+**Public privacy policy:** https://sidiropoulosag.github.io/ar-names/privacy.html — the full description (Greek and English) of what is kept, how Google / email sign-in works, and how to delete your data. Also linked from Settings → Privacy, Help, and the Account page.
+
+**Full user guide (v43):** https://sidiropoulosag.github.io/ar-names/guide.html — simple Greek, with the avatar pictures.
 
 **Delete:** Settings → Privacy → Delete my profile (server + this device). **Block / report** from a person’s sheet; unblock under Privacy.
 
@@ -447,7 +457,9 @@ The family administrator runs the server (the `ar-names-pc` package, version **0
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
 
-**v42:** public **privacy policy** at https://sidiropoulosag.github.io/ar-names/privacy.html (Greek and English). Linked from Settings → Privacy, from Help, and from the Account page. (v41 is reserved for the next tutorial poses, once they are approved.)
+**v43:** a full **user guide** in Greek at https://sidiropoulosag.github.io/ar-names/guide.html, with the avatar pictures. Eight new poses in the 14-step guide (install, events, “You met”, “Where we met”, emergency card, missing person, accessibility, privacy). Sign-in pictures on the Account page. The live preview on “Look and sound” shows the avatar in a cafe, with the name above his head. Re-convert poses with `python3 scripts/process-avatar-poses.py` (from `/workspace/noera-avatar-poses/*.jpg`).
+
+**v42:** public **privacy policy** at https://sidiropoulosag.github.io/ar-names/privacy.html (Greek and English). Linked from Settings → Privacy, from Help, and from the Account page.
 
 **v40:** the guide and first-time setup now show the **Noera avatar** (4 poses, logo on the shirt) instead of the old sketches.
 
@@ -475,7 +487,7 @@ From **v25** onward, app code is **network-first**: you get a new published vers
 
 ## In-app help
 
-Settings → **Help**: categories (enrolment, names, greetings, events, invites, privacy, report, achievements, filters, language, install, missing person, emergency card, waiting message, accessibility, guide), **search**, and **FAQ** (why nobody sees me, camera, delete, greetings, “How do I report someone missing?”). The **picture guide** also starts from here. The Privacy category links to the [public privacy policy](https://sidiropoulosag.github.io/ar-names/privacy.html).
+Settings → **Help**: categories (enrolment, names, greetings, events, invites, privacy, report, achievements, filters, language, install, missing person, emergency card, waiting message, accessibility, guide), **search**, and **FAQ** (why nobody sees me, camera, delete, greetings, “How do I report someone missing?”). The **picture guide** also starts from here, and there is a link to the [full user guide](https://sidiropoulosag.github.io/ar-names/guide.html) (Greek). The Privacy category links to the [public privacy policy](https://sidiropoulosag.github.io/ar-names/privacy.html).
 
 ---
 

@@ -286,13 +286,13 @@ body.wel-on #iosHint,body.wel-on #updBar{display:none!important}
 @media (max-height:480px){.wel-ico{display:none}}
 
 /* v31: live preview on «Εμφάνιση και ήχος» — sticky on top while the options scroll under it */
-#lookPrev{position:sticky;top:0;z-index:3;height:clamp(160px,26dvh,200px);margin:0 0 10px;border-radius:14px;overflow:hidden;background:#1b2633;box-shadow:0 6px 14px -6px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);contain:strict}
+#lookPrev{position:sticky;top:0;z-index:3;height:clamp(220px,34dvh,300px);margin:0 0 10px;border-radius:14px;overflow:hidden;background:#1b2633;box-shadow:0 6px 14px -6px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.08);contain:strict}
 #lookPrev .lp-bg,#lookPrev .lp-3d{position:absolute;inset:0;width:100%;height:100%;display:block}
 #lookPrev .lp-layer{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;overflow:hidden}
 #lookPrev .lp-layer .bubble{max-width:300px}
 #lookPrev .lp-tag{position:absolute;left:8px;top:7px;font-size:12px;line-height:1.2;padding:3px 8px;border-radius:999px;background:rgba(13,27,42,.7);color:#cfe6ff;pointer-events:none;max-width:calc(100% - 16px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .look-test{display:block;margin:4px 0 8px;padding:8px 14px;border-radius:999px;font-size:15px}
-@media (max-height:600px){#lookPrev{height:160px}}
+@media (max-height:600px){#lookPrev{height:200px}}
 /* v32: privacy policy, consent, delete, report / block */
 .linkbtn{background:none;border:0;color:#8cc8ff;text-decoration:underline;padding:8px 0;font-size:15px;min-height:44px;cursor:pointer}
 #privSheet{z-index:46;justify-content:center;align-items:stretch;overflow:hidden}
@@ -430,6 +430,10 @@ body.tut-on,body.help-on{overflow:hidden}
 .acc-g{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-weight:800;font-size:18px;color:#fff;background:conic-gradient(#ea4335 0 25%,#fbbc05 0 50%,#34a853 0 75%,#4285f4 0)}
 .acc-or{text-align:center;opacity:.7;margin:8px 0}
 .acc-who{font-size:17px;font-weight:600;margin:4px 0 8px}
+.acc-art{display:block;width:100%;max-width:220px;margin:2px auto 10px}
+.acc-art img{display:block;width:100%;height:auto;max-height:200px;object-fit:contain;margin:0 auto;background:transparent}
+a.srow{color:inherit;text-decoration:none;box-sizing:border-box}
+#helpGuide{margin:8px 0 12px}
 .acc-msg.ok{color:#a5d6a7}
 #accCodeBox{margin-top:10px}
 #accCode{font-size:22px;letter-spacing:6px;text-align:center}

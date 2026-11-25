@@ -234,6 +234,7 @@
     </div>
     <p id="accMsg" class="small acc-msg" aria-live="polite"></p>
     <p class="small" data-i18n="acc.privacy">Κρατάμε μόνο το email σου, για να σε αναγνωρίζουμε όταν συνδέεσαι. Δεν βλέπουμε τον κωδικό σου στο Google. Αν διαγράψεις το προφίλ σου, σβήνεται κι αυτό.</p>
+    <p class="small"><a href="privacy.html" target="_blank" rel="noopener" data-i18n="pv.webLink">📄 Πολιτική απορρήτου στον ιστό</a></p>
   </section>
 
   <!-- 🎨 look & sound: my screen (sound, «?») + how my name looks to the others (style, 3D object, sizes) -->
@@ -421,7 +422,10 @@
 
   <!-- 🛡️ v32: privacy and safety -->
   <section class="spage" data-page="privacy">
-    <div class="scard"><button id="prPolicy" type="button" class="wide" data-i18n="pv.open">📄 Πολιτική απορρήτου</button></div>
+    <div class="scard">
+      <button id="prPolicy" type="button" class="wide" data-i18n="pv.open">📄 Πολιτική απορρήτου</button>
+      <a id="prWeb" class="btn wide" href="privacy.html" target="_blank" rel="noopener" data-i18n="pv.webLink">📄 Πολιτική απορρήτου στον ιστό</a>
+    </div>
     <h3 data-i18n="pr.consentH">Συγκατάθεση</h3>
     <div class="scard"><p id="prConsent" class="small"></p><button id="prAgree" type="button" class="primary wide hidden" data-i18n="pr.agreeNow">Συμφωνώ τώρα</button></div>
     <div class="me-only">

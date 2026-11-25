@@ -967,7 +967,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v40';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v42';   // keep in sync with CACHE in sw.js
 
 // v40: decorative avatar images are webp, with a PNG fallback if the file fails to load
 document.querySelectorAll('img[data-png]').forEach((img) => {
@@ -2179,6 +2179,9 @@ function renderPolicy(box) {
     box.append(h, p);
   }
   const v = document.createElement('p'); v.className = 'pv-ver'; v.textContent = tr('pv.ver', { v: consentVersion() }); box.appendChild(v);
+  const web = document.createElement('p');
+  const a = document.createElement('a'); a.href = 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = tr('pv.webLink');
+  web.appendChild(a); box.appendChild(web);
 }
 function openPriv() {
   setText($('pvTitle'), lt('pv.title')); renderPolicy($('pvBody'));
@@ -2392,6 +2395,11 @@ function buildHelp(q) {
     btn.querySelector('span').textContent = title;
     const bodyEl = document.createElement('div'); bodyEl.className = 'help-body-cat';
     bodyEl.innerHTML = body.split('\n').map((line) => `<p>${escapeHtml(line)}</p>`).join('');
+    if (id === 'privacy') {
+      const p = document.createElement('p');
+      const a = document.createElement('a'); a.href = 'privacy.html'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = tr('pv.webLink');
+      p.appendChild(a); bodyEl.appendChild(p);
+    }
     btn.onclick = () => d.classList.toggle('open');
     d.append(btn, bodyEl); cats.appendChild(d);
   }

@@ -1452,7 +1452,7 @@ D.de = {
 // ---------- v32: privacy / consent / delete / report-block / invites ----------
 Object.assign(D.el, {
   'm.priv': '🛡️ Απόρρητο και ασφάλεια', 'm.privSub': 'πολιτική, συγκατάθεση, αποκλεισμοί, διαγραφή',
-  'pv.title': '📄 Πολιτική απορρήτου', 'pv.open': '📄 Πολιτική απορρήτου', 'pv.close': 'Κλείσιμο',
+  'pv.title': '📄 Πολιτική απορρήτου', 'pv.open': '📄 Πολιτική απορρήτου', 'pv.close': 'Κλείσιμο', 'pv.webLink': '📄 Πολιτική απορρήτου στον ιστό',
   'pv.ver': 'Έκδοση {v} · Νοέμβριος 2026',
   'pv.s1t': 'Τι κρατάμε',
   'pv.s1': 'Μόνο το όνομά σου και ένα αριθμητικό «αποτύπωμα» του προσώπου σου (μια σειρά από αριθμούς). Από αυτούς τους αριθμούς δεν μπορεί να ξαναφτιαχτεί φωτογραφία. Οι φωτογραφίες της εγγραφής χρησιμοποιούνται μόνο για να υπολογιστεί το αποτύπωμα — ο server της οικογένειας δεν τις κρατά. Κρατιούνται επίσης όσα διαλέγεις εσύ: τα μηνύματά σου, ποιος σε βλέπει, οι ομάδες σου.',
@@ -1509,7 +1509,7 @@ Object.assign(D.el, {
 });
 Object.assign(D.en, {
   'm.priv': '🛡️ Privacy and safety', 'm.privSub': 'policy, consent, blocks, delete',
-  'pv.title': '📄 Privacy policy', 'pv.open': '📄 Privacy policy', 'pv.close': 'Close',
+  'pv.title': '📄 Privacy policy', 'pv.open': '📄 Privacy policy', 'pv.close': 'Close', 'pv.webLink': '📄 Privacy policy on the web',
   'pv.ver': 'Version {v} · November 2026',
   'pv.s1t': 'What we keep',
   'pv.s1': 'Only your name and a numeric “fingerprint” of your face (a list of numbers). A photo cannot be rebuilt from these numbers. The sign-up photos are used only to compute the fingerprint — the family server does not keep them. We also keep what you choose: your messages, who can see you, your groups.',
@@ -1566,7 +1566,7 @@ Object.assign(D.en, {
 });
 Object.assign(D.fr, {
   'm.priv': '🛡️ Confidentialité et sécurité', 'm.privSub': 'politique, consentement, blocages, suppression',
-  'pv.title': '📄 Politique de confidentialité', 'pv.open': '📄 Politique de confidentialité', 'pv.close': 'Fermer',
+  'pv.title': '📄 Politique de confidentialité', 'pv.open': '📄 Politique de confidentialité', 'pv.close': 'Fermer', 'pv.webLink': '📄 Politique de confidentialité sur le web',
   'pv.ver': 'Version {v} · novembre 2026',
   'pv.s1t': 'Ce que nous gardons',
   'pv.s1': 'Seulement votre nom et une « empreinte » numérique de votre visage (une suite de nombres). On ne peut pas refaire une photo à partir de ces nombres. Les photos de l’inscription servent seulement à calculer l’empreinte — le serveur familial ne les garde pas. Nous gardons aussi ce que vous choisissez : vos messages, qui vous voit, vos groupes.',
@@ -1623,7 +1623,7 @@ Object.assign(D.fr, {
 });
 Object.assign(D.de, {
   'm.priv': '🛡️ Datenschutz und Sicherheit', 'm.privSub': 'Richtlinie, Einwilligung, Blockierungen, Löschen',
-  'pv.title': '📄 Datenschutzrichtlinie', 'pv.open': '📄 Datenschutzrichtlinie', 'pv.close': 'Schließen',
+  'pv.title': '📄 Datenschutzrichtlinie', 'pv.open': '📄 Datenschutzrichtlinie', 'pv.close': 'Schließen', 'pv.webLink': '📄 Datenschutzrichtlinie im Web',
   'pv.ver': 'Version {v} · November 2026',
   'pv.s1t': 'Was wir speichern',
   'pv.s1': 'Nur deinen Namen und einen digitalen „Fingerabdruck“ deines Gesichts (eine Reihe von Zahlen). Aus diesen Zahlen lässt sich kein Foto zurückgewinnen. Die Fotos der Anmeldung dienen nur zur Berechnung des Fingerabdrucks — der Familienserver behält sie nicht. Außerdem speichern wir, was du wählst: deine Nachrichten, wer dich sieht, deine Gruppen.',
@@ -1751,7 +1751,7 @@ Object.assign(D.el, {
   'help.body.greet': 'Πάτα πάνω σε κάποιον που αναγνωρίστηκε. Διάλεξε ένα emoji (👋 ❤️ 😂 🎉). Ο άλλος το βλέπει ως μικρό εφέ πάνω από το κεφάλι/όνομά του. Τα ίδια όρια και το απόρρητο ισχύουν όπως στα μηνύματα.',
   'help.body.events': 'Ρυθμίσεις → Εκδηλώσεις → «Φτιάξε εκδήλωση». Μοιράσου τον κωδικό, τον σύνδεσμο ή το QR. Οι άλλοι: «Μπες με κωδικό ή QR». Στην ομάδα βλέπετε ονόματα μεταξύ σας.',
   'help.body.invite': 'Αν ο server ζητά πρόσκληση, άνοιξε τον σύνδεσμο ή γράψε τον κωδικό που σου έδωσαν όταν φτιάχνεις προφίλ.',
-  'help.body.privacy': 'Ρυθμίσεις → Απόρρητο: διάβασε την πολιτική, δώσε συγκατάθεση, δες ποιος σε βλέπει, διέγραψε το προφίλ σου οποιαδήποτε στιγμή.',
+  'help.body.privacy': 'Ρυθμίσεις → Απόρρητο: διάβασε την πολιτική, δώσε συγκατάθεση, δες ποιος σε βλέπει, διέγραψε το προφίλ σου οποιαδήποτε στιγμή.\nΗ ίδια πολιτική υπάρχει και ως ιστοσελίδα: Ρυθμίσεις → Απόρρητο → «Πολιτική απορρήτου στον ιστό», ή https://sidiropoulosag.github.io/ar-names/privacy.html',
   'help.body.report': 'Πάτα κάποιον → Αναφορά ή Αποκλεισμός. Με αποκλεισμό δεν βλέπεστε ούτε ανταλλάσσετε μηνύματα.',
   'help.body.ach': 'Ρυθμίσεις → Τα επιτεύγματά μου. Τα σήματα ξεκλειδώνουν μόνα τους· δεν υπάρχει πίεση ή ειδοποιήσεις-spam.',
   'help.body.filt': 'Ρυθμίσεις → Εμφάνιση και ήχος → Αστείο φίλτρο. Βλέπεις ζωντανή προεπισκόπηση. Εποχιακά (Χριστούγεννα, Απόκριες) εμφανίζονται στην περίοδό τους.',
@@ -1836,7 +1836,7 @@ Object.assign(D.en, {
   'help.body.greet': 'Tap someone who was recognised. Pick an emoji (👋 ❤️ 😂 🎉). They see a small effect above their head/name. Same limits and privacy as messages.',
   'help.body.events': 'Settings → Events → “Create event”. Share the code, link or QR. Others: “Join with a code or QR”. In the group you see each other’s names.',
   'help.body.invite': 'If the server asks for an invite, open the link or type the code you were given when creating a profile.',
-  'help.body.privacy': 'Settings → Privacy: read the policy, give consent, see who can see you, delete your profile anytime.',
+  'help.body.privacy': 'Settings → Privacy: read the policy, give consent, see who can see you, delete your profile anytime.\nThe same policy is also a web page: Settings → Privacy → “Privacy policy on the web”, or https://sidiropoulosag.github.io/ar-names/privacy.html',
   'help.body.report': 'Tap someone → Report or Block. With a block you no longer see each other or exchange messages.',
   'help.body.ach': 'Settings → My achievements. Badges unlock by themselves; no pressure or spam.',
   'help.body.filt': 'Settings → Look and sound → Fun filter. Live preview. Seasonal ones (Christmas, Halloween) appear in season.',
@@ -1920,7 +1920,7 @@ Object.assign(D.fr, {
   'help.body.greet': 'Appuie sur une personne reconnue. Choisis un emoji (👋 ❤️ 😂 🎉). L’autre voit un petit effet au-dessus de sa tête.',
   'help.body.events': 'Réglages → Événements → « Créer ». Partage le code, le lien ou le QR. Les autres rejoignent avec le code.',
   'help.body.invite': 'Si le serveur demande une invitation, ouvre le lien ou saisis le code.',
-  'help.body.privacy': 'Réglages → Confidentialité : politique, consentement, qui te voit, suppression.',
+  'help.body.privacy': 'Réglages → Confidentialité : politique, consentement, qui te voit, suppression.\nLa même politique est aussi une page web : Réglages → Confidentialité → « Politique de confidentialité sur le web », ou https://sidiropoulosag.github.io/ar-names/privacy.html',
   'help.body.report': 'Appuie sur quelqu’un → Signaler ou Bloquer.',
   'help.body.ach': 'Réglages → Mes succès. Les badges se débloquent seuls, sans pression.',
   'help.body.filt': 'Réglages → Apparence → Filtre amusant. Aperçu en direct. Saisons (Noël, Halloween).',
@@ -2004,7 +2004,7 @@ Object.assign(D.de, {
   'help.body.greet': 'Tippe auf eine erkannte Person. Wähle ein Emoji (👋 ❤️ 😂 🎉). Die andere Person sieht einen kleinen Effekt über dem Kopf.',
   'help.body.events': 'Einstellungen → Events → „Event erstellen“. Code, Link oder QR teilen. Andere treten mit dem Code bei.',
   'help.body.invite': 'Wenn der Server eine Einladung verlangt: Link öffnen oder Code eingeben.',
-  'help.body.privacy': 'Einstellungen → Privatsphäre: Richtlinie, Zustimmung, Sichtbarkeit, Profil löschen.',
+  'help.body.privacy': 'Einstellungen → Privatsphäre: Richtlinie, Zustimmung, Sichtbarkeit, Profil löschen.\nDieselbe Richtlinie gibt es auch als Webseite: Einstellungen → Privatsphäre → «Datenschutzrichtlinie im Web», oder https://sidiropoulosag.github.io/ar-names/privacy.html',
   'help.body.report': 'Person antippen → Melden oder Sperren.',
   'help.body.ach': 'Einstellungen → Meine Erfolge. Abzeichen schalten sich selbst frei.',
   'help.body.filt': 'Einstellungen → Aussehen → Lustiger Filter. Live-Vorschau. Saisonal (Weihnachten, Halloween).',

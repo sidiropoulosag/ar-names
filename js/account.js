@@ -80,13 +80,23 @@ function setAccount(a) { ctx.cfg.account = a ? { provider: a.provider, email: a.
 // /people/me (0.10.0) carries the linked accounts
 export function noteMe(me) { if (me && Array.isArray(me.accounts)) { setAccount(me.accounts[0] || null); render(); } }
 
+// Official OAuth redirect URI is https://sidiropoulosag.github.io/ar-names/ (must match exactly).
+// Normalise /ar-names, /ar-names/ and /ar-names/index.html to the directory URL.
+function googleRedirectUri() {
+  const u = new URL(location.href);
+  let path = u.pathname;
+  if (path.endsWith('index.html')) path = path.slice(0, -'index.html'.length);
+  if (!path.endsWith('/')) path += '/';
+  return u.origin + path;
+}
+
 function startGoogle() {
   const id = auth().google_client_id; if (!id) return;
   const state = rnd(), nonce = rnd();
   lsSet(G_KEY, JSON.stringify({ state, nonce, at: Date.now() }));
   const u = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   u.search = new URLSearchParams({
-    client_id: id, redirect_uri: new URL('./', location.href).href, response_type: 'id_token',
+    client_id: id, redirect_uri: googleRedirectUri(), response_type: 'id_token',
     scope: 'openid email profile', nonce, state, prompt: 'select_account',
   }).toString();
   msg(tr('acc.toGoogle'));

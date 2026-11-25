@@ -2664,7 +2664,7 @@ Object.assign(D.el, {
   'acc.welHave': '🔐 Έχω ήδη προφίλ — Σύνδεση',
   'acc.enHave': '🔐 Έχεις ήδη προφίλ από άλλο κινητό; Σύνδεση',
   'help.cat.account': '🔐 Λογαριασμός και νέο κινητό',
-  'help.body.account': 'Ρυθμίσεις → Λογαριασμός → «Σύνδεση με Google» (ή με email: σου έρχεται 6ψήφιος κωδικός).\nΑπό εκεί και πέρα το προφίλ σου είναι δεμένο με τον λογαριασμό σου.\nΣε νέο κινητό ή αν σβήσεις και ξαναβάλεις την εφαρμογή: άνοιξέ την → Ρυθμίσεις → Λογαριασμός → σύνδεση με τον ίδιο τρόπο. Όλα επιστρέφουν (όνομα, μηνύματα, ομάδες, πρόσωπο) χωρίς νέες φωτογραφίες.\nΗ σύνδεση είναι προαιρετική: χωρίς αυτήν όλα δουλεύουν όπως πριν.',
+  'help.body.account': 'Ρυθμίσεις → Λογαριασμός → «Σύνδεση με Google» (ή με email: σου έρχεται 6ψήφιος κωδικός).\nΑπό εκεί και πέρα το προφίλ σου είναι δεμένο με τον λογαριασμό σου.\nΣε νέο κινητό ή αν σβήσεις και ξαναβάλεις την εφαρμογή: άνοιξέ την → Ρυθμίσεις → Λογαριασμός → σύνδεση με τον ίδιο τρόπο. Όλα επιστρέφουν (όνομα, μηνύματα, ομάδες, πρόσωπο) χωρίς νέες φωτογραφίες.\nΗ σύνδεση ζητείται μία φορά, στην αρχή, όταν ανοίγεις το Noera: «Σύνδεση με Google» ή με email. Αν είσαι ήδη συνδεδεμένος, δεν ξαναζητείται.',
   'help.faq.phone.q': 'Άλλαξα κινητό — πρέπει να φωτογραφηθώ ξανά;',
   'help.faq.phone.a': 'Όχι, αν είχες συνδεθεί με Google ή email. Στο νέο κινητό: Ρυθμίσεις → Λογαριασμός → σύνδεση με τον ίδιο τρόπο, και το προφίλ σου επανέρχεται.',
 });
@@ -2704,7 +2704,7 @@ Object.assign(D.en, {
   'acc.welHave': '🔐 I already have a profile — Sign in',
   'acc.enHave': '🔐 Already have a profile on another phone? Sign in',
   'help.cat.account': '🔐 Account and new phone',
-  'help.body.account': 'Settings → Account → “Sign in with Google” (or with email: you get a 6-digit code).\nFrom then on your profile is tied to your account.\nOn a new phone, or if you delete and reinstall the app: open it → Settings → Account → sign in the same way. Everything comes back (name, messages, groups, face) without new photos.\nSigning in is optional: without it everything works as before.',
+  'help.body.account': 'Settings → Account → “Sign in with Google” (or with email: you get a 6-digit code).\nFrom then on your profile is tied to your account.\nOn a new phone, or if you delete and reinstall the app: open it → Settings → Account → sign in the same way. Everything comes back (name, messages, groups, face) without new photos.\nSigning in is asked once, at the start, when you open Noera: “Sign in with Google” or with email. If you are already signed in it is not asked again.',
   'help.faq.phone.q': 'I changed phone — do I need new photos?',
   'help.faq.phone.a': 'No, if you had signed in with Google or email. On the new phone: Settings → Account → sign in the same way and your profile comes back.',
 });
@@ -2744,7 +2744,7 @@ Object.assign(D.fr, {
   'acc.welHave': '🔐 J’ai déjà un profil — Connexion',
   'acc.enHave': '🔐 Déjà un profil sur un autre téléphone ? Connexion',
   'help.cat.account': '🔐 Compte et nouveau téléphone',
-  'help.body.account': 'Réglages → Compte → « Se connecter avec Google » (ou par e-mail : vous recevez un code à 6 chiffres).\nEnsuite votre profil est lié à votre compte.\nSur un nouveau téléphone, ou après réinstallation : ouvrez l’app → Réglages → Compte → connectez-vous de la même façon. Tout revient (nom, messages, groupes, visage) sans nouvelles photos.\nLa connexion est facultative : sans elle, tout fonctionne comme avant.',
+  'help.body.account': 'Réglages → Compte → « Se connecter avec Google » (ou par e-mail : vous recevez un code à 6 chiffres).\nEnsuite votre profil est lié à votre compte.\nSur un nouveau téléphone, ou après réinstallation : ouvrez l’app → Réglages → Compte → connectez-vous de la même façon. Tout revient (nom, messages, groupes, visage) sans nouvelles photos.\nLa connexion est demandée une fois, au début, quand tu ouvres Noera : « Se connecter avec Google » ou par e-mail. Si tu es déjà connecté(e), elle n’est plus demandée.',
   'help.faq.phone.q': 'J’ai changé de téléphone — faut-il refaire les photos ?',
   'help.faq.phone.a': 'Non, si vous vous étiez connecté(e) avec Google ou un e-mail. Sur le nouveau téléphone : Réglages → Compte → connectez-vous de la même façon et votre profil revient.',
 });
@@ -2784,7 +2784,7 @@ Object.assign(D.de, {
   'acc.welHave': '🔐 Ich habe schon ein Profil — Anmelden',
   'acc.enHave': '🔐 Schon ein Profil auf einem anderen Handy? Anmelden',
   'help.cat.account': '🔐 Konto und neues Handy',
-  'help.body.account': 'Einstellungen → Konto → „Mit Google anmelden“ (oder per E-Mail: du bekommst einen 6-stelligen Code).\nDanach ist dein Profil mit deinem Konto verknüpft.\nAuf einem neuen Handy oder nach Löschen und Neuinstallation: App öffnen → Einstellungen → Konto → genauso anmelden. Alles kommt zurück (Name, Nachrichten, Gruppen, Gesicht) ohne neue Fotos.\nDie Anmeldung ist freiwillig: ohne sie funktioniert alles wie bisher.',
+  'help.body.account': 'Einstellungen → Konto → „Mit Google anmelden“ (oder per E-Mail: du bekommst einen 6-stelligen Code).\nDanach ist dein Profil mit deinem Konto verknüpft.\nAuf einem neuen Handy oder nach Löschen und Neuinstallation: App öffnen → Einstellungen → Konto → genauso anmelden. Alles kommt zurück (Name, Nachrichten, Gruppen, Gesicht) ohne neue Fotos.\nDie Anmeldung wird einmal am Anfang verlangt, wenn du Noera öffnest: „Mit Google anmelden“ oder per E-Mail. Wenn du schon angemeldet bist, wird sie nicht erneut verlangt.',
   'help.faq.phone.q': 'Neues Handy — brauche ich neue Fotos?',
   'help.faq.phone.a': 'Nein, wenn du mit Google oder E-Mail angemeldet warst. Auf dem neuen Handy: Einstellungen → Konto → genauso anmelden, und dein Profil ist wieder da.',
 });

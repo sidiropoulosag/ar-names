@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v43 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v44 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -27,9 +27,10 @@
 ## Πρώτη φορά
 
 1. **Γλώσσα** — εμφανίζεται αν δεν έχεις διαλέξει ακόμα.
-2. **«📸 Ξεκινάμε»** — η πρώτη οθόνη ανοίγει την κάμερα και σε πάει κατευθείαν στην καταχώριση, χωρίς ξεχωριστή «ξενάγηση». Αν έχεις ήδη προφίλ από άλλο κινητό, πάτα «🔐 Έχω ήδη προφίλ — Σύνδεση»· αν θες μόνο να δεις, «Μόνο να δω πρώτα».
-3. **Συναίνεση** — πριν την πρώτη καταχώριση (και μία φορά αν ενημερώθηκε η πολιτική) εμφανίζεται ερώτηση με σύνδεσμο στην **πολιτική απορρήτου**. Χρειάζεται τσεκάρισμα «Διάβασα και συμφωνώ» και «Συμφωνώ».
-4. **Οδηγός σε 4 βήματα (v39)** — μέσα στην ίδια πρώτη ρύθμιση: **① όνομα και φωτογραφίες** → **② 3D αντικείμενο πάνω από το κεφάλι** → **③ μικρό μήνυμα πάνω από το κεφάλι** → **④ «Έτοιμο, χρησιμοποίησέ το»**. Μόνο τα βασικά (όχι χαμένο άτομο, έκτακτη ανάγκη κ.λπ.). Τα βήματα ②–③ έχουν «Παράλειψη αυτού του βήματος» και υπάρχει πάντα «Αργότερα». Όποιος έχει ήδη προφίλ **δεν** περνά ξανά από αυτόν· ξανανοίγει με το «🪄 Οδηγός βήμα-βήμα» στο Ρυθμίσεις → Το προφίλ μου ή στη Βοήθεια. Αν βάλεις και αντικείμενο και μήνυμα, στο τέλος διαλέγεις: μόνο το αντικείμενο, μόνο το μήνυμα, ή «Και τα δύο» (όνομα + 3D αντικείμενο + μήνυμα μαζί — προεπιλογή). Τα αλλάζεις αργότερα από «Εμφάνιση και ήχος» (έως 3 στοιχεία).
+2. **🔐 Σύνδεση (v44, υποχρεωτική στην αρχή)** — πριν ανοίξει η κάμερα ή η καταχώριση, η εφαρμογή ζητά **«Σύνδεση με Google»** (κύριος τρόπος) ή **«Σύνδεση με email»** (6ψήφιος κωδικός). Αν ο λογαριασμός έχει ήδη προφίλ (νέο κινητό / επανεγκατάσταση), επιστρέφει και πας κατευθείαν στην κάμερα, χωρίς νέες φωτογραφίες. Αν είναι νέος λογαριασμός, συνεχίζεις στην καταχώριση και στον οδηγό 4 βημάτων. Όποιος έχει ήδη προφίλ σε αυτό το κινητό αλλά όχι λογαριασμό βλέπει κι αυτός την οθόνη· η σύνδεση **δένει το υπάρχον προφίλ** με τον λογαριασμό, δεν χάνεται τίποτα. Αν είσαι ήδη συνδεδεμένος, η οθόνη δεν εμφανίζεται. Αν δεν υπάρχει σύνδεση με τον server, εμφανίζεται μήνυμα με «Δοκίμασε ξανά». (Αν ο server δεν έχει ενεργοποιημένη σύνδεση, ισχύει η παλιά συμπεριφορά.)
+3. **«📸 Ξεκινάμε»** — η πρώτη οθόνη ανοίγει την κάμερα και σε πάει κατευθείαν στην καταχώριση, χωρίς ξεχωριστή «ξενάγηση». αν θες μόνο να δεις, «Μόνο να δω πρώτα».
+4. **Συναίνεση** — πριν την πρώτη καταχώριση (και μία φορά αν ενημερώθηκε η πολιτική) εμφανίζεται ερώτηση με σύνδεσμο στην **πολιτική απορρήτου**. Χρειάζεται τσεκάρισμα «Διάβασα και συμφωνώ» και «Συμφωνώ».
+5. **Οδηγός σε 4 βήματα (v39)** — μέσα στην ίδια πρώτη ρύθμιση: **① όνομα και φωτογραφίες** → **② 3D αντικείμενο πάνω από το κεφάλι** → **③ μικρό μήνυμα πάνω από το κεφάλι** → **④ «Έτοιμο, χρησιμοποίησέ το»**. Μόνο τα βασικά (όχι χαμένο άτομο, έκτακτη ανάγκη κ.λπ.). Τα βήματα ②–③ έχουν «Παράλειψη αυτού του βήματος» και υπάρχει πάντα «Αργότερα». Όποιος έχει ήδη προφίλ **δεν** περνά ξανά από αυτόν· ξανανοίγει με το «🪄 Οδηγός βήμα-βήμα» στο Ρυθμίσεις → Το προφίλ μου ή στη Βοήθεια. Αν βάλεις και αντικείμενο και μήνυμα, στο τέλος διαλέγεις: μόνο το αντικείμενο, μόνο το μήνυμα, ή «Και τα δύο» (όνομα + 3D αντικείμενο + μήνυμα μαζί — προεπιλογή). Τα αλλάζεις αργότερα από «Εμφάνιση και ήχος» (έως 3 στοιχεία).
 
 ---
 
@@ -165,7 +166,7 @@
 
 - **Νέο κινητό ή επανεγκατάσταση:** άνοιξε την εφαρμογή → Ρυθμίσεις → Λογαριασμός (ή «🔐 Έχω ήδη προφίλ — Σύνδεση» στην πρώτη οθόνη / στην καταχώριση) → σύνδεση με τον ίδιο τρόπο. Επιστρέφουν όνομα, μηνύματα, ομάδες και το πρόσωπό σου, **χωρίς νέες φωτογραφίες**. Το παλιό κινητό συνεχίζει να δουλεύει.
 - **Πρώτα σύνδεση, μετά προφίλ:** αν ο λογαριασμός δεν έχει ακόμα προφίλ, φτιάχνεις ένα με «＋ Νέο άτομο» και δένεται αυτόματα με τον λογαριασμό.
-- Η σύνδεση είναι **προαιρετική**: όσοι δεν συνδεθούν συνεχίζουν όπως πριν. Κρατάμε μόνο το email (για να σε αναγνωρίζουμε)· αν διαγράψεις το προφίλ, σβήνεται κι αυτό. «Αφαίρεση σύνδεσης λογαριασμού» αφήνει το προφίλ ως έχει.
+- Από το **v44** η σύνδεση **ζητείται στην αρχή** (βλ. «Πρώτη φορά»). Κρατάμε μόνο το email (για να σε αναγνωρίζουμε)· αν διαγράψεις το προφίλ, σβήνεται κι αυτό. «Αφαίρεση σύνδεσης λογαριασμού» αφήνει το προφίλ ως έχει.
 - Το κουμπί Google / το email εμφανίζονται μόνο όταν ο διαχειριστής τα έχει ενεργοποιήσει στον server (server **0.10.0**).
 
 ---
@@ -200,6 +201,8 @@
 ## Ανανεώσεις
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
+
+**v44:** **σύνδεση στην αρχή**: πριν ανοίξει η κάμερα ή η καταχώριση εμφανίζεται οθόνη «Σύνδεση με Google» / «Σύνδεση με email» (6ψήφιος κωδικός). Λογαριασμός με προφίλ → επιστρέφει κατευθείαν στην κάμερα· νέος λογαριασμός → καταχώριση και οδηγός 4 βημάτων· υπάρχον προφίλ χωρίς λογαριασμό → η σύνδεση το δένει, δεν χάνεται τίποτα. Αν ο server δεν είναι διαθέσιμος: μήνυμα και «Δοκίμασε ξανά». Η επιστροφή από το Google συνεχίζει σωστά και μετά από ανανέωση της σελίδας.
 
 **v43:** πλήρης **οδηγός χρήσης** στα ελληνικά στη διεύθυνση https://sidiropoulosag.github.io/ar-names/guide.html, με τις εικόνες του άβαταρ. Οκτώ νέες πόζες στον οδηγό 14 βημάτων (εγκατάσταση, εκδηλώσεις, «Γνωριστήκατε», «Πού γνωριστήκαμε», κάρτα ανάγκης, χαμένο άτομο, εύκολη χρήση, απόρρητο). Εικόνες σύνδεσης στη σελίδα Λογαριασμός. Η ζωντανή προεπισκόπηση στο «Εμφάνιση και ήχος» δείχνει το άβαταρ σε καφέ, με το όνομα πάνω από το κεφάλι. Οι πόζες ξαναμετατρέπονται με `python3 scripts/process-avatar-poses.py` (από `/workspace/noera-avatar-poses/*.jpg`).
 
@@ -265,7 +268,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v43 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v44 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -290,9 +293,10 @@ Main UI: **👥** settings, **🔄** flip camera, **⚪** snapshot (frame + labe
 ## First run
 
 1. **Language** picker if none saved.
-2. **«📸 Let’s start»** — the first screen opens the camera and goes straight into enrolment, no separate tour. Already have a profile on another phone? «🔐 I already have a profile — Sign in»; just want a look? «Just look around first».
-3. **Consent** before first enrolment (and once if the policy updated): read the **privacy policy**, tick agree, tap Agree.
-4. **4-step guide (v39)** — inside that same first setup: **① name and photos** → **② 3D object above your head** → **③ a short message above your head** → **④ «Done, start using it»**. Basics only (no missing-person, emergency card etc.). Steps ②–③ have «Skip this step», and «Later» is always there. People who already have a profile are **not** sent through it again; reopen it with «🪄 Step-by-step guide» in Settings → My profile or in Help. If you choose both an object and a message, at the end you pick: object only, message only, or «Both» (name + 3D object + message together — the default). Change this later in «Look and sound» (up to 3 items).
+2. **🔐 Sign-in (v44, required at the start)** — before the camera or the enrolment opens, the app asks for **“Sign in with Google”** (main way) or **“Sign in with email”** (6-digit code). If the account already has a profile (new phone / reinstall) it comes back and you go straight to the camera, with no new photos. A new account continues into enrolment and the 4-step guide. Someone who already has a profile on this phone but no account sees the screen too; signing in **links the existing profile** to the account — nothing is lost. If you are already signed in the screen does not appear. If the server cannot be reached a message with “Try again” is shown. (If the server has no sign-in switched on, the old behaviour applies.)
+3. **«📸 Let’s start»** — the first screen opens the camera and goes straight into enrolment, no separate tour. Just want a look? «Just look around first».
+4. **Consent** before first enrolment (and once if the policy updated): read the **privacy policy**, tick agree, tap Agree.
+5. **4-step guide (v39)** — inside that same first setup: **① name and photos** → **② 3D object above your head** → **③ a short message above your head** → **④ «Done, start using it»**. Basics only (no missing-person, emergency card etc.). Steps ②–③ have «Skip this step», and «Later» is always there. People who already have a profile are **not** sent through it again; reopen it with «🪄 Step-by-step guide» in Settings → My profile or in Help. If you choose both an object and a message, at the end you pick: object only, message only, or «Both» (name + 3D object + message together — the default). Change this later in «Look and sound» (up to 3 items).
 
 ---
 
@@ -421,7 +425,7 @@ Only enrol people who agree.
 
 - **New phone or reinstall:** open the app → Settings → Account (or “🔐 I already have a profile — Sign in” on the first screen / enrolment screen) → sign in the same way. Name, messages, groups and your face come back, **no new photos**. The old phone keeps working.
 - **Sign in first, profile later:** if the account has no profile yet, create one with “＋ New person” and it is linked automatically.
-- Signing in is **optional**: people who don’t sign in carry on as before. Only the email is kept (to recognise you); deleting the profile deletes it too. “Remove account link” leaves the profile as it is.
+- Since **v44** signing in is **asked at the start** (see “First run”). Only the email is kept (to recognise you); deleting the profile deletes it too. “Remove account link” leaves the profile as it is.
 - The Google button / email sign-in appear only when the administrator has switched them on in the server (server **0.10.0**).
 
 ---
@@ -456,6 +460,8 @@ The family administrator runs the server (the `ar-names-pc` package, version **0
 ## Updates
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
+
+**v44:** **sign-in at the start**: before the camera or enrolment opens, a screen offers “Sign in with Google” / “Sign in with email” (6-digit code). An account with a profile goes straight back to the camera; a new account continues into enrolment and the 4-step guide; an existing profile without an account is linked by signing in, nothing is lost. If the server cannot be reached: a message with “Try again”. The return from Google continues correctly even after a page reload.
 
 **v43:** a full **user guide** in Greek at https://sidiropoulosag.github.io/ar-names/guide.html, with the avatar pictures. Eight new poses in the 14-step guide (install, events, “You met”, “Where we met”, emergency card, missing person, accessibility, privacy). Sign-in pictures on the Account page. The live preview on “Look and sound” shows the avatar in a cafe, with the name above his head. Re-convert poses with `python3 scripts/process-avatar-poses.py` (from `/workspace/noera-avatar-poses/*.jpg`).
 

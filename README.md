@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v44 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v45 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -202,9 +202,11 @@
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
 
+**v45:** στην προεπισκόπηση «Εμφάνιση και ήχος», όταν είναι ενεργό το «?» σε αγνώστους, δεξιά εμφανίζεται ένα μικρό στεναχωρημένο άβαταρ με το ίδιο χρυσό «?» που χρησιμοποιεί η κάμερα.
+
 **v44:** **σύνδεση στην αρχή**: πριν ανοίξει η κάμερα ή η καταχώριση εμφανίζεται οθόνη «Σύνδεση με Google» / «Σύνδεση με email» (6ψήφιος κωδικός). Λογαριασμός με προφίλ → επιστρέφει κατευθείαν στην κάμερα· νέος λογαριασμός → καταχώριση και οδηγός 4 βημάτων· υπάρχον προφίλ χωρίς λογαριασμό → η σύνδεση το δένει, δεν χάνεται τίποτα. Αν ο server δεν είναι διαθέσιμος: μήνυμα και «Δοκίμασε ξανά». Η επιστροφή από το Google συνεχίζει σωστά και μετά από ανανέωση της σελίδας.
 
-**v43:** πλήρης **οδηγός χρήσης** στα ελληνικά στη διεύθυνση https://sidiropoulosag.github.io/ar-names/guide.html, με τις εικόνες του άβαταρ. Οκτώ νέες πόζες στον οδηγό 14 βημάτων (εγκατάσταση, εκδηλώσεις, «Γνωριστήκατε», «Πού γνωριστήκαμε», κάρτα ανάγκης, χαμένο άτομο, εύκολη χρήση, απόρρητο). Εικόνες σύνδεσης στη σελίδα Λογαριασμός. Η ζωντανή προεπισκόπηση στο «Εμφάνιση και ήχος» δείχνει το άβαταρ σε καφέ, με το όνομα πάνω από το κεφάλι. Οι πόζες ξαναμετατρέπονται με `python3 scripts/process-avatar-poses.py` (από `/workspace/noera-avatar-poses/*.jpg`).
+**v43:** πλήρης **οδηγός χρήσης** στα ελληνικά στη διεύθυνση https://sidiropoulosag.github.io/ar-names/guide.html, με τις εικόνες του άβαταρ. Οκτώ νέες πόζες στον οδηγό 14 βημάτων (εγκατάσταση, εκδηλώσεις, «Γνωριστήκατε», «Πού γνωριστήκαμε», κάρτα ανάγκης, χαμένο άτομο, εύκολη χρήση, απόρρητο). Εικόνες σύνδεσης στη σελίδα Λογαριασμός. Η ζωντανή προεπισκόπηση στο «Εμφάνιση και ήχος» δείχνει το άβαταρ σε καφέ, με το όνομα πάνω από το κεφάλι· όταν είναι ενεργό το «?», δεξιά εμφανίζεται ένα μικρό στεναχωρημένο άβαταρ με το ίδιο χρυσό «?» που βλέπεις στην κάμερα. Οι πόζες ξαναμετατρέπονται με `python3 scripts/process-avatar-poses.py` (από `/workspace/noera-avatar-poses/*.jpg`).
 
 **v42:** δημόσια **πολιτική απορρήτου** στη διεύθυνση https://sidiropoulosag.github.io/ar-names/privacy.html (ελληνικά και αγγλικά). Σύνδεσμος από Ρυθμίσεις → Απόρρητο, από τη Βοήθεια και από τη σελίδα Λογαριασμός.
 
@@ -268,7 +270,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v44 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v45 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -461,9 +463,11 @@ The family administrator runs the server (the `ar-names-pc` package, version **0
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
 
+**v45:** in the “Look and sound” preview, when “?” for strangers is on, a smaller sad avatar appears on the right with the same gold “?” the camera uses.
+
 **v44:** **sign-in at the start**: before the camera or enrolment opens, a screen offers “Sign in with Google” / “Sign in with email” (6-digit code). An account with a profile goes straight back to the camera; a new account continues into enrolment and the 4-step guide; an existing profile without an account is linked by signing in, nothing is lost. If the server cannot be reached: a message with “Try again”. The return from Google continues correctly even after a page reload.
 
-**v43:** a full **user guide** in Greek at https://sidiropoulosag.github.io/ar-names/guide.html, with the avatar pictures. Eight new poses in the 14-step guide (install, events, “You met”, “Where we met”, emergency card, missing person, accessibility, privacy). Sign-in pictures on the Account page. The live preview on “Look and sound” shows the avatar in a cafe, with the name above his head. Re-convert poses with `python3 scripts/process-avatar-poses.py` (from `/workspace/noera-avatar-poses/*.jpg`).
+**v43:** a full **user guide** in Greek at https://sidiropoulosag.github.io/ar-names/guide.html, with the avatar pictures. Eight new poses in the 14-step guide (install, events, “You met”, “Where we met”, emergency card, missing person, accessibility, privacy). Sign-in pictures on the Account page. The live preview on “Look and sound” shows the avatar in a cafe, with the name above his head; when “?” is on, a smaller sad avatar appears on the right with the same gold “?” as on the camera. Re-convert poses with `python3 scripts/process-avatar-poses.py` (from `/workspace/noera-avatar-poses/*.jpg`).
 
 **v42:** public **privacy policy** at https://sidiropoulosag.github.io/ar-names/privacy.html (Greek and English). Linked from Settings → Privacy, from Help, and from the Account page.
 

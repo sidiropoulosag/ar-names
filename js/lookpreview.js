@@ -13,6 +13,9 @@ export const lookStats = { created: 0, disposed: 0, alive: 0, frames: 0, starts:
 // (hair line, chin, face center) or run a screenshot and tweak these numbers.
 const PREVIEW_SRC = 'tutorial/preview-avatar.webp';
 const HEAD = { cx: 0.48, top: 0.29, bottom: 0.70, fw: 0.42 };
+// v45: when «?» is on, a smaller sad/confused avatar on the right, with the same gold «?» the camera uses.
+const PREVIEW_SAD_SRC = 'tutorial/preview-avatar-sad.webp';
+const HEAD_SAD = { cx: 0.47, top: 0.29, bottom: 0.70, fw: 0.42 };
 
 // Give a preview copy of a 3D object its own geometry / materials / textures, so they can be disposed
 // on leave without touching the copies the camera screen uses (makeObject() shares them between copies).
@@ -50,6 +53,11 @@ export class LookPreview {
     this.photo.onload = () => { this.sig = ''; if (this.on) this.draw(performance.now()); };
     this.photo.onerror = () => { this.sig = ''; };
     this.photo.src = PREVIEW_SRC;
+    this.sadView = null;
+    this.photoSad = new Image();
+    this.photoSad.onload = () => { this.sig = ''; if (this.on) this.draw(performance.now()); };
+    this.photoSad.onerror = () => { this.sig = ''; };
+    this.photoSad.src = PREVIEW_SAD_SRC;
   }
   async font() {
     const f = this.getFont && this.getFont();
@@ -140,7 +148,29 @@ export class LookPreview {
     srcY = Math.max(0, Math.min(srcY, sh0 - srcH));
     this.view = { srcX, srcY, srcW, srcH, sw0, sh0, w, h };
   }
-  // me = the avatar's real head (labels sit above it). If «?» is on, a small unknown face on the right.
+  // v45: a small rounded inset on the right for the unrecognized person (only when «?» is on).
+  prepareSadView(st) {
+    this.sadView = null;
+    if (!st || !st.unknown) return;
+    const { w, h } = this.size || { w: 0, h: 0 };
+    const img = this.photoSad;
+    if (!w || !h || !img || !img.naturalWidth) return;
+    const sw0 = img.naturalWidth, sh0 = img.naturalHeight;
+    const insetW = Math.min(w * 0.27, h * 0.40);
+    const insetH = Math.min(h * 0.62, insetW * 1.22);
+    const x = w - insetW - 6, y = h - insetH - 6;
+    const hairY = HEAD_SAD.top * sh0, chinY = HEAD_SAD.bottom * sh0;
+    const aspect = insetW / insetH;
+    let srcH = sw0 / aspect, srcW = sw0;
+    if (srcH > sh0) { srcH = sh0; srcW = srcH * aspect; }
+    let srcX = Math.max(0, HEAD_SAD.cx * sw0 - srcW / 2);
+    if (srcX + srcW > sw0) srcX = Math.max(0, sw0 - srcW);
+    let srcY = hairY - 0.20 * srcH;
+    if (srcY + srcH < chinY + 0.06 * sh0) srcY = Math.min(hairY - 0.12 * srcH, chinY + 0.06 * sh0 - srcH);
+    srcY = Math.max(0, Math.min(srcY, sh0 - srcH));
+    this.sadView = { x, y, w: insetW, h: insetH, srcX, srcY, srcW, srcH, sw0, sh0 };
+  }
+  // me = the avatar's real head (labels sit above it). If «?» is on, the sad avatar on the right.
   people(st) {
     const VW = this.size.w * K, VH = this.size.h * K;
     const out = [];
@@ -161,12 +191,22 @@ export class LookPreview {
     } else {
       add(1, VW * 0.5, Math.min(VH * 0.22, VW * 0.22));
     }
-    if (st.unknown) add(2, VW * 0.88, Math.min(VH * 0.14, VW * 0.12));
+    const s = this.sadView;
+    if (st.unknown && s && s.srcW) {
+      const cx = (s.x + ((HEAD_SAD.cx * s.sw0 - s.srcX) / s.srcW) * s.w) * K;
+      const y0 = (s.y + ((HEAD_SAD.top * s.sh0 - s.srcY) / s.srcH) * s.h) * K;
+      const y1 = (s.y + ((HEAD_SAD.bottom * s.sh0 - s.srcY) / s.srcH) * s.h) * K;
+      const fw = ((HEAD_SAD.fw * s.sw0 / s.srcW) * s.w) * K;
+      add(2, cx, fw, y0, y1 - y0);
+    } else if (st.unknown) {
+      add(2, VW * 0.88, Math.min(VH * 0.14, VW * 0.12));
+    }
     return out;
   }
-  background(ppl, st) {   // v43: cafe + avatar photo; fallback gradient if the image is still loading
+  background(ppl, st) {   // v43: cafe + avatar photo; v45: small sad inset on the right when «?» is on
     const ready = !!(this.photo && this.photo.naturalWidth);
-    const sig = `${this.size.w}x${this.size.h}:${st.unknown ? 1 : 0}:${ready ? 1 : 0}:${this.view ? this.view.srcY.toFixed(1) : 0}`;
+    const sadReady = !!(st.unknown && this.photoSad && this.photoSad.naturalWidth && this.sadView);
+    const sig = `${this.size.w}x${this.size.h}:${st.unknown ? 1 : 0}:${ready ? 1 : 0}:${sadReady ? 1 : 0}:${this.view ? this.view.srcY.toFixed(1) : 0}`;
     if (sig === this.sig) return;
     this.sig = sig;
     const dpr = Math.min(window.devicePixelRatio || 1, 2), { w, h } = this.size, c = this.bg;
@@ -179,16 +219,22 @@ export class LookPreview {
       const bgr = g.createLinearGradient(0, 0, 0, h); bgr.addColorStop(0, '#33475b'); bgr.addColorStop(1, '#1b2633');
       g.fillStyle = bgr; g.fillRect(0, 0, w, h);
     }
-    for (const p of ppl) {
-      if (p.id !== 2) continue;   // only the optional unknown face is drawn as a silhouette
-      const cx = p.cx / K, fw = p.fw / K, fh = p.fh / K, y0 = p.y0 / K;
-      g.fillStyle = '#5d6d7e';
-      g.beginPath(); g.ellipse(cx, h + fh * 0.2, fw * 1.25, fh * 0.75, 0, Math.PI, 0); g.fill();
-      g.fillRect(cx - fw * 0.2, y0 + fh * 0.8, fw * 0.4, fh * 0.4);
-      g.fillStyle = '#7b8a99';
-      g.beginPath(); g.ellipse(cx, y0 + fh / 2, fw / 2, fh / 2, 0, 0, Math.PI * 2); g.fill();
-      g.fillStyle = '#4e5b68';
-      g.beginPath(); g.ellipse(cx, y0 + fh * 0.18, fw * 0.5, fh * 0.2, 0, Math.PI, 0); g.fill();
+    const s = this.sadView;
+    if (sadReady && s) {
+      const r = Math.min(16, s.w * 0.12, s.h * 0.12);
+      const path = () => { if (g.roundRect) g.roundRect(s.x, s.y, s.w, s.h, r); else { g.rect(s.x, s.y, s.w, s.h); } };
+      g.save();
+      g.shadowColor = 'rgba(0,0,0,.5)'; g.shadowBlur = 14; g.shadowOffsetY = 2;
+      g.beginPath(); path(); g.fillStyle = '#1b2633'; g.fill();
+      g.restore();
+      g.save();
+      g.beginPath(); path(); g.clip();
+      g.drawImage(this.photoSad, s.srcX, s.srcY, s.srcW, s.srcH, s.x, s.y, s.w, s.h);
+      g.restore();
+      g.save();
+      g.beginPath(); path();
+      g.strokeStyle = 'rgba(255,255,255,.38)'; g.lineWidth = 1.5; g.stroke();
+      g.restore();
     }
   }
   draw(ms) {
@@ -197,6 +243,7 @@ export class LookPreview {
     this.last = ms;
     const st = this.getState();
     this.prepareView();
+    this.prepareSadView(st);
     const ppl = this.people(st);
     this.background(ppl, st);
     const t = ms / 1000, VW = this.size.w * K, VH = this.size.h * K;
@@ -204,7 +251,7 @@ export class LookPreview {
       id: 1, label: st.name, kps: p.kps, box: p.box, missed: 0, embeds: 5,
       pose: { yaw: Math.sin(t * 0.7) * 10, pitch: Math.sin(t * 0.5) * 4, roll: Math.sin(t * 0.9) * 3 },
       showName: st.showName, sizes: st.sizes, style: st.style, objectId: st.objectId, filterId: st.filterId || '', message: st.message,
-    } : { id: 2, label: null, kps: p.kps, box: p.box, missed: 0, embeds: 5, pose: { yaw: 0, pitch: 0, roll: Math.sin(t * 0.6) * 4 } }));
+    } : { id: 2, label: null, kps: p.kps, box: p.box, missed: 0, embeds: 5, pose: { yaw: Math.sin(t * 0.5) * 3, pitch: Math.sin(t * 0.4) * 2, roll: Math.sin(t * 0.6) * 2 } }));
     if (this.popAt) { const r = lab.meshes.get(1); if (r) { r.born = this.popAt; if (r.obj) r.objBorn = this.popAt; } this.popAt = 0; }
     lab.render(tracks, VW, VH, !!st.unknown, ms);
     lookStats.frames++;

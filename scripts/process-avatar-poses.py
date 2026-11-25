@@ -7,8 +7,9 @@ Default:
 Special files (same folder, same filenames if regenerated):
   profile-avatar.jpg  →  icons/profile-avatar.webp + .png
       (circular crop, transparent corners, 320px)
-  preview-avatar.jpg  →  tutorial/preview-avatar.webp + .jpg
-      (cafe background kept, no cut-out, compressed <80KB)
+  preview-avatar.jpg, preview-avatar-sad.jpg
+      →  tutorial/<name>.webp + .jpg + .png
+      (cafe background kept, no cut-out, compressed webp <80KB)
 
 Everything else gets a transparent background (white/near-white flood from
 the border, plus leftover enclosed white gaps). White props that contain
@@ -39,7 +40,7 @@ PROFILE_SIZE = 320
 PREVIEW_MAX_SIDE = 960
 
 # files that are not cut-out tutorial poses
-KEEP_BG = {"preview-avatar"}
+KEEP_BG = {"preview-avatar", "preview-avatar-sad"}
 CIRCLE_CROP = {"profile-avatar"}
 # extra poses (e.g. var-phone, var-think) are still converted into tutorial/
 
@@ -337,12 +338,16 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--src", default="/workspace/noera-avatar-poses", help="folder of source JPEGs")
     ap.add_argument("--out", default=str(repo), help="repo root (writes tutorial/ and icons/)")
+    ap.add_argument("names", nargs="*", help="optional stems or filenames to convert (default: all JPEGs)")
     args = ap.parse_args()
     src = Path(args.src)
     repo = Path(args.out)
     if not src.is_dir():
         sys.exit(f"source folder not found: {src}")
     jpgs = sorted(src.glob("*.jpg")) + sorted(src.glob("*.jpeg"))
+    if args.names:
+        want = {Path(n).stem for n in args.names}
+        jpgs = [p for p in jpgs if p.stem in want]
     if not jpgs:
         sys.exit(f"no JPEGs in {src}")
     (repo / "tutorial").mkdir(parents=True, exist_ok=True)
@@ -356,9 +361,12 @@ def main():
             out = process_preview(rgb)
             webp = dest / f"{stem}.webp"
             jpg = dest / f"{stem}.jpg"
+            png = dest / f"{stem}.png"
             q = save_webp(out, webp)
             out.save(jpg, "JPEG", quality=85, optimize=True)
-            print(f"{stem:22} {out.size} webp={webp.stat().st_size:6d} (q~{q}) jpg={jpg.stat().st_size:6d}  -> {dest.name}/")
+            out.save(png, "PNG", optimize=True, compress_level=9)
+            pngquant(png)
+            print(f"{stem:22} {out.size} webp={webp.stat().st_size:6d} (q~{q}) jpg={jpg.stat().st_size:6d} png={png.stat().st_size:7d}  -> {dest.name}/")
             continue
         if stem in CIRCLE_CROP:
             out = process_circle(rgb)

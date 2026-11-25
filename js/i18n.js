@@ -3069,3 +3069,18 @@ Object.assign(D.de, {
   'help.body.tutorial': 'Über das Menü „📘 Anleitung“ oder hier: „Anleitung starten“. 14 Schritte mit dem Noera-Avatar. Es gibt auch eine vollständige Anleitung auf Griechisch, mit denselben Bildern: „Vollständige Gebrauchsanleitung“ oder https://sidiropoulosag.github.io/ar-names/guide.html',
   'help.body.account': 'Einstellungen → Konto → „Mit Google anmelden“ (oder per E-Mail: du bekommst einen 6-stelligen Code von noera.app@gmail.com, 10 Minuten gültig — auch den Spam-Ordner prüfen).\nDanach ist dein Profil mit deinem Konto verknüpft.\nAuf einem neuen Handy oder nach Löschen und Neuinstallation: App öffnen → Einstellungen → Konto → genauso anmelden. Alles kommt zurück (Name, Nachrichten, Gruppen, Gesichtsabdruck) ohne neue Fotos.\nDie Anmeldung ist freiwillig: ohne sie funktioniert alles wie bisher.\nSchritt für Schritt, mit Bildern: „Vollständige Gebrauchsanleitung“.',
 });
+
+
+/* v45: look preview also shows a small unknown avatar with «?» */
+Object.assign(D.el, {
+  'help.body.filt': 'Ρυθμίσεις → Εμφάνιση και ήχος → Αστείο φίλτρο. Βλέπεις ζωντανή προεπισκόπηση πάνω στο άβαταρ (και, αν είναι ενεργό το «?», ένα μικρό στεναχωρημένο άβαταρ δεξιά με το ερωτηματικό πάνω από το κεφάλι). Εποχιακά (Χριστούγεννα, Απόκριες) εμφανίζονται στην περίοδό τους.',
+});
+Object.assign(D.en, {
+  'help.body.filt': 'Settings → Look and sound → Fun filter. Live preview over the avatar (and, if “?” is on, a small sad avatar on the right with the question mark above the head). Seasonal ones (Christmas, Halloween) appear in season.',
+});
+Object.assign(D.fr, {
+  'help.body.filt': 'Réglages → Apparence → Filtre amusant. Aperçu en direct sur l’avatar (et, si « ? » est activé, un petit avatar triste à droite avec le point d’interrogation au-dessus de la tête). Saisons (Noël, Halloween).',
+});
+Object.assign(D.de, {
+  'help.body.filt': 'Einstellungen → Aussehen → Lustiger Filter. Live-Vorschau auf dem Avatar (und, wenn „?“ an ist, ein kleines trauriges Avatar rechts mit dem Fragezeichen über dem Kopf). Saisonal (Weihnachten, Halloween).',
+});

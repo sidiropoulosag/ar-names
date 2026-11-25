@@ -977,7 +977,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v44';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v45';   // keep in sync with CACHE in sw.js
 
 // v40: decorative avatar images are webp, with a PNG fallback if the file fails to load
 document.querySelectorAll('img[data-png]').forEach((img) => {

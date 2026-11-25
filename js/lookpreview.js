@@ -76,7 +76,7 @@ export class LookPreview {
     this.host.insertBefore(canvas, this.layer);
     const lab = new Labels3D(canvas);
     lookStats.created++; lookStats.alive++;
-    lab.topPad = 40;  // v43: leave room for the name above the avatar's hair
+    lab.topPad = 28;  // v46: clear the rounded corner; the caption is outside the image
     lab.beforeDraw = () => this.track();
     Object.assign(this, { canvas, lab });
     if (this.ro) this.ro.observe(this.host);

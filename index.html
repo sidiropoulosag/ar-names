@@ -286,11 +286,13 @@
 
   <!-- 🎨 look & sound: my screen (sound, «?») + how my name looks to the others (style, 3D object, sizes) -->
   <section class="spage" data-page="look">
-    <!-- v31: live preview (same 3D labels as the camera screen), sticky while scrolling the options -->
-    <div id="lookPrev" role="img" aria-label="Προεπισκόπηση: έτσι θα φαίνεται στην κάμερα" data-i18n-aria="look.prevAria">
-      <canvas class="lp-bg" aria-hidden="true"></canvas>
-      <div class="lp-layer" aria-hidden="true"></div>
-      <span class="lp-tag" data-i18n="look.prevTag">👁️ Προεπισκόπηση</span>
+    <!-- v31: live preview; v46: the caption sits above the image so it never covers the name -->
+    <div class="look-prev-wrap">
+      <p class="lp-cap" data-i18n="look.prevTag">👁️ Προεπισκόπηση — έτσι θα φαίνεται</p>
+      <div id="lookPrev" role="img" aria-label="Προεπισκόπηση: έτσι θα φαίνεται στην κάμερα" data-i18n-aria="look.prevAria">
+        <canvas class="lp-bg" aria-hidden="true"></canvas>
+        <div class="lp-layer" aria-hidden="true"></div>
+      </div>
     </div>
     <h3 data-i18n="look.mine">📱 Στην οθόνη μου</h3>
     <div class="scard">

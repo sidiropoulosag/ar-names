@@ -538,24 +538,28 @@ function closePeople() { $('people').classList.add('hidden'); syncShot(); clearI
 // What the preview shows = exactly what the camera screen would draw for me with the CURRENT (unsaved) choices:
 // my name (or a sample), the text style, the sizes, the 3D object and my comment; «?» on a sample stranger when
 // that option is on. Read fresh on every frame, so any change (also of language) shows at once.
+let lookTest = null;   // v46 screenshots / tests: merge over the live state
 function lookState() {
   const unknown = !!settings.showUnknown;
   const me = !$('srvMe').classList.contains('hidden') && hasCap('display');
+  let st;
   if (!me) {   // no server profile: only my own screen's options (no style / object / comment for local people)
     const mine = (localPeople || []).find((p) => p.me);
-    return { name: (mine && mine.name) || cfg.name || tr('disp.namePh'), showName: true, style: 'bold', sizes: null, objectId: '', filterId: dispFilt || '', message: '', unknown };
+    st = { name: (mine && mine.name) || cfg.name || tr('disp.namePh'), showName: true, style: 'bold', sizes: null, objectId: '', filterId: dispFilt || '', message: '', unknown };
+  } else {
+    const items = selItems();
+    const texts = [['message1', 'srvMsg'], ['message2', 'srvMsg2']].filter(([k]) => items.includes(k)).map(([, id]) => $(id).value.trim()).filter(Boolean);
+    st = {
+      name: cfg.name || tr('disp.namePh'),
+      showName: dispMulti ? items.includes('name') : true,
+      style: hasCap('styles') ? dispStyle : 'bold',
+      sizes: hasCap('sizes') ? { name: +$('szName').value, text: +$('szText').value, object: +$('szObj').value } : null,
+      objectId: items.includes('object3d') ? dispObj : '',
+      filterId: dispFilt || '',
+      message: texts.join('\n'), unknown,
+    };
   }
-  const items = selItems();
-  const texts = [['message1', 'srvMsg'], ['message2', 'srvMsg2']].filter(([k]) => items.includes(k)).map(([, id]) => $(id).value.trim()).filter(Boolean);
-  return {
-    name: cfg.name || tr('disp.namePh'),
-    showName: dispMulti ? items.includes('name') : true,
-    style: hasCap('styles') ? dispStyle : 'bold',
-    sizes: hasCap('sizes') ? { name: +$('szName').value, text: +$('szText').value, object: +$('szObj').value } : null,
-    objectId: items.includes('object3d') ? dispObj : '',
-    filterId: dispFilt || '',
-    message: texts.join('\n'), unknown,
-  };
+  return lookTest ? Object.assign({}, st, lookTest) : st;
 }
 var lookPv = new LookPreview($('lookPrev'), { getState: lookState, getFont: () => labels.font, fontUrl: FONT_URL });
 // runs only while «Εμφάνιση και ήχος» is the open page of an open settings panel; otherwise stopped + disposed
@@ -565,7 +569,7 @@ function syncLookPv() {
   else lookPv.stop();
 }
 function updatePreview() { if (lookPv && lookPv.on) lookPv.start(); }   // redraw now (start() on a running preview = draw)
-window.__ar.lookPv = { get on() { return lookPv.on; }, stats: lookStats, snapshot: () => lookPv.snapshot(), state: () => lookState() };
+window.__ar.lookPv = { get on() { return lookPv.on; }, stats: lookStats, snapshot: () => lookPv.snapshot(), state: () => lookState(), testState(s) { lookTest = s || null; updatePreview(); } };
 // ---------- v29: Settings = main menu + sub-pages ----------
 // Rows show only when their page has something to show (profile: a server is set; who / messages: my server
 // profile and a server that supports them). «‹ Πίσω» (or Esc) returns to the menu; ✕ closes as before.
@@ -977,7 +981,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v45';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v46';   // keep in sync with CACHE in sw.js
 
 // v40: decorative avatar images are webp, with a PNG fallback if the file fails to load
 document.querySelectorAll('img[data-png]').forEach((img) => {

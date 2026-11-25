@@ -130,6 +130,7 @@ export class Labels3D {
       const fh = (t.box.y1 - t.box.y0) * vh * s;
       const bb = rec.mesh && rec.mesh.geometry.boundingBox;
       const gw = rec.mesh ? (bb ? bb.max.x - bb.min.x : 0.6 * text.length) : 0;
+      const gh = rec.mesh && bb ? Math.max(1, bb.max.y - bb.min.y) : 1;  // v46: curved names are taller than 1
       // base size from the face width (smoothed below); the name's own size also fits the screen width
       const size0 = Math.max(14, Math.min(150, fw * (unk ? 0.35 : 0.3)));
       // eyes sit ~40% down the box; go up to the top of the head + a small gap
@@ -143,7 +144,8 @@ export class Labels3D {
       const three = !!(showName && objId && msg);
       const objMul = three ? 1.7 : 2.2;
       const nameS = (b) => (gw ? Math.max(10, Math.min(b * sN, (W * 0.92) / Math.max(gw, 0.5))) : 0);
-      const nameHOf = (b) => (gw ? nameS(b) * 1.05 : b * 0.15);
+      const nameMul = (style === 'curved' ? gh + 0.08 : 1.05);
+      const nameHOf = (b) => (gw ? nameS(b) * nameMul : b * 0.15);
       const objHOf = (b) => (objId ? b * objMul * sO * 1.05 : 0);
       const bubHOf = (ts) => (msg ? (16 * ts * 1.25) * Math.min(4, msg.split('\n').length) + 16 : 0);
       const stackHOf = (b, ts) => nameHOf(b) + objHOf(b) + (msg ? b * 0.16 : b * 0.25) + bubHOf(ts);
@@ -177,7 +179,7 @@ export class Labels3D {
       }
       const k = rec.sm, pop = Math.min(1, (now - rec.born) / 180);
       const ease = 1 - Math.pow(1 - pop, 3);
-      const ns = nameS(k.s), nameH = gw ? ns * 1.05 : k.s * 0.15;
+      const ns = nameS(k.s), nameH = gw ? ns * nameMul : k.s * 0.15;
       if (rec.mesh) {
         rec.mesh.position.set(k.x, H - k.y, 0);
         rec.mesh.quaternion.copy(k.q);

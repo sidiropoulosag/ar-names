@@ -388,7 +388,13 @@ body.a11y-large #meetCard .meet-note-date{font-size:17px}
 .hud-met{background:rgba(13,27,42,.82);color:#fff;border-radius:12px;padding:4px 10px;font-size:13px;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .hud-chip{background:#b42318;color:#fff;border:0;border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600}
 .tut-body{max-width:520px;margin:0 auto}
-.tut-art{display:block;width:100%;max-width:320px;height:auto;margin:8px auto 12px;border-radius:16px;background:#f3f0e8}
+.tut-art{display:block;width:100%;max-width:280px;height:auto;max-height:240px;object-fit:contain;margin:4px auto 10px;background:transparent}
+.start-art{display:block;width:auto;height:150px;max-width:72%;margin:0 auto 8px;object-fit:contain}
+.su-art{display:block;width:auto;height:132px;max-width:200px;margin:0 auto 4px;object-fit:contain}
+.en-guide{flex-direction:row;align-items:center;gap:10px}
+.en-art{width:72px;height:72px;object-fit:contain;flex:none}
+.en-guide-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+@media (max-height:700px){.start-art{height:110px}.su-art{height:108px}.tut-art{max-height:180px}}
 #tutHeading{margin:0 0 8px;font-size:22px}
 #tutBody{font-size:17px;line-height:1.45;margin:0 0 18px}
 .pilot{background:#fff3cd;color:#3a2f27;border-radius:12px;padding:12px 14px;font-weight:600;line-height:1.35}

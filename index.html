@@ -83,6 +83,7 @@
 <!-- Start (needed for camera permission on iOS) -->
 <div id="start" class="sheet center">
   <div class="card">
+    <img class="start-art" src="tutorial/01-welcome.webp" alt="" width="200" height="214" data-png="tutorial/01-welcome.png">
     <h1>Noera</h1>
     <p id="startIntro" data-i18n="start.intro">Η κάμερα αναγνωρίζει τα άτομα που έχεις καταχωρίσει και δείχνει το όνομά τους σε 3D πάνω από το κεφάλι.</p>
     <p id="privacyNote" class="small" data-i18n="privacy.local">Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.</p>
@@ -98,8 +99,11 @@
 <div id="enOval" class="hidden" aria-hidden="true"></div>
 <div id="enroll" class="panel bottom hidden">
   <div id="enGuide" class="en-guide hidden">
-    <b data-i18n="su.g1t">Βήμα 1 από 4 · Όνομα και φωτογραφίες</b>
-    <span data-i18n="su.g1b">Γράψε το όνομά σου, κράτα καλό φως στο πρόσωπο (χωρίς γυαλιά ηλίου ή μάσκα) και πάτα ▶. Θέλει περίπου 1 λεπτό.</span>
+    <img class="en-art" src="tutorial/02-photos.webp" alt="" width="80" height="84" data-png="tutorial/02-photos.png">
+    <div class="en-guide-txt">
+      <b data-i18n="su.g1t">Βήμα 1 από 4 · Όνομα και φωτογραφίες</b>
+      <span data-i18n="su.g1b">Γράψε το όνομά σου, κράτα καλό φως στο πρόσωπο (χωρίς γυαλιά ηλίου ή μάσκα) και πάτα ▶. Θέλει περίπου 1 λεπτό.</span>
+    </div>
   </div>
   <div class="row">
     <input id="enName" type="text" placeholder="Όνομα (π.χ. Μαρία)" data-i18n-ph="en.namePh" maxlength="40" autocomplete="off">
@@ -159,7 +163,7 @@
       <button type="button" class="srow" data-go="ach"><span class="sico" aria-hidden="true">🏅</span><span class="stxt"><b data-i18n="m.ach">Τα επιτεύγματά μου</b><small data-i18n="m.achSub">Σήματα που κέρδισες</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="safety"><span class="sico" aria-hidden="true">🆘</span><span class="stxt"><b data-i18n="m.safety">Χαμένο άτομο</b><small data-i18n="m.safetySub">Προφίλ ασφαλείας, αν χαθεί κάποιος</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="a11y"><span class="sico" aria-hidden="true">♿</span><span class="stxt"><b data-i18n="m.a11y">Εύκολη χρήση</b><small data-i18n="m.a11ySub">Φωνή, μεγάλα γράμματα, αντίθεση</small></span><span class="schev" aria-hidden="true">›</span></button>
-      <button type="button" class="srow" data-go="tutorial"><span class="sico" aria-hidden="true">📘</span><span class="stxt"><b data-i18n="m.tutorial">Οδηγός με σκίτσα</b><small data-i18n="m.tutorialSub">Πώς δουλεύουν όλα, βήμα-βήμα</small></span><span class="schev" aria-hidden="true">›</span></button>
+      <button type="button" class="srow" data-go="tutorial"><span class="sico" aria-hidden="true">📘</span><span class="stxt"><b data-i18n="m.tutorial">Οδηγός</b><small data-i18n="m.tutorialSub">Πώς δουλεύουν όλα, βήμα-βήμα</small></span><span class="schev" aria-hidden="true">›</span></button>
       <button type="button" class="srow" data-go="help"><span class="sico" aria-hidden="true">❓</span><span class="stxt"><b data-i18n="m.help">Οδηγός και βοήθεια</b><small data-i18n="m.helpSub">Οδηγίες, ερωτήσεις, εγκατάσταση</small></span><span class="schev" aria-hidden="true">›</span></button>
     </nav>
   </section>
@@ -503,20 +507,20 @@
     </div>
     <div class="wel-body">
       <section class="wstep on" data-step="obj">
-        <div class="wel-ico" aria-hidden="true">🧸</div>
+        <img class="su-art" src="tutorial/03-above-head.webp" alt="" width="200" height="196" data-png="tutorial/03-above-head.png">
         <h2 id="suTitle" data-i18n="su.objT">Διάλεξε ένα 3D αντικείμενο</h2>
         <p class="wel-lead" data-i18n="su.objB">Θα φαίνεται πάνω από το κεφάλι σου, δίπλα στο όνομά σου.</p>
         <div id="suObjs" role="radiogroup" aria-label="3D" data-i18n-aria="su.objAria"></div>
       </section>
       <section class="wstep" data-step="msg">
-        <div class="wel-ico" aria-hidden="true">💬</div>
+        <img class="su-art" src="tutorial/03-above-head.webp" alt="" width="200" height="196" data-png="tutorial/03-above-head.png">
         <h2 data-i18n="su.msgT">Γράψε ένα μικρό μήνυμα</h2>
         <p class="wel-lead" data-i18n="su.msgB">Θα το διαβάζουν όσοι σε αναγνωρίζουν. Κάτι σύντομο και φιλικό.</p>
         <textarea id="suMsg" rows="2" maxlength="80" placeholder="π.χ. Χαίρομαι που σε βλέπω 😊" data-i18n-ph="su.msgPh"></textarea>
         <div id="suChips" class="su-chips"></div>
       </section>
       <section class="wstep" data-step="done">
-        <div class="wel-ico" aria-hidden="true">✅</div>
+        <img class="su-art" src="tutorial/04-ready.webp" alt="" width="180" height="235" data-png="tutorial/04-ready.png">
         <h2 id="suDoneTitle"></h2>
         <ul id="suSummary" class="wel-list"></ul>
         <div id="suPick" class="wel-note hidden" role="radiogroup">
@@ -621,7 +625,10 @@
   </div>
   <div class="set-body tut-body">
     <p id="tutStep" class="small"></p>
-    <img id="tutArt" class="tut-art" alt="">
+    <picture>
+      <source id="tutArtWebp" type="image/webp">
+      <img id="tutArt" class="tut-art" alt="">
+    </picture>
     <h3 id="tutHeading"></h3>
     <p id="tutBody"></p>
     <div class="row">

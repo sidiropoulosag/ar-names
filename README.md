@@ -2,7 +2,7 @@
 
 [English below](#english)
 
-**Έκδοση εφαρμογής:** v39 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
+**Έκδοση εφαρμογής:** v40 · **Άνοιγμα:** https://sidiropoulosag.github.io/ar-names/
 
 Το **Noera** είναι εφαρμογή στο κινητό (PWA) που ανοίγει την κάμερα και, όταν αναγνωρίσει κάποιον που έχει καταχωριστεί, δείχνει το **όνομά του με τρισδιάστατα γράμματα** πάνω από το κεφάλι του — και μπορεί να δείχνει μήνυμα, αστείο 3D αντικείμενο ή φίλτρο. Δουλεύει για **πολλά πρόσωπα μαζί** στην οθόνη (έως 12).
 
@@ -75,8 +75,8 @@
 | **Τα επιτεύγματά μου** | Τοπικά σήματα στη συσκευή — χωρίς πίεση / spam. |
 | **Χαμένο άτομο** | Προφίλ ασφαλείας για ευάλωτο άτομο (server 0.9.0+). |
 | **Εύκολη χρήση** | Εκφώνηση ονομάτων, μεγάλα γράμματα, υψηλή αντίθεση, εμφάνιση για φροντιστή. |
-| **Οδηγός με σκίτσα** | Βήμα-βήμα, με απλά σκίτσα, και στις 4 γλώσσες. |
-| **Οδηγός και βοήθεια** | Κατηγορίες, αναζήτηση, FAQ, οδηγός βήμα-βήμα και σύνδεσμος στον οδηγό με σκίτσα. |
+| **Οδηγός** | Βήμα-βήμα, με το άβαταρ του Noera (4 πόζες), και στις 4 γλώσσες. |
+| **Οδηγός και βοήθεια** | Κατηγορίες, αναζήτηση, FAQ, οδηγός βήμα-βήμα και σύνδεσμος στον εικονογραφημένο οδηγό. |
 
 ---
 
@@ -90,9 +90,9 @@
 
 ---
 
-## Οδηγός με σκίτσα
+## Οδηγός
 
-Από το μενού **«📘 Οδηγός με σκίτσα»** ή από Βοήθεια → **«Ξεκίνα τον οδηγό»**. 14 βήματα με απλά σκίτσα (όχι πραγματικά πρόσωπα) και σύντομο κείμενο, στις γλώσσες Ελληνικά / English / Français / Deutsch. Εξηγεί την κάμερα, την καταχώριση, τα μηνύματα, τις εκδηλώσεις, τη φωτο ανάμνησης, το χαμένο άτομο, την κάρτα ανάγκης, την εύκολη χρήση και το απόρρητο.
+Από το μενού **«📘 Οδηγός»** ή από Βοήθεια → **«Ξεκίνα τον οδηγό»**. 14 βήματα με το **άβαταρ του Noera** (ίδιος χαρακτήρας, λογότυπο στη μπλούζα) και σύντομο κείμενο, στις γλώσσες Ελληνικά / English / Français / Deutsch. Οι εικόνες είναι: καλωσόρισμα (γεια), φωτογραφίες (σέλφι με το κινητό), πάνω από το κεφάλι (δείχνει ψηλά), έτοιμο (like). Όπου ένα βήμα δεν έχει δική του πόζα, χρησιμοποιείται η πιο κοντινή από τις τέσσερις. Εξηγεί την κάμερα, την καταχώριση, τα μηνύματα, τις εκδηλώσεις, τη φωτο ανάμνησης, το χαμένο άτομο, την κάρτα ανάγκης, την εύκολη χρήση και το απόρρητο. Το ίδιο άβαταρ εμφανίζεται και στην πρώτη ρύθμιση (καλωσόρισμα, φωτογραφίες, αντικείμενο/μήνυμα, «Έτοιμο»).
 
 ---
 
@@ -195,6 +195,8 @@
 
 Από την **v25** και μετά ο κώδικας της εφαρμογής φορτώνεται **network-first**: στο **πρώτο άνοιγμα** μετά από δημοσίευση παίρνεις τη νέα έκδοση (χωρίς διπλό άνοιγμα). Αν η σελίδα μείνει ανοιχτή ενώ βγαίνει νέα έκδοση, γίνεται ήσυχη ανανέωση όταν δεν σε διακόπτει (ή εμφανίζεται μικρή μπάρα «Νέα έκδοση»). **Offline** χρησιμοποιείται η τελευταία έκδοση που έχει αποθηκευτεί στην προσωρινή μνήμη (service worker).
 
+**v40:** ο οδηγός και η πρώτη ρύθμιση δείχνουν πλέον το **άβαταρ του Noera** (4 πόζες, λογότυπο στη μπλούζα) αντί για τα παλιά σκίτσα.
+
 **v39:** πάνω από το κεφάλι μπορούν να φαίνονται **μαζί** το όνομα, το 3D αντικείμενο και το μήνυμα (όριο 3). Στον οδηγό, στο βήμα 4, αν έβαλες και τα δύο, η προεπιλογή είναι «Και τα δύο». Το ίδιο στις ρυθμίσεις «Εμφάνιση και ήχος». Χρειάζεται server 0.10.1.
 
 **v38:** η πρώτη ρύθμιση έγινε **ένας οδηγός 4 βημάτων** μέσα στην καταχώριση φωτογραφιών: όνομα και φωτογραφίες → 3D αντικείμενο → μήνυμα → «Έτοιμο, χρησιμοποίησέ το». Η παλιά ξεχωριστή «ξενάγηση» αφαιρέθηκε· όσοι έχουν ήδη προφίλ δεν περνούν ξανά από αυτήν.
@@ -219,7 +221,7 @@
 
 ## Βοήθεια μέσα στην εφαρμογή
 
-Ρυθμίσεις → **Οδηγός και βοήθεια**: κατηγορίες (φωτογράφιση, ονόματα, χαιρετισμοί, εκδηλώσεις, προσκλήσεις, απόρρητο, αναφορά, επιτεύγματα, φίλτρα, γλώσσα, εγκατάσταση, χαμένο άτομο, κάρτα ανάγκης, μήνυμα που περιμένει, εύκολη χρήση, οδηγός με σκίτσα), **αναζήτηση** και **FAQ** (π.χ. «Γιατί δεν με βλέπει κανείς;», κάμερα, διαγραφή, χαιρετισμός, «Πώς δηλώνω ότι χάθηκε κάποιος;»). Από εκεί ξεκινά και ο **οδηγός με σκίτσα**.
+Ρυθμίσεις → **Οδηγός και βοήθεια**: κατηγορίες (φωτογράφιση, ονόματα, χαιρετισμοί, εκδηλώσεις, προσκλήσεις, απόρρητο, αναφορά, επιτεύγματα, φίλτρα, γλώσσα, εγκατάσταση, χαμένο άτομο, κάρτα ανάγκης, μήνυμα που περιμένει, εύκολη χρήση, οδηγός), **αναζήτηση** και **FAQ** (π.χ. «Γιατί δεν με βλέπει κανείς;», κάμερα, διαγραφή, χαιρετισμός, «Πώς δηλώνω ότι χάθηκε κάποιος;»). Από εκεί ξεκινά και ο **εικονογραφημένος οδηγός**.
 
 ---
 
@@ -253,7 +255,7 @@
 <a id="english"></a>
 # Noera — 3D name labels above recognised faces
 
-**App version:** v39 · **Open:** https://sidiropoulosag.github.io/ar-names/
+**App version:** v40 · **Open:** https://sidiropoulosag.github.io/ar-names/
 
 **Noera** is a phone PWA: point the camera at people who enrolled, and their **name appears as 3D lettering** above their head (optional message, 3D object, or funny filter). Up to **12 faces** at once.
 
@@ -321,8 +323,8 @@ Recognised faces get a **3D name** (and optional message / object / filter). Tap
 | **My achievements** | Local badges on this device — no spam. |
 | **Missing person** | Safety profile for a vulnerable person (server 0.9.0+). |
 | **Easier to use** | Spoken names, large text, high contrast, caregiver layout. |
-| **Illustrated guide** | Step-by-step sketches, in all 4 languages. |
-| **Help** | Categories, search, FAQ, step-by-step guide, and a link to the illustrated guide. |
+| **Guide** | Step-by-step, with the Noera avatar (4 poses), in all 4 languages. |
+| **Help** | Categories, search, FAQ, step-by-step guide, and a link to the picture guide. |
 
 ---
 
@@ -336,9 +338,9 @@ Recognised faces get a **3D name** (and optional message / object / filter). Tap
 
 ---
 
-## Illustrated guide
+## Guide
 
-From the menu **“📘 Illustrated guide”** or Help → **“Start the guide”**. 14 steps with simple sketches (no real faces) and short text, in Greek / English / Français / Deutsch. It covers the camera, enrolment, messages, events, the memory photo, missing-person alerts, the emergency card, accessibility and privacy.
+From the menu **“📘 Guide”** or Help → **“Start the guide”**. 14 steps with the **Noera avatar** (same character, logo on the shirt) and short text, in Greek / English / Français / Deutsch. The pictures are: welcome (waving), photos (selfie with the phone), above the head (pointing up), and ready (thumbs up). Steps without their own pose reuse the closest of the four. It covers the camera, enrolment, messages, events, the memory photo, missing-person alerts, the emergency card, accessibility and privacy. The same avatar also appears in first-time setup (welcome, photos, object/message, “Done”).
 
 ---
 
@@ -439,6 +441,8 @@ The family administrator runs the server (the `ar-names-pc` package, version **0
 
 From **v25** onward, app code is **network-first**: you get a new published version on the **first open** (no double open). If the page stays open during a publish, it reloads when safe or shows a small update bar. **Offline** uses the last cached version.
 
+**v40:** the guide and first-time setup now show the **Noera avatar** (4 poses, logo on the shirt) instead of the old sketches.
+
 **v39:** the name, the 3D object and the message can now all show **together** above the head (limit 3). In the guide, step 4 defaults to «Both» if you picked both. The same choice is in Settings → Look and sound. Needs server 0.10.1.
 
 **v38:** first-time setup is now **one 4-step guide** inside the photo setup: name and photos → 3D object → message → «Done, start using it». The old separate tour is gone; people who already have a profile are not sent through it again.
@@ -463,7 +467,7 @@ From **v25** onward, app code is **network-first**: you get a new published vers
 
 ## In-app help
 
-Settings → **Help**: categories (enrolment, names, greetings, events, invites, privacy, report, achievements, filters, language, install, missing person, emergency card, waiting message, accessibility, illustrated guide), **search**, and **FAQ** (why nobody sees me, camera, delete, greetings, “How do I report someone missing?”). The **illustrated guide** also starts from here.
+Settings → **Help**: categories (enrolment, names, greetings, events, invites, privacy, report, achievements, filters, language, install, missing person, emergency card, waiting message, accessibility, guide), **search**, and **FAQ** (why nobody sees me, camera, delete, greetings, “How do I report someone missing?”). The **picture guide** also starts from here.
 
 ---
 

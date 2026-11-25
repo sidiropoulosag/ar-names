@@ -4,6 +4,14 @@ import { t as tr, getLang, applyI18n, locale } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const TUT = ['t1','t2','t3','t4','t5','t6','t7','t8','t9','t10','t11','t12','t13','t14'];
+// v40: approved Noera avatar poses (same character, logo on the shirt).
+// Steps without a dedicated pose reuse the closest of the four.
+const TUT_ART = {
+  t1: '01-welcome', t2: '02-photos', t3: '02-photos', t4: '03-above-head',
+  t5: '03-above-head', t6: '01-welcome', t7: '01-welcome', t8: '01-welcome',
+  t9: '03-above-head', t10: '01-welcome', t11: '04-ready', t12: '02-photos',
+  t13: '04-ready', t14: '04-ready',
+};
 const A11Y_KEY = 'ar-names-a11y';
 const MET_NOTES_KEY = 'ar-names-met-notes';
 const EM_MODE_KEY = 'ar-names-emergency-mode';
@@ -123,9 +131,9 @@ function renderTut() {
   $('tutStep').textContent = tr('tut.step', { i: tutStep + 1, n });
   $('tutHeading').textContent = tr('tut.' + id + '.t');
   $('tutBody').textContent = tr('tut.' + id + '.b');
-  const img = tr('tut.' + id + '.img') || (id.replace(/^t/, '') && '');
-  const file = ['welcome','install','enroll','camera','look','greet','events','meet','waiting','remember','emergency','safety','a11y','privacy'][tutStep] + '.svg';
-  $('tutArt').src = 'tutorial/' + file;
+  const file = tr('tut.' + id + '.img') || TUT_ART[id] || '01-welcome';
+  const src = $('tutArtWebp'); if (src) src.srcset = 'tutorial/' + file + '.webp';
+  $('tutArt').src = 'tutorial/' + file + '.png';
   $('tutArt').alt = tr('tut.' + id + '.t');
   $('tutPrev').disabled = tutStep <= 0;
   $('tutNext').textContent = tutStep >= n - 1 ? tr('tut.done') : tr('tut.next');

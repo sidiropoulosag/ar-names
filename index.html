@@ -95,6 +95,43 @@
   </div>
 </div>
 
+<!-- v44: sign-in screen at the very start (js/gate.js): Google = main, email code = alternative -->
+<div id="gate" class="sheet center hidden" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="card gate-card">
+    <img class="gate-art" src="tutorial/gate-signin.webp" alt="" width="295" height="320" data-png="tutorial/gate-signin.png">
+    <h1 id="gateTitle">Noera</h1>
+    <p id="gateLead" class="gate-lead" data-i18n="gate.lead">Καλώς ήρθες στο Noera! Συνδέσου για να ξεκινήσεις.</p>
+    <p id="gateChecking" class="small" aria-live="polite" data-i18n="gate.checking">Έλεγχος σύνδεσης…</p>
+    <div id="gateOff" class="hidden">
+      <p id="gateOffMsg" class="err" data-i18n="gate.offline">Δεν μπορώ να συνδεθώ με τον server του Noera. Έλεγξε το ίντερνετ και δοκίμασε ξανά.</p>
+      <button id="gateRetry" type="button" class="primary big" data-i18n="gate.retry">↻ Δοκίμασε ξανά</button>
+    </div>
+    <div id="gateOpts" class="hidden">
+      <p id="gateWhy" class="small" data-i18n="gate.why">Έτσι το προφίλ σου είναι δικό σου και επιστρέφει αν αλλάξεις κινητό — χωρίς νέες φωτογραφίες.</p>
+      <p id="gateHave" class="small gate-have hidden" data-i18n="gate.have">Έχεις ήδη προφίλ σε αυτό το κινητό: συνδέσου και θα δεθεί με τον λογαριασμό σου. Δεν χάνεις τίποτα.</p>
+      <button id="gateGoogle" type="button" class="acc-google big hidden"><span class="acc-g" aria-hidden="true">G</span> <span data-i18n="acc.google">Σύνδεση με Google</span></button>
+      <p id="gateOr" class="acc-or hidden" data-i18n="acc.or">ή</p>
+      <button id="gateEmailShow" type="button" class="big hidden" data-i18n="gate.email">✉️ Σύνδεση με email</button>
+      <div id="gateEmailBox" class="hidden">
+        <div id="gateEmailStep">
+          <label class="setting"><span data-i18n="acc.emailLabel">Σύνδεση με email</span>
+            <input id="gEmail" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="το email σου" data-i18n-ph="acc.emailPh"></label>
+          <button id="gSend" type="button" class="primary wide" data-i18n="acc.send">✉️ Στείλε μου κωδικό</button>
+        </div>
+        <div id="gateCodeStep" class="hidden">
+          <label class="setting"><span data-i18n="acc.codeLabel">Ο κωδικός από το email</span>
+            <input id="gCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456"></label>
+          <button id="gVerify" type="button" class="primary wide" data-i18n="acc.verify">Σύνδεση</button>
+          <div class="row gate-links"><button id="gResend" type="button" class="linkbtn" data-i18n="acc.resend">Δεν ήρθε; Στείλε ξανά</button><button id="gOther" type="button" class="linkbtn" data-i18n="gate.otherEmail">Άλλο email</button></div>
+        </div>
+      </div>
+      <button id="gateBack" type="button" class="linkbtn hidden" data-i18n="gate.back">‹ Πίσω</button>
+    </div>
+    <p id="gateMsg" class="small acc-msg" aria-live="polite"></p>
+    <p class="small"><a href="privacy.html" target="_blank" rel="noopener" data-i18n="pv.webLink">📄 Πολιτική απορρήτου στον ιστό</a></p>
+  </div>
+</div>
+
 <!-- Enroll -->
 <div id="enOval" class="hidden" aria-hidden="true"></div>
 <div id="enroll" class="panel bottom hidden">

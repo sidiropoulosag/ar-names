@@ -15,9 +15,11 @@ import { t as tr, setLang, getLang, savedLang, guessLang, applyI18n, locale, dic
 import { initV34 } from './v34.js';
 import { initAccount } from './account.js';
 import { initOnboard } from './onboard.js';
+import { createGate } from './gate.js';
 let v34 = null;
 let onboard = null;   // v38 guided first-time setup (js/onboard.js)
 let account = null;   // v37 «Λογαριασμός» (js/account.js)
+let gate = null;      // v44 sign-in screen at the very start (js/gate.js)
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
 const $ = (id) => document.getElementById(id);
@@ -213,9 +215,13 @@ async function boot() {
     refreshFamily();
     setStatus(lt('status.ready'));
     // v30: first run -> the welcome decides: «📸 Φωτογράφισέ με τώρα» = camera + enrolment, «Μόνο να δω πρώτα» = camera
-    if (await welcomeP === 'first') { setFirstRunCard(true); showStartButton(); return; }   // v38: «📸 Ξεκινάμε» = camera + the guided photo setup
+    // v44: nothing opens before the sign-in screen is done (no screen = already signed in, or the server has no sign-in)
+    const g = gate ? await gate.done : {};
+    window.__ar.gateResult = g;
+    // a new account -> the photo setup + guide; an account with a profile (restored / linked) -> straight to the camera
+    if (g.newAccount || (!g.signedIn && await welcomeP === 'first')) { setFirstRunCard(true); showStartButton(); return; }   // v38: «📸 Ξεκινάμε» = camera + the guided photo setup
     await consentUpdateMaybe();   // v32: once, for people who enrolled before the consent question (never over the camera)
-    const auto = new URLSearchParams(location.search).has('autostart') || await camAllowedP;
+    const auto = new URLSearchParams(location.search).has('autostart') || await camAllowedP || !!(g.signedIn && g.now);   // after a sign-in just now: try the camera at once (the button shows if the browser wants a tap)
     if (auto && !camStarting && !ready) {
       window.__ar.autoStarted = true;
       $('btnStart').disabled = true; setText($('btnStart'), lt('start.opening'));
@@ -971,7 +977,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v43';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v44';   // keep in sync with CACHE in sw.js
 
 // v40: decorative avatar images are webp, with a PNG fallback if the file fails to load
 document.querySelectorAll('img[data-png]').forEach((img) => {
@@ -985,6 +991,7 @@ const verNum = (v) => { const m = /v(\d+)$/.exec(v || ''); return m ? +m[1] : 0;
 function updBusy() {
   if (mode === 'enroll' || !$('enroll').classList.contains('hidden') || !$('tokSheet').classList.contains('hidden')) return true;
   if (V32_SHEETS.some((id) => !$(id).classList.contains('hidden'))) return true;
+  if (!$('gate').classList.contains('hidden')) return true;   // v44: sign-in screen
   const a = document.activeElement;
   if (a && (a.tagName === 'TEXTAREA' || a.isContentEditable || (a.tagName === 'INPUT' && !['checkbox', 'radio', 'range', 'button', 'file'].includes(a.type)))) return true;
   if (dispDirty || ($('pingText') && $('pingText').value.trim() && !$('pingSheet').classList.contains('hidden'))) return true;
@@ -1106,9 +1113,11 @@ async function accountRestored(person, token) {
 }
 langReady().then(() => {
   initServerUi();
+  gate = createGate();   // v44: the sign-in screen at the start; started right after the account layer below
   account = initAccount({
     api, cfg, hasCap, toast, errMsg, health: () => srvHealth, loadHealth: async () => noteHealth(await api.health()),
     saveCfg: () => server.saveCfg(cfg), onRestored: accountRestored, offerEnroll: accountOfferEnroll,
+    gate,
   });
   window.__ar.account = account;
   onboard = initOnboard({
@@ -1121,6 +1130,7 @@ langReady().then(() => {
   window.__ar.onboard = onboard;
   if (cfg.token && cfg.url) api.me().then((me) => { if (me && me.enrollment && me.enrollment.active) onboard.markDone(); }).catch(() => {});   // v38: existing users are never sent through the guide
   if (account.hasPendingSignIn()) welcomeSeen();   // back from Google: no first-run tour on top of the sign-in
+  gate.start({ cfg, api, account, hasCap, errMsg, health: () => srvHealth, loadHealth: async () => noteHealth(await api.health()) });
   welcomeP = welcomeFirstRun(); boot();
 });
 

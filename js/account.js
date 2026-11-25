@@ -20,23 +20,36 @@ function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
 function lsDel(k) { try { localStorage.removeItem(k); } catch (_) {} }
 function rnd() { const a = new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a, (x) => x.toString(16).padStart(2, '0')).join(''); }
 
+// v44: Google's answer is also kept in this tab's sessionStorage until the server has answered, so a reload in
+// between (an app update, the first-visit service-worker reload) continues the sign-in instead of losing it.
+const PEND_KEY = 'noera-google-pending';
+function ssGet() { try { return JSON.parse(sessionStorage.getItem(PEND_KEY) || 'null'); } catch (_) { return null; } }
+function ssSet(v) { try { sessionStorage.setItem(PEND_KEY, JSON.stringify(v)); } catch (_) {} }
+function ssDel() { try { sessionStorage.removeItem(PEND_KEY); } catch (_) {} }
+
 // Read the Google answer from the address bar as early as possible (module load) and clean the address.
 (function captureRedirect() {
   try {
     const h = location.hash || '';
-    if (!/(^#|&)(id_token|error)=/.test(h)) return;
+    if (!/(^#|&)(id_token|error)=/.test(h)) {
+      const s = ssGet();   // a reload after the address was already cleaned
+      if (s && s.idToken && Date.now() - s.at < 10 * 60 * 1000) pendingGoogle = { idToken: s.idToken, nonce: s.nonce };
+      else if (s) ssDel();
+      return;
+    }
     const p = new URLSearchParams(h.slice(1));
     if (!p.has('state')) return;
     history.replaceState(null, '', location.pathname + location.search);
     let saved = null; try { saved = JSON.parse(lsGet(G_KEY) || 'null'); } catch (_) {}
     lsDel(G_KEY);
     if (!saved || saved.state !== p.get('state') || Date.now() - saved.at > 15 * 60 * 1000) { pendingGoogle = { error: 'state' }; return; }
-    if (p.get('id_token')) pendingGoogle = { idToken: p.get('id_token'), nonce: saved.nonce };
+    if (p.get('id_token')) { pendingGoogle = { idToken: p.get('id_token'), nonce: saved.nonce }; ssSet({ ...pendingGoogle, at: Date.now() }); }
     else pendingGoogle = { error: p.get('error') || 'error' };
   } catch (_) {}
 })();
 
-export const hasPendingSignIn = () => !!pendingGoogle;
+let googleBusy = false;   // v44: Google's answer is being sent to the server
+export const hasPendingSignIn = () => !!pendingGoogle || googleBusy;
 
 function health() { return ctx.health() || null; }
 function auth() { const h = health(); return (h && h.auth) || {}; }
@@ -46,9 +59,12 @@ function emailOn() { return supported() && !!auth().email; }
 export function available() { return googleOn() || emailOn(); }
 
 function msg(text, ok) {
-  const m = $('accMsg'); if (!m) return;
-  m.textContent = text || ''; m.classList.toggle('ok', !!ok);
+  for (const id of ['accMsg', 'gateMsg']) {   // v44: the start sign-in screen (gate) has its own message line
+    const m = $(id); if (!m) continue;
+    m.textContent = text || ''; m.classList.toggle('ok', !!ok);
+  }
 }
+const gateOn = () => !!(ctx && ctx.gate && ctx.gate.active());
 function provName(p) { return p === 'google' ? 'Google' : tr('acc.provEmail'); }
 
 export function render() {
@@ -105,6 +121,12 @@ function startGoogle() {
 
 // The server's answer to a sign-in (Google or email) — same handling for both.
 async function finish(r) {
+  if (gateOn()) {   // v44: the sign-in screen at the start: same server calls, the screen decides what comes next
+    if (r.status === 'restored') { setAccount(r.account); await ctx.onRestored(r.person, r.token); }
+    else if (r.status === 'linked' || r.status === 'already') setAccount(r.account);
+    else if (r.status === 'no_profile') { ctx.cfg.ticket = r.ticket || ''; setAccount(null); ctx.cfg.pendingEmail = (r.account && r.account.email) || ''; ctx.saveCfg(); }
+    render(); ctx.gate.onResult(r); return;
+  }
   if (r.status === 'restored') {
     setAccount(r.account);
     await ctx.onRestored(r.person, r.token);
@@ -129,16 +151,29 @@ async function withSwitch(call, e) {
 }
 
 async function completeGoogle() {
+  googleBusy = true;
+  try { await completeGoogle1(); } finally { googleBusy = false; }
+}
+async function completeGoogle1() {
   const p = pendingGoogle; pendingGoogle = null;
   if (!p) return;
-  if (p.error) { if (p.error !== 'access_denied') ctx.toast(tr('acc.googleFail')); return; }
+  if (p.error) {
+    if (p.error !== 'access_denied') { ctx.toast(tr('acc.googleFail')); if (gateOn()) msg(tr('acc.googleFail')); }
+    else if (gateOn()) msg(tr('gate.cancelled'));
+    if (gateOn()) ctx.gate.onFail(false);
+    return;
+  }
   if (!health()) { try { await ctx.loadHealth(); } catch (_) {} }
   const call = (sw) => ctx.api.authGoogle(p.idToken, p.nonce, sw);
   try {
     let r; try { r = await call(false); } catch (e) { r = await withSwitch(call, e); }
-    if (r) await finish(r);
+    ssDel();
+    if (r) await finish(r); else if (gateOn()) ctx.gate.onFail(false);
   } catch (e) {
-    ctx.toast('⚠️ ' + (e.code === 'google_bad_token' ? tr('acc.googleFail') : ctx.errMsg(e)));
+    if (e && (e.code === 'offline' || e.code === 'timeout')) pendingGoogle = p;   // v44: keep Google's answer so «Δοκίμασε ξανά» can send it again
+    else ssDel();
+    const m = e.code === 'google_bad_token' ? tr('acc.googleFail') : ctx.errMsg(e);
+    ctx.toast('⚠️ ' + m); if (gateOn()) { msg('⚠️ ' + m); ctx.gate.onFail(!!pendingGoogle); }
   }
 }
 
@@ -200,6 +235,16 @@ export function maybeHint() {
   setTimeout(() => ctx.toast(tr('acc.hint')), 2500);
 }
 
+// v44: pieces the start sign-in screen (js/gate.js) uses — the very same flows as «Λογαριασμός»
+export const signInWithGoogle = () => startGoogle();
+export async function verifyEmailCodeFor(email, code) {   // throws the server error; true = the server accepted the code
+  const call = (sw) => ctx.api.emailVerify(email, code, sw);
+  let r; try { r = await call(false); } catch (e) { r = await withSwitch(call, e); }
+  if (r) { await finish(r); return true; }
+  return false;
+}
+export function retryPendingGoogle() { if (!pendingGoogle || googleBusy) return false; completeGoogle(); return true; }
+
 export function initAccount(c) {
   ctx = c;
   $('accGoogle').onclick = startGoogle;
@@ -211,5 +256,5 @@ export function initAccount(c) {
   $('accUnlink').onclick = unlink;
   render();
   if (pendingGoogle) completeGoogle();
-  return { render, refresh, noteMe, linkAfterEnroll, signOutDevice, maybeHint, available, hasPendingSignIn };
+  return { render, refresh, noteMe, linkAfterEnroll, signOutDevice, maybeHint, available, hasPendingSignIn, setAccount, signInWithGoogle, verifyEmailCodeFor, retryPendingGoogle };
 }

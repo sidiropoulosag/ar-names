@@ -14,7 +14,9 @@ import { ortInfo, ORT_1T_KEY, IOS } from './ort.js';
 import { t as tr, setLang, getLang, savedLang, guessLang, applyI18n, locale, dict as I18N, LANGS } from './i18n.js';
 import { initV34 } from './v34.js';
 import { initAccount } from './account.js';
+import { initOnboard } from './onboard.js';
 let v34 = null;
+let onboard = null;   // v38 guided first-time setup (js/onboard.js)
 let account = null;   // v37 «Λογαριασμός» (js/account.js)
 let dispMulti = false, dispDirty = false;   // «Τι δείχνω»: 2 choices allowed (0.4.0) / unsaved edits
 
@@ -132,7 +134,7 @@ let caps = null; // null = unknown, else { version, features:Set }
 let srvHealth = null;   // v32: last /health answer (enroll_mode, consent_version)
 function noteHealth(h) {
   caps = { version: h.version || '', features: new Set(h.features || []) }; srvHealth = h;
-  try { syncMenu(); if (account) account.render(); if (!$('welcome').classList.contains('hidden')) welShow(wel.step); } catch (_) {}   // v37: the «Λογαριασμός» row / buttons
+  try { syncMenu(); if (account) account.render(); } catch (_) {}   // v37: the «Λογαριασμός» row / buttons
   return h;
 }
 const hasCap = (f) => !!(caps && caps.features.has(f));
@@ -164,7 +166,7 @@ async function cameraAlreadyAllowed() {
 const camAllowedP = (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? cameraAlreadyAllowed() : Promise.resolve(false);
 function showStartButton(err) {
   $('start').classList.remove('hidden');
-  $('btnStart').disabled = false; setText($('btnStart'), lt('start.open'));
+  $('btnStart').disabled = false; setText($('btnStart'), lt(firstRun.on ? 'start.first' : 'start.open'));
   if (err) setText($('loadErr'), err);
 }
 // the chime's AudioContext still needs a user gesture: unlock it on the first touch/click after an auto-start
@@ -211,8 +213,7 @@ async function boot() {
     refreshFamily();
     setStatus(lt('status.ready'));
     // v30: first run -> the welcome decides: «📸 Φωτογράφισέ με τώρα» = camera + enrolment, «Μόνο να δω πρώτα» = camera
-    const w = await welcomeP;
-    if (w) { await welcomeAfter(w); return; }
+    if (await welcomeP === 'first') { setFirstRunCard(true); showStartButton(); return; }   // v38: «📸 Ξεκινάμε» = camera + the guided photo setup
     await consentUpdateMaybe();   // v32: once, for people who enrolled before the consent question (never over the camera)
     const auto = new URLSearchParams(location.search).has('autostart') || await camAllowedP;
     if (auto && !camStarting && !ready) {
@@ -251,6 +252,10 @@ async function start(opts = {}) {
   ready = true;
   camStarting = false;
   loop();
+  if (firstRun.on) {   // v38: first run -> straight into the photo setup (name + photos), then object / text / ready
+    firstRun.on = false; welcomeSeen();
+    if (firstRun.enroll && mode === 'scan' && !hasOwnProfile()) openEnroll();
+  }
 }
 
 async function openCamera(f) {
@@ -616,16 +621,14 @@ for (const b of document.querySelectorAll('#people .set-lang')) b.onclick = () =
   if (b.dataset.lang === getLang()) return;
   $('optLang').value = b.dataset.lang; $('optLang').dispatchEvent(new Event('change'));
 };
-// ---------- v30: welcome / onboarding ----------
+// ---------- v38: first-time setup is part of the photo setup (the old 3-step welcome tour is gone) ----------
 // First run only: no «welcomed» flag, no people on this device, no server profile (token) and the camera never used
-// here before (an existing user who updates never sees it; the flag is then set silently). Shown right after the
-// language; the models load behind it, the camera waits for the answer. Again any time from Settings →
-// «Οδηγός και βοήθεια». The enrolment itself is the usual openEnroll() (server profile when a server is set,
-// otherwise on-device) — its logic is not changed here.
+// here before (an existing user who updates is never sent through it; the flag is then set silently). The start card
+// becomes «📸 Ξεκινάμε»: it opens the camera and goes straight into the usual enrolment (name + photos), and when
+// that is done js/onboard.js walks through the basics: 3D object -> text -> «Έτοιμο, χρησιμοποίησέ το».
 const WELCOME_KEY = 'ar-names-welcomed';
-const WEL_N = 3;
 let welcomeP = Promise.resolve(null);
-const wel = { step: 0, help: false, done: null };
+const firstRun = { on: false, enroll: true };
 function welcomeSeen() { try { localStorage.setItem(WELCOME_KEY, '1'); } catch (_) {} }
 async function welcomeFirstRun() {
   let show = false;
@@ -637,42 +640,13 @@ async function welcomeFirstRun() {
     }
   } catch (_) {}
   document.documentElement.classList.remove('wel-check');
-  return show ? openWelcome(false) : null;
+  return show ? 'first' : null;
 }
-function welPrivText() {
-  $('welPriv').textContent = tr(cfg.url ? 'wel.privServer' : 'wel.privLocal');
-  $('welPrivNote').textContent = tr(cfg.url ? 'privacy.server' : 'privacy.local');
+function setFirstRunCard(on) {
+  firstRun.on = on;
+  $('startIntro').dataset.i18n = on ? 'start.introFirst' : 'start.intro'; $('startIntro').textContent = tr($('startIntro').dataset.i18n);
+  $('startLook').classList.toggle('hidden', !on);
 }
-function welShow(i) {
-  wel.step = Math.max(0, Math.min(WEL_N - 1, i));
-  for (const sec of document.querySelectorAll('#welcome .wstep')) sec.classList.toggle('on', +sec.dataset.step === wel.step);
-  [...document.querySelectorAll('#welcome .wel-dots span')].forEach((d, k) => d.classList.toggle('on', k === wel.step));
-  $('welcome').querySelector('.wel-dots').setAttribute('aria-label', tr('wel.step', { i: wel.step + 1, n: WEL_N }));
-  const last = wel.step === WEL_N - 1, own = hasOwnProfile();
-  $('welBack').classList.toggle('off', wel.step === 0);
-  $('welSkip').classList.toggle('off', last);
-  $('welNext').classList.toggle('hidden', last);
-  $('welGo').classList.toggle('hidden', !last || own);
-  $('welHas').classList.toggle('hidden', !last || !own);
-  $('welLater').classList.toggle('hidden', !last);
-  $('welSignIn').classList.toggle('hidden', !last || own || !(account && account.available()));
-  $('welLater').textContent = tr(wel.help || own ? 'wel.close' : 'wel.later');
-  welPrivText();
-  const f = last ? (own ? $('welLater') : $('welGo')) : $('welNext');
-  setTimeout(() => { try { f.focus({ preventScroll: true }); } catch (_) {} }, 30);
-}
-function openWelcome(help) {
-  wel.help = !!help;
-  $('welcome').classList.remove('hidden'); document.body.classList.add('wel-on');
-  welShow(0);
-  return new Promise((resolve) => { wel.done = resolve; });
-}
-function closeWelcome(answer) {
-  welcomeSeen();
-  $('welcome').classList.add('hidden'); document.body.classList.remove('wel-on');
-  const d = wel.done; wel.done = null; if (d) d(answer);
-}
-// after the welcome: the camera (a tap = user gesture, so start() may ask for the permission), then the enrolment
 async function welcomeAfter(w) {
   if (!ready) {
     if (!camStarting) { unlockAudioOnFirstTouch(); await start(); }
@@ -695,19 +669,13 @@ function closeHelpSheet() {
   document.body.classList.remove('help-on');
   syncShot();
 }
-$('welNext').onclick = () => welShow(wel.step + 1);
-$('welBack').onclick = () => welShow(wel.step - 1);
-$('welSkip').onclick = () => welShow(WEL_N - 1);   // straight to the last step (the two choices)
-$('welGo').onclick = () => { unlockAudio(); goFullscreen(); closeWelcome('enroll'); };
-$('welSignIn').onclick = () => { unlockAudio(); closeWelcome('skip'); openPeople(); setGo('account'); };
 $('enSignIn').onclick = () => { closeEnroll(); openPeople(); setGo('account'); };
-$('welLater').onclick = () => { unlockAudio(); if (!wel.help) goFullscreen(); closeWelcome(wel.help ? 'close' : 'skip'); };
-document.addEventListener('keydown', (e) => {
-  if ($('welcome').classList.contains('hidden')) return;
-  if (e.key === 'Escape' && wel.help) { e.preventDefault(); closeWelcome('close'); }
-});
-window.addEventListener('langchange', () => { if (!$('welcome').classList.contains('hidden')) welShow(wel.step); });
-window.__ar.welcome = { open: (help) => openWelcome(help), get step() { return wel.step; }, get shown() { return !$('welcome').classList.contains('hidden'); }, KEY: WELCOME_KEY };
+$('startSignIn').onclick = async () => {   // «Έχω ήδη προφίλ — Σύνδεση» on the very first screen
+  unlockAudio(); goFullscreen(); firstRun.enroll = false;
+  await start();
+  if (ready) { openPeople(); setGo('account'); }
+};
+$('startLook').onclick = () => { if (camStarting || ready) return; unlockAudio(); goFullscreen(); firstRun.enroll = false; start(); };   // «Μόνο να δω πρώτα»
 window.__ar.setNav = { go: (pg) => setGo(pg), get page() { return setPage; }, available: (pg) => pageAvailable(pg) };
 function famOnFocus() { if (!document.hidden && Date.now() - fam.at > 3000) refreshFamily(); }
 document.addEventListener('visibilitychange', famOnFocus);
@@ -736,6 +704,8 @@ function openEnrollNow(existing = null, extra = {}) {
   mode = 'enroll';
   en.person = existing; en.samples = []; en.auto = false; en.step = 0; en.oneShot = false; en.st = {};
   en.safetyId = extra && extra.safetyId ? extra.safetyId : null;
+  en.guided = !existing && !en.safetyId && !!onboard && !onboard.isDone();   // v38: first photo setup = guided (steps 1-4)
+  $('enGuide').classList.toggle('hidden', !en.guided);
   $('enName').value = (extra && extra.name) || (existing ? existing.name : '');
   $('enName').disabled = !!existing || !!en.safetyId;
   $('enThumbs').innerHTML = '';
@@ -893,7 +863,7 @@ async function enrollFromFiles(files) {
 }
 
 // ---------- UI wiring ----------
-$('btnStart').onclick = () => { if (camStarting || ready) return; unlockAudio(); goFullscreen(); start(); };
+$('btnStart').onclick = () => { if (camStarting || ready) return; unlockAudio(); goFullscreen(); firstRun.enroll = true; start(); };
 
 // ---- Full screen / install (hides the browser address bar) ----
 const isStandalone = () => window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -997,7 +967,7 @@ if ('serviceWorker' in navigator && !self.crossOriginIsolated) {
 // service worker announces itself; the page reloads by itself only when that cannot disturb anyone
 // (hidden, or just opened before the camera runs), otherwise it shows a small banner and reloads
 // the next time the app comes back to the foreground. Never during enrollment or while typing.
-const APP_VERSION = 'v37';   // keep in sync with CACHE in sw.js
+const APP_VERSION = 'v38';   // keep in sync with CACHE in sw.js
 const UPD_KEY = 'ar-names-upd-reload';
 const upd = { pending: '', t0: performance.now(), hadController: !!(navigator.serviceWorker && navigator.serviceWorker.controller), reloads: 0 };
 window.__ar.upd = upd; window.__ar.APP_VERSION = APP_VERSION;
@@ -1118,7 +1088,7 @@ function accountOfferEnroll(text) {
 }
 async function accountRestored(person, token) {
   Object.assign(cfg, { token, personId: person.id, name: person.name, enabled: true }); server.saveCfg(cfg);
-  welcomeSeen(); srv.offline = false;
+  welcomeSeen(); if (onboard) onboard.markDone(); srv.offline = false;
   if (mode === 'enroll') closeEnroll();
   syncServerUi(); tracker.relabel(); syncEnrollBtn();
   try { await refreshServer(); } catch (_) {}
@@ -1132,6 +1102,15 @@ langReady().then(() => {
     saveCfg: () => server.saveCfg(cfg), onRestored: accountRestored, offerEnroll: accountOfferEnroll,
   });
   window.__ar.account = account;
+  onboard = initOnboard({
+    api, cfg, hasCap, toast, errMsg, saveCfg: () => server.saveCfg(cfg),
+    rememberMsg: (t) => msgHistAdd('', t),
+    prefill: () => ({ obj: selItems().includes('object3d') ? dispObj : '', msg: $('srvMsg').value.trim() }),
+    afterSave: async () => { try { await refreshServer(); } catch (_) {} tracker.relabel(); refreshFamily(); setStatus(lt('su.readyStatus')); },
+  });
+  $('profSetup').onclick = () => { closePeople(); onboard.open({ prefill: true }); };
+  window.__ar.onboard = onboard;
+  if (cfg.token && cfg.url) api.me().then((me) => { if (me && me.enrollment && me.enrollment.active) onboard.markDone(); }).catch(() => {});   // v38: existing users are never sent through the guide
   if (account.hasPendingSignIn()) welcomeSeen();   // back from Google: no first-run tour on top of the sign-in
   welcomeP = welcomeFirstRun(); boot();
 });
@@ -1442,7 +1421,13 @@ async function saveEnrollServer() {
       cfg.enabled = true; server.saveCfg(cfg); syncServerUi(); tracker.relabel();
       setMsg(() => tr('en.srvReady', { head: head(), n: enr.frames }));
       setStatus(lt('en.srvReadyStatus'));
-      setTimeout(() => { if (mode === 'enroll' && $('tokSheet').classList.contains('hidden')) closeEnroll(); }, 1200);   // v17: close soon after a successful save
+      setTimeout(async () => {   // v17: close soon after a successful save; v38: then the guided basics (object / text / ready)
+        if (mode === 'enroll' && $('tokSheet').classList.contains('hidden')) {
+          const g = en.guided; en.guided = false;
+          await closeEnroll();
+          if (g && onboard && cfg.token) onboard.open();
+        }
+      }, 1200);
     } else {
       const miss = enr ? enr.missing_poses : [];
       const need = enr ? enr.frames_still_needed : 0;
@@ -1748,6 +1733,7 @@ async function refreshServer(verbose = false) {
     try { me = await api.me(); } catch (e) { e.fromMe = true; throw e; }
     cfg.personId = me.id; cfg.name = me.name; server.saveCfg(cfg);
     if (account) { account.noteMe(me); account.maybeHint(); }
+    if (onboard && me.enrollment && me.enrollment.active) onboard.markDone();   // v38: already set up -> never sent through the guide
     consentSync(me);
     const { people } = await api.people();
     const e = me.enrollment;
@@ -2191,7 +2177,7 @@ function openPriv() {
 }
 function closePriv() { $('privSheet').classList.add('hidden'); syncShot(); }
 $('pvClose').onclick = closePriv; $('pvOk').onclick = closePriv;
-$('prPolicy').onclick = openPriv; $('welPolicy').onclick = openPriv;
+$('prPolicy').onclick = openPriv;
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!$('privSheet').classList.contains('hidden')) { e.preventDefault(); e.stopPropagation(); closePriv(); }
@@ -2410,7 +2396,7 @@ function buildHelp(q) {
   }
 }
 $('helpClose').onclick = closeHelpSheet;
-$('helpTour').onclick = async () => { closeHelpSheet(); const w = await openWelcome(true); if (w === 'enroll') welcomeAfter(w); };
+$('helpTour').onclick = () => { closeHelpSheet(); if (cfg.token) onboard.open({ prefill: true }); else welcomeAfter('enroll'); };   // v38: the quick tour = the guided basics (or the photo setup when there is no profile yet)
 $('helpSearch').oninput = () => buildHelp($('helpSearch').value);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !$('helpSheet').classList.contains('hidden')) { e.preventDefault(); closeHelpSheet(); }

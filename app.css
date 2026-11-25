@@ -430,3 +430,33 @@ body.tut-on,body.help-on{overflow:hidden}
 #accEmail{display:block;width:100%;box-sizing:border-box;margin-top:6px;font-size:18px;min-height:48px;padding:12px;border-radius:12px;border:1px solid #3d5a80;background:#0d1b2a;color:#fff}
 #accCode{display:block;width:100%;box-sizing:border-box;margin:6px 0 8px;min-height:52px}
 #accEmailBox .primary{margin-top:10px}
+/* v38 guided first-time setup (reuses the .wel-* layout of the old welcome) */
+#setup{z-index:30;background:radial-gradient(circle at 50% 30%,#16324f 0,#0d1b2a 60%,#060d16 100%);justify-content:center;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#setup .wstep{margin:0;padding:4px 2px}
+#setup .wel-ico{font-size:48px;margin-bottom:6px}
+#setup .wstep h2{font-size:24px;margin:0 0 8px}
+#setup .wel-lead{font-size:17px;margin:0 0 10px}
+#suObjs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+#suObjs button{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:92px;padding:8px 4px;border-radius:14px;background:rgba(255,255,255,.07);border:2px solid transparent;font-size:13px;line-height:1.15}
+#suObjs button img{width:56px;height:56px;object-fit:contain}
+#suObjs button .emo{font-size:40px;line-height:56px;height:56px}
+#suObjs button.sel{border-color:#7cc4ff;background:rgba(124,196,255,.18)}
+#suMsg{width:100%;box-sizing:border-box;font-size:19px;padding:12px;border-radius:14px;border:1px solid #3d5a80;background:#0d1b2a;color:#fff;margin-bottom:10px}
+.su-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.su-chip{min-height:44px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.09);font-size:16px}
+#suPick{text-align:left}#suPick p{margin:0 0 6px}
+.su-tag{margin:0;text-align:center;font-size:14px;opacity:.75}
+.wel-dots span.past:not(.on){background:#7cc4ff;opacity:.55}
+#setup .wel-foot{gap:8px}
+#setup .wel-foot .wel-later{min-height:46px;font-size:16px}
+@media (max-height:700px){#setup .wel-ico{display:none}}
+.en-guide{display:flex;flex-direction:column;gap:2px;font-size:14px;line-height:1.3;margin:0 0 8px;padding:8px 10px;border-radius:12px;background:rgba(124,196,255,.14)}
+.en-guide b{font-size:15px;color:#bfe2ff}
+#enroll.capturing .en-guide{display:none}
+#startLook{display:block;margin:6px auto 0}#startSignIn{display:block;margin:0 auto}
+#setup .wel-body{overflow:hidden}
+#setup .wstep.on{display:flex;flex-direction:column;min-height:0;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#setup .wstep[data-step="obj"].on{overflow:hidden;text-align:center}
+#suObjs{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;align-content:start;padding:2px 2px 8px}
+#suPick{margin-top:10px}

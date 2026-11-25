@@ -63,7 +63,7 @@ export function render() {
   $('accGoogle').classList.toggle('hidden', !googleOn());
   $('accEmailBox').classList.toggle('hidden', !emailOn());
   $('accOr').classList.toggle('hidden', !(googleOn() && emailOn()));
-  for (const id of ['welSignIn', 'enSignIn']) { const b = $(id); if (b) b.classList.toggle('hidden', !on || !!c.token); }
+  for (const id of ['startSignIn', 'enSignIn']) { const b = $(id); if (b) b.classList.toggle('hidden', !on || !!c.token); }
 }
 
 // Opening the page: ask the server which accounts are linked (another phone may have changed it).

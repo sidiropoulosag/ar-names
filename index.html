@@ -84,9 +84,11 @@
 <div id="start" class="sheet center">
   <div class="card">
     <h1>Noera</h1>
-    <p data-i18n="start.intro">Η κάμερα αναγνωρίζει τα άτομα που έχεις καταχωρίσει και δείχνει το όνομά τους σε 3D πάνω από το κεφάλι.</p>
+    <p id="startIntro" data-i18n="start.intro">Η κάμερα αναγνωρίζει τα άτομα που έχεις καταχωρίσει και δείχνει το όνομά τους σε 3D πάνω από το κεφάλι.</p>
     <p id="privacyNote" class="small" data-i18n="privacy.local">Όλα γίνονται μόνο σε αυτή τη συσκευή. Καμία εικόνα δεν φεύγει από το κινητό.</p>
     <button id="btnStart" class="primary big" disabled>Φόρτωση μοντέλων…</button>
+    <button id="startLook" type="button" class="linkbtn hidden" data-i18n="su.look">Μόνο να δω πρώτα</button>
+    <button id="startSignIn" type="button" class="linkbtn hidden" data-i18n="acc.welHave">🔐 Έχω ήδη προφίλ — Σύνδεση</button>
     <p id="loadErr" class="err"></p>
     <button id="btnInstall" class="hidden" data-i18n="start.install">📲 Εγκατάσταση του Noera στην αρχική οθόνη</button>
   </div>
@@ -95,6 +97,10 @@
 <!-- Enroll -->
 <div id="enOval" class="hidden" aria-hidden="true"></div>
 <div id="enroll" class="panel bottom hidden">
+  <div id="enGuide" class="en-guide hidden">
+    <b data-i18n="su.g1t">Βήμα 1 από 4 · Όνομα και φωτογραφίες</b>
+    <span data-i18n="su.g1b">Γράψε το όνομά σου, κράτα καλό φως στο πρόσωπο (χωρίς γυαλιά ηλίου ή μάσκα) και πάτα ▶. Θέλει περίπου 1 λεπτό.</span>
+  </div>
   <div class="row">
     <input id="enName" type="text" placeholder="Όνομα (π.χ. Μαρία)" data-i18n-ph="en.namePh" maxlength="40" autocomplete="off">
   </div>
@@ -170,6 +176,7 @@
   <section class="spage" data-page="profile">
     <p id="srvInfo" class="small"></p>
     <div class="me-only">
+      <button id="profSetup" type="button" class="wide" data-i18n="su.rerun">🪄 Οδηγός βήμα-βήμα: αντικείμενο και μήνυμα</button>
       <h3 id="dispTitle">Τι βλέπουν οι άλλοι πάνω από το κεφάλι μου</h3>
       <p id="dispHint" class="small disp-only" data-i18n="disp.hint1">Διάλεξε ένα από τα τρία.</p>
       <div class="scard">
@@ -486,47 +493,46 @@
   </div>
 </div>
 
-<!-- v30: welcome / onboarding — first run only (after the language), or again from Settings → «Οδηγός και βοήθεια».
-     3 short steps; the last one offers «📸 Φωτογράφισέ με τώρα» (opens the camera + the usual enrolment) or «Μόνο να δω πρώτα». -->
-<div id="welcome" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="welTitle">
+<!-- v38: guided first-time setup (after the photos): 3D object -> text -> «Έτοιμο». Replaces the old 3-step welcome tour. -->
+<div id="setup" class="sheet hidden" role="dialog" aria-modal="true" aria-labelledby="suTitle">
   <div class="wel-card">
     <div class="wel-top">
-      <button id="welBack" type="button" class="wel-tbtn" data-i18n="set.back">‹ Πίσω</button>
+      <button id="suBack" type="button" class="wel-tbtn" data-i18n="set.back">‹ Πίσω</button>
       <span class="wel-brand"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>Noera</span></span>
-      <button id="welSkip" type="button" class="wel-tbtn wel-skip" data-i18n="wel.skip">Παράλειψη</button>
+      <button id="suLater" type="button" class="wel-tbtn wel-skip" data-i18n="su.later">Αργότερα</button>
     </div>
     <div class="wel-body">
-      <section class="wstep on" data-step="0">
-        <div class="wel-ico" aria-hidden="true">👀</div>
-        <h2 id="welTitle" data-i18n="wel.t1">Καλώς ήρθες!</h2>
-        <p class="wel-lead" data-i18n="wel.b1">Στρέψε την κάμερα σε κάποιον γνωστό σου: το όνομά του εμφανίζεται πάνω από το κεφάλι του.</p>
-        <p class="wel-note"><span aria-hidden="true">🤝</span> <span data-i18n="wel.n1">Ο καθένας φωτογραφίζεται μόνος του, με τη δική του συναίνεση.</span></p>
+      <section class="wstep on" data-step="obj">
+        <div class="wel-ico" aria-hidden="true">🧸</div>
+        <h2 id="suTitle" data-i18n="su.objT">Διάλεξε ένα 3D αντικείμενο</h2>
+        <p class="wel-lead" data-i18n="su.objB">Θα φαίνεται πάνω από το κεφάλι σου, δίπλα στο όνομά σου.</p>
+        <div id="suObjs" role="radiogroup" aria-label="3D" data-i18n-aria="su.objAria"></div>
       </section>
-      <section class="wstep" data-step="1">
-        <div class="wel-ico" aria-hidden="true">📸</div>
-        <h2 data-i18n="wel.t2">Πώς φωτογραφίζεσαι</h2>
-        <ul class="wel-list">
-          <li><span class="wli" aria-hidden="true">🙂</span><span data-i18n="wel.b2a">Θα σου ζητήσω να κοιτάξεις την κάμερα και να γυρίσεις λίγο το κεφάλι.</span></li>
-          <li><span class="wli" aria-hidden="true">💡</span><span data-i18n="wel.b2b">Κράτα καλό φως στο πρόσωπό σου.</span></li>
-          <li><span class="wli" aria-hidden="true">🕶️</span><span data-i18n="wel.b2c">Χωρίς γυαλιά ηλίου και χωρίς μάσκα.</span></li>
-          <li><span class="wli" aria-hidden="true">⏱️</span><span data-i18n="wel.b2d">Παίρνει περίπου 1 λεπτό.</span></li>
-        </ul>
+      <section class="wstep" data-step="msg">
+        <div class="wel-ico" aria-hidden="true">💬</div>
+        <h2 data-i18n="su.msgT">Γράψε ένα μικρό μήνυμα</h2>
+        <p class="wel-lead" data-i18n="su.msgB">Θα το διαβάζουν όσοι σε αναγνωρίζουν. Κάτι σύντομο και φιλικό.</p>
+        <textarea id="suMsg" rows="2" maxlength="80" placeholder="π.χ. Χαίρομαι που σε βλέπω 😊" data-i18n-ph="su.msgPh"></textarea>
+        <div id="suChips" class="su-chips"></div>
       </section>
-      <section class="wstep" data-step="2">
-        <div class="wel-ico" aria-hidden="true">🔒</div>
-        <h2 data-i18n="wel.t3">Το απόρρητό σου</h2>
-        <p id="welPriv" class="wel-lead"></p>
-        <p id="welPrivNote" class="wel-note small"></p>
-        <button id="welPolicy" type="button" class="linkbtn" data-i18n="pv.open">📄 Πολιτική απορρήτου</button>
-        <p id="welHas" class="wel-note hidden" data-i18n="wel.hasProfile">✅ Έχεις ήδη προφίλ σε αυτό το κινητό.</p>
+      <section class="wstep" data-step="done">
+        <div class="wel-ico" aria-hidden="true">✅</div>
+        <h2 id="suDoneTitle"></h2>
+        <ul id="suSummary" class="wel-list"></ul>
+        <div id="suPick" class="wel-note hidden" role="radiogroup">
+          <p data-i18n="su.pickQ">Πάνω από το κεφάλι χωράνε το όνομά σου και ένα ακόμα πράγμα. Ποιο να φαίνεται;</p>
+          <label class="setting check"><input type="radio" name="suPickR" value="object3d" checked> <span data-i18n="su.pickObj">🧸 Το αντικείμενο</span></label>
+          <label class="setting check"><input type="radio" name="suPickR" value="message1"> <span data-i18n="su.pickMsg">💬 Το μήνυμα</span></label>
+        </div>
+        <p class="wel-note small" data-i18n="su.later2">Τα αλλάζεις όποτε θες: Ρυθμίσεις → Το προφίλ μου.</p>
       </section>
     </div>
     <div class="wel-foot">
-      <div class="wel-dots" role="img"><span></span><span></span><span></span></div>
-      <button id="welNext" type="button" class="primary big" data-i18n="wel.next">Συνέχεια</button>
-      <button id="welGo" type="button" class="primary big hidden" data-i18n="wel.go">📸 Φωτογράφισέ με τώρα</button>
-      <button id="welLater" type="button" class="wel-later hidden" data-i18n="wel.later">Μόνο να δω πρώτα</button>
-      <button id="welSignIn" type="button" class="wel-later hidden" data-i18n="acc.welHave">🔐 Έχω ήδη προφίλ — Σύνδεση</button>
+      <p id="suStepTag" class="su-tag"></p>
+      <div class="wel-dots" role="img"><span></span><span></span><span></span><span></span></div>
+      <button id="suNext" type="button" class="primary big" data-i18n="wel.next">Συνέχεια</button>
+      <button id="suDone" type="button" class="primary big hidden" data-i18n="su.done">✅ Έτοιμο, χρησιμοποίησέ το</button>
+      <button id="suSkip" type="button" class="wel-later" data-i18n="su.skip">Παράλειψη αυτού του βήματος</button>
     </div>
   </div>
 </div>
